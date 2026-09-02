@@ -22,18 +22,17 @@ export const CSP_HEADER = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  "img-src 'self' data: blob: https://z-cdn.chatglm.cn",
   "font-src 'self' data:",
   "connect-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "frame-ancestors 'none'",
   "upgrade-insecure-requests",
 ].join('; ');
 
 const isProd = process.env.NODE_ENV === 'production';
-const GITHUB_PAGES_BASE = '/cardcraft';
+const GITHUB_PAGES_BASE = '/cardcraft_v2';
 
 const nextConfig: NextConfig = {
   // Static export for GitHub Pages
