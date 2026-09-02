@@ -4299,10 +4299,40 @@ input[type="color"].color-picker-input::-moz-color-swatch {
   }
 }
 
-/* ─── DARK MODE (system preference) ─── */
+/* ─── UI THEME (light/dark/auto) ─── */
+/* Тёмная тема UI chrome — применяется через .cc-root[data-ui-theme="dark"]
+   или через .cc-root[data-ui-theme="auto"] когда система в dark mode.
+   Важно: это НЕ влияет на темы карточек (card themes) — только на sidebar,
+   top bar, modal, popup, toast (UI chrome). */
+
+/* Тёмная тема — явный выбор пользователя */
+.cc-root[data-ui-theme="dark"] {
+  --ui-bg: #0a0a0b;
+  --ui-surface: #18181b;
+  --ui-surface-hover: #27272a;
+  --ui-border: #27272a;
+  --ui-border-strong: #3f3f46;
+  --ui-text: #fafafa;
+  --ui-text-secondary: #a1a1aa;
+  --ui-text-tertiary: #71717a;
+  --ui-accent: #6366f1;
+  --ui-accent-hover: #818cf8;
+  --ui-accent-fg: #ffffff;
+  --ui-focus: #6366f1;
+  --ui-success: #22c55e;
+  --ui-danger: #ef4444;
+  --ui-danger-bg: #450a0a;
+  --ui-danger-border: #7f1d1d;
+  --ui-overlay: rgba(0, 0, 0, 0.6);
+  --sh-sm: 0 1px 2px 0 rgba(0,0,0,0.3);
+  --sh-md: 0 4px 12px -2px rgba(0,0,0,0.4), 0 2px 4px -2px rgba(0,0,0,0.3);
+  --sh-lg: 0 16px 40px -8px rgba(0,0,0,0.5), 0 4px 12px -4px rgba(0,0,0,0.4);
+  --sh-xl: 0 24px 56px -12px rgba(0,0,0,0.6), 0 8px 20px -8px rgba(0,0,0,0.5);
+}
+
+/* Тёмная тема через auto — следует system preference */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) {
-    /* Тёмная тема UI chrome (не карточек) — только если пользователь не выбрал светлую тему карточки */
+  .cc-root[data-ui-theme="auto"] {
     --ui-bg: #0a0a0b;
     --ui-surface: #18181b;
     --ui-surface-hover: #27272a;
@@ -4312,15 +4342,53 @@ input[type="color"].color-picker-input::-moz-color-swatch {
     --ui-text-secondary: #a1a1aa;
     --ui-text-tertiary: #71717a;
     --ui-accent: #6366f1;
+    --ui-accent-hover: #818cf8;
     --ui-accent-fg: #ffffff;
     --ui-focus: #6366f1;
+    --ui-success: #22c55e;
     --ui-danger: #ef4444;
     --ui-danger-bg: #450a0a;
     --ui-danger-border: #7f1d1d;
     --ui-overlay: rgba(0, 0, 0, 0.6);
+    --sh-sm: 0 1px 2px 0 rgba(0,0,0,0.3);
+    --sh-md: 0 4px 12px -2px rgba(0,0,0,0.4), 0 2px 4px -2px rgba(0,0,0,0.3);
+    --sh-lg: 0 16px 40px -8px rgba(0,0,0,0.5), 0 4px 12px -4px rgba(0,0,0,0.4);
+    --sh-xl: 0 24px 56px -12px rgba(0,0,0,0.6), 0 8px 20px -8px rgba(0,0,0,0.5);
   }
-  .top-bar {
+}
+
+/* Top bar background в тёмной теме */
+.cc-root[data-ui-theme="dark"] .top-bar {
+  background: rgba(10, 10, 11, 0.85);
+}
+@media (prefers-color-scheme: dark) {
+  .cc-root[data-ui-theme="auto"] .top-bar {
     background: rgba(10, 10, 11, 0.85);
+  }
+}
+
+/* Theme toggle button — swap icon based on theme */
+.cc-root[data-ui-theme="dark"] .theme-toggle .sun-icon,
+.cc-root[data-ui-theme="auto"] .theme-toggle .sun-icon {
+  display: none;
+}
+.cc-root[data-ui-theme="light"] .theme-toggle .moon-icon {
+  display: none;
+}
+@media (prefers-color-scheme: light) {
+  .cc-root[data-ui-theme="auto"] .theme-toggle .sun-icon {
+    display: none;
+  }
+  .cc-root[data-ui-theme="auto"] .theme-toggle .moon-icon {
+    display: block;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .cc-root[data-ui-theme="auto"] .theme-toggle .sun-icon {
+    display: block;
+  }
+  .cc-root[data-ui-theme="auto"] .theme-toggle .moon-icon {
+    display: none;
   }
 }
 

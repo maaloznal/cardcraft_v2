@@ -142,6 +142,7 @@ export function initCardCraftApp(root: HTMLElement): () => void {
     confirmCancel: $<HTMLButtonElement>('#confirmCancel'),
     undoBtn: $<HTMLButtonElement>('#undoBtn'),
     redoBtn: $<HTMLButtonElement>('#redoBtn'),
+    themeToggleBtn: $<HTMLButtonElement>('#themeToggleBtn'),
     cardCountBadge: $<HTMLElement>('#cardCountBadge'),
   };
 
@@ -483,6 +484,39 @@ export function initCardCraftApp(root: HTMLElement): () => void {
     }
   }
 
+  /* ---------- 11b. UI Theme (light / dark / auto) ---------- */
+  const UI_THEME_KEY = 'cardcraft-ui-theme';
+  type UiTheme = 'light' | 'dark' | 'auto';
+  // Cycle: light → dark → auto → light
+  function toggleUiTheme(): void {
+    const current = (root.getAttribute('data-ui-theme') as UiTheme) || 'auto';
+    const next: UiTheme = current === 'light' ? 'dark' : current === 'dark' ? 'auto' : 'light';
+    applyUiTheme(next);
+  }
+  function applyUiTheme(theme: UiTheme): void {
+    root.setAttribute('data-ui-theme', theme);
+    try { localStorage.setItem(UI_THEME_KEY, theme); } catch { /* ignore */ }
+    // Update button title
+    const btn = dom.themeToggleBtn;
+    if (btn) {
+      const labels: Record<UiTheme, string> = {
+        light: 'Светлая тема (сейчас: светлая)',
+        dark: 'Тёмная тема (сейчас: тёмная)',
+        auto: 'Авто тема (по системе)',
+      };
+      btn.title = labels[theme];
+      btn.setAttribute('aria-label', labels[theme]);
+    }
+  }
+  function loadUiTheme(): void {
+    let theme: UiTheme = 'auto';
+    try {
+      const saved = localStorage.getItem(UI_THEME_KEY) as UiTheme | null;
+      if (saved === 'light' || saved === 'dark' || saved === 'auto') theme = saved;
+    } catch { /* ignore */ }
+    applyUiTheme(theme);
+  }
+
   /* ---------- 12. Build context ---------- */
   const ctx: OrchestratorContext = {
     dom,
@@ -813,6 +847,9 @@ export function initCardCraftApp(root: HTMLElement): () => void {
     addEl(dom.undoBtn, 'click', () => undo());
     addEl(dom.redoBtn, 'click', () => redo());
 
+    // UI Theme toggle (light / dark / auto)
+    addEl(dom.themeToggleBtn, 'click', () => toggleUiTheme());
+
     // Sidebar toggle
     addEl(dom.toggleSidebarBtn, 'click', () => {
       const open = dom.editorSidebar?.classList.contains('collapsed');
@@ -1018,6 +1055,7 @@ export function initCardCraftApp(root: HTMLElement): () => void {
   guard('renderEditor', renderEditor);
   guard('renderPreview', renderPreview);
   guard('applyCharLimit', () => applyCharLimit(ctx));
+  guard('loadUiTheme', loadUiTheme);
   // Initial history snapshot
   historyManager.init(stateManager.snapshot());
   updateUndoRedoButtons(ctx);

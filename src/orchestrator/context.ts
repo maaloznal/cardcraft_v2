@@ -60,6 +60,7 @@ export interface DomRefs {
   confirmCancel: HTMLButtonElement | null;
   undoBtn: HTMLButtonElement | null;
   redoBtn: HTMLButtonElement | null;
+  themeToggleBtn: HTMLButtonElement | null;
   cardCountBadge: HTMLElement | null;
 }
 
