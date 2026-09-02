@@ -71,6 +71,9 @@ export class VerticalResize {
       divider.classList.add('dragging');
       document.body.style.cursor = 'row-resize';
       document.body.style.userSelect = 'none';
+      // Capture pointer so touch events keep firing even if finger
+      // moves outside the divider element
+      try { divider.setPointerCapture(e.pointerId); } catch { /* ignore */ }
       e.preventDefault();
       document.addEventListener('pointermove', onPointerMove);
       document.addEventListener('pointerup', onPointerUp);
@@ -146,6 +149,9 @@ export class HorizontalResize {
       divider.classList.add('dragging');
       document.body.style.cursor = 'col-resize';
       document.body.style.userSelect = 'none';
+      // Capture pointer so touch events keep firing even if finger
+      // moves outside the divider element
+      try { divider.setPointerCapture(e.pointerId); } catch { /* ignore */ }
       e.preventDefault();
       document.addEventListener('pointermove', onPointerMove);
       document.addEventListener('pointerup', onPointerUp);

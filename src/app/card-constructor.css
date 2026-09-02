@@ -1621,10 +1621,22 @@
   background: var(--ui-border);
   transition: background var(--dur) var(--ease);
   z-index: 10;
+  /* Prevent browser from intercepting touch gestures for scroll */
+  touch-action: none;
 }
 .resize-divider:hover,
 .resize-divider.dragging {
   background: var(--ui-text);
+}
+
+/* Expand touch target without changing visual size.
+   ::before is transparent, absolutely positioned, extends 20px in each direction
+   so total touch area is ~44px (Apple HIG minimum). */
+.resize-divider::before {
+  content: '';
+  position: absolute;
+  z-index: 11;
+  background: transparent;
 }
 
 /* Вертикальный разделитель (меняет высоту верхней/нижней области) */
@@ -1633,6 +1645,12 @@
   cursor: row-resize;
   width: 100%;
   margin: 0;
+}
+.resize-divider-h::before {
+  left: 0;
+  right: 0;
+  top: -20px;
+  bottom: -20px;
 }
 .resize-divider-h::after {
   content: '';
@@ -1645,6 +1663,7 @@
   border-radius: 1px;
   background: var(--ui-border-strong);
   transition: background var(--dur) var(--ease);
+  z-index: 12;
 }
 .resize-divider-h:hover::after,
 .resize-divider-h.dragging::after {
@@ -1657,6 +1676,12 @@
   cursor: col-resize;
   align-self: stretch;
 }
+.resize-divider-v::before {
+  top: 0;
+  bottom: 0;
+  left: -20px;
+  right: -20px;
+}
 .resize-divider-v::after {
   content: '';
   position: absolute;
@@ -1668,6 +1693,7 @@
   border-radius: 1px;
   background: var(--ui-border-strong);
   transition: background var(--dur) var(--ease);
+  z-index: 12;
 }
 .resize-divider-v:hover::after,
 .resize-divider-v.dragging::after {
@@ -4296,6 +4322,37 @@ input[type="color"].color-picker-input::-moz-color-swatch {
   .btn-secondary:active {
     transform: scale(0.96);
     opacity: 0.8;
+  }
+
+  /* Resize dividers — increase touch target to 56px on touch devices
+     (was 44px via ::before, now 56px for easier finger drag) */
+  .resize-divider-h::before {
+    top: -26px;
+    bottom: -26px;
+  }
+  .resize-divider-v::before {
+    left: -26px;
+    right: -26px;
+  }
+
+  /* Visual handle indicator — make it more visible on touch */
+  .resize-divider-h::after {
+    width: 48px;
+    height: 4px;
+    background: var(--ui-text-tertiary);
+  }
+  .resize-divider-v::after {
+    width: 4px;
+    height: 48px;
+    background: var(--ui-text-tertiary);
+  }
+
+  /* Highlight handle when dragging on touch */
+  .resize-divider.dragging::after {
+    background: var(--ui-accent);
+  }
+  .resize-divider.dragging {
+    background: var(--ui-accent);
   }
 }
 
