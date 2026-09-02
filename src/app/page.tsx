@@ -106,166 +106,150 @@ export default function Home() {
         <aside className="editor-sidebar collapsed" id="editorSidebar">
           <div className="sidebar-fixed-header">
 
-          {/* 1. Формат */}
+          {/* Оформление карточек — единый аккордеон со всеми настройками */}
           <div className="sidebar-accordion" data-sidebar-accordion>
             <button className="sidebar-accordion-header" type="button" data-sidebar-toggle>
-              <span>Формат</span>
+              <span>Оформление карточек</span>
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
             <div className="sidebar-accordion-body">
-            <div className="sidebar-section">
-            <select id="formatSelect" defaultValue="auto">
-              {FORMATS.map((f) => (
-                <option key={f.value} value={f.value}>
-                  {f.label}
-                </option>
-              ))}
-            </select>
-            <div className="toggle-row" style={{ marginTop: 10 }}>
-              <span className="toggle-label">Лимит символов</span>
-              <label className="switch">
-                <input type="checkbox" id="charLimitToggle" />
-                <span className="switch-slider" />
-              </label>
-            </div>
-            <div className="char-counter" id="charCounter" style={{ display: 'none' }}>
-              <span id="charCounterText">0 / 0</span>
-            </div>
-            </div>
-            </div>
-          </div>
 
-          {/* 2. Тема оформления */}
-          <div className="sidebar-accordion" data-sidebar-accordion>
-            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle>
-              <span>Тема оформления</span>
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-            <div className="sidebar-accordion-body">
-            <div className="sidebar-section">
-            {/* Скрытый native select для совместимости с TS логикой */}
-            <select id="themeSelect" defaultValue="default" aria-hidden="true" style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-              {THEME_GROUPS.map((g) => (
-                <optgroup key={g.label} label={g.label}>
-                  {g.themes.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
+            {/* Формат */}
+            <div className="sidebar-subsection">
+              <div className="sidebar-subsection-label">Формат</div>
+              <div className="sidebar-section">
+                <select id="formatSelect" defaultValue="auto">
+                  {FORMATS.map((f) => (
+                    <option key={f.value} value={f.value}>
+                      {f.label}
                     </option>
                   ))}
-                </optgroup>
-              ))}
-            </select>
-            {/* Кастомный аккордеон-селектор */}
-            <div className="theme-dropdown" id="themeDropdown">
-              <button className="theme-dropdown-trigger" id="themeDropdownTrigger" type="button" aria-haspopup="listbox" aria-expanded="false">
-                <span className="theme-dropdown-label" id="themeDropdownLabel">1. Clean Minimal</span>
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-              </button>
-              <div className="theme-dropdown-panel" id="themeDropdownPanel" role="listbox">
-                {THEME_GROUPS.map((g, gi) => (
-                  <div className="theme-group" key={g.label} data-group-index={gi}>
-                    <button className="theme-group-header" type="button" aria-expanded="false">
-                      <span>{g.label}</span>
-                      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                    </button>
-                    <div className="theme-group-items">
-                      {g.themes.map((t) => (
-                        <button
-                          className="theme-item"
-                          data-value={t.value}
-                          data-label={t.label}
-                          type="button"
-                          key={t.value}
-                        >
-                          {t.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                </select>
+                <div className="toggle-row" style={{ marginTop: 10 }}>
+                  <span className="toggle-label">Лимит символов</span>
+                  <label className="switch">
+                    <input type="checkbox" id="charLimitToggle" />
+                    <span className="switch-slider" />
+                  </label>
+                </div>
+                <div className="char-counter" id="charCounter" style={{ display: 'none' }}>
+                  <span id="charCounterText">0 / 0</span>
+                </div>
               </div>
             </div>
-            </div>
-            </div>
-          </div>
 
-          {/* 3. Угол градиента */}
-          <div className="sidebar-accordion" data-sidebar-accordion>
-            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle>
-              <span>Угол градиента</span>
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-            <div className="sidebar-accordion-body">
-            <div className="sidebar-section gradient-control-section">
-            <div className="gradient-value-row">
-              <span className="gradient-angle-value" id="gradientAngleValue">135°</span>
+            {/* Тема оформления */}
+            <div className="sidebar-subsection">
+              <div className="sidebar-subsection-label">Тема оформления</div>
+              <div className="sidebar-section">
+                <select id="themeSelect" defaultValue="default" aria-hidden="true" style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+                  {THEME_GROUPS.map((g) => (
+                    <optgroup key={g.label} label={g.label}>
+                      {g.themes.map((t) => (
+                        <option key={t.value} value={t.value}>
+                          {t.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+                <div className="theme-dropdown" id="themeDropdown">
+                  <button className="theme-dropdown-trigger" id="themeDropdownTrigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span className="theme-dropdown-label" id="themeDropdownLabel">1. Clean Minimal</span>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                  </button>
+                  <div className="theme-dropdown-panel" id="themeDropdownPanel" role="listbox">
+                    {THEME_GROUPS.map((g, gi) => (
+                      <div className="theme-group" key={g.label} data-group-index={gi}>
+                        <button className="theme-group-header" type="button" aria-expanded="false">
+                          <span>{g.label}</span>
+                          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
+                        <div className="theme-group-items">
+                          {g.themes.map((t) => (
+                            <button
+                              className="theme-item"
+                              data-value={t.value}
+                              data-label={t.label}
+                              type="button"
+                              key={t.value}
+                            >
+                              {t.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
-            <input
-              type="range"
-              id="gradientAngleSlider"
-              min={0}
-              max={360}
-              defaultValue={135}
-              className="gradient-angle-slider"
-            />
-            </div>
-            </div>
-          </div>
 
-          {/* 4. Стиль списков (включая нумерацию карточек) */}
-          <div className="sidebar-accordion" data-sidebar-accordion>
-            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle>
-              <span>Стиль списков</span>
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-            <div className="sidebar-accordion-body">
-            <div className="sidebar-section">
-            <select id="listStyleSelect" defaultValue="numbers">
-              <option value="numbers">Классическая нумерация</option>
-              <option value="bullets">Маркеры</option>
-              <option value="dashes">Тире</option>
-              <option value="circles">Цифры в круге</option>
-              <option value="squares">Цифры в квадрате</option>
-              <option value="decorative">Декоративные маркеры</option>
-            </select>
+            {/* Угол градиента */}
+            <div className="sidebar-subsection">
+              <div className="sidebar-subsection-label">Угол градиента</div>
+              <div className="sidebar-section gradient-control-section">
+                <div className="gradient-value-row">
+                  <span className="gradient-angle-value" id="gradientAngleValue">135°</span>
+                </div>
+                <input
+                  type="range"
+                  id="gradientAngleSlider"
+                  min={0}
+                  max={360}
+                  defaultValue={135}
+                  className="gradient-angle-slider"
+                />
+              </div>
             </div>
-            <div className="sidebar-section">
-            <div className="toggle-row">
-              <span className="toggle-label">Нумерация карточек</span>
-              <label className="switch">
-                <input type="checkbox" id="numberingToggle" defaultChecked />
-                <span className="switch-slider" />
-              </label>
-            </div>
-            </div>
-            </div>
-          </div>
 
-          {/* 5. Шкала прогресса (стиль + переключатель) */}
-          <div className="sidebar-accordion" data-sidebar-accordion>
-            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle>
-              <span>Шкала прогресса</span>
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-            <div className="sidebar-accordion-body">
-            <div className="sidebar-section">
-            <div className="toggle-row" style={{ marginBottom: 10 }}>
-              <span className="toggle-label">Показывать шкалу</span>
-              <label className="switch">
-                <input type="checkbox" id="progressBarToggle" defaultChecked />
-                <span className="switch-slider" />
-              </label>
+            {/* Стиль списков */}
+            <div className="sidebar-subsection">
+              <div className="sidebar-subsection-label">Стиль списков</div>
+              <div className="sidebar-section">
+                <select id="listStyleSelect" defaultValue="numbers">
+                  <option value="numbers">Классическая нумерация</option>
+                  <option value="bullets">Маркеры</option>
+                  <option value="dashes">Тире</option>
+                  <option value="circles">Цифры в круге</option>
+                  <option value="squares">Цифры в квадрате</option>
+                  <option value="decorative">Декоративные маркеры</option>
+                </select>
+              </div>
+              <div className="sidebar-section">
+                <div className="toggle-row">
+                  <span className="toggle-label">Нумерация карточек</span>
+                  <label className="switch">
+                    <input type="checkbox" id="numberingToggle" defaultChecked />
+                    <span className="switch-slider" />
+                  </label>
+                </div>
+              </div>
             </div>
-            <select id="progressBarStyleSelect" defaultValue="default">
-              <option value="default">Сплошная линия</option>
-              <option value="dashed">Пунктирная линия</option>
-              <option value="circles">Круги</option>
-              <option value="squares">Квадраты</option>
-              <option value="diamonds">Ромбы</option>
-              <option value="hexagons">Шестиугольники</option>
-              <option value="stars">Звёзды</option>
-            </select>
+
+            {/* Шкала прогресса */}
+            <div className="sidebar-subsection">
+              <div className="sidebar-subsection-label">Шкала прогресса</div>
+              <div className="sidebar-section">
+                <div className="toggle-row" style={{ marginBottom: 10 }}>
+                  <span className="toggle-label">Показывать шкалу</span>
+                  <label className="switch">
+                    <input type="checkbox" id="progressBarToggle" defaultChecked />
+                    <span className="switch-slider" />
+                  </label>
+                </div>
+                <select id="progressBarStyleSelect" defaultValue="default">
+                  <option value="default">Сплошная линия</option>
+                  <option value="dashed">Пунктирная линия</option>
+                  <option value="circles">Круги</option>
+                  <option value="squares">Квадраты</option>
+                  <option value="diamonds">Ромбы</option>
+                  <option value="hexagons">Шестиугольники</option>
+                  <option value="stars">Звёзды</option>
+                </select>
+              </div>
             </div>
+
             </div>
           </div>
 

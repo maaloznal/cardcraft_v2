@@ -1608,6 +1608,23 @@
   padding: 8px 0 4px;
 }
 
+/* Sub-sections inside the unified "Оформление карточек" accordion */
+.sidebar-subsection {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ui-border);
+}
+.sidebar-subsection:last-child {
+  border-bottom: none;
+}
+.sidebar-subsection-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ui-text-tertiary);
+  margin-bottom: 6px;
+}
+
 /* Workspace */
 .preview-workspace {
   flex: 1;
