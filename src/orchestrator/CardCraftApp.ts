@@ -202,7 +202,10 @@ export function initCardCraftApp(root: HTMLElement): () => void {
   const toastQueue = new ToastQueue(dom.toastEl!);
 
   // Accordion controllers (defaults: initial='none' — matches old behavior)
-  const sidebarAccordion = new SidebarAccordion(root, { initial: 'none' });
+  const sidebarAccordion = new SidebarAccordion(root, {
+    initial: 'none',
+    onChange: () => autoAdjustHeaderHeight(),
+  });
   const modalAccordion = new ModalAccordion(dom.colorModal!, { initial: 'none' });
 
   // Modal controller — ESC handled centrally, so disable auto-ESC
@@ -515,6 +518,30 @@ export function initCardCraftApp(root: HTMLElement): () => void {
       if (saved === 'light' || saved === 'dark' || saved === 'auto') theme = saved;
     } catch { /* ignore */ }
     applyUiTheme(theme);
+  }
+
+  /* ---------- 11c. Auto-adjust sidebar header height ----------
+     When sidebar accordions expand/collapse, automatically adjust
+     .sidebar-fixed-header height so all expanded content is visible
+     without manual divider dragging. Only expands — never shrinks
+     below user-set height (unless content fits in less). */
+  function autoAdjustHeaderHeight(): void {
+    if (!dom.editorSidebar) return;
+    const fixedHeader = dom.editorSidebar.querySelector<HTMLElement>('.sidebar-fixed-header');
+    if (!fixedHeader) return;
+    // Calculate the natural height of all content in fixed-header
+    const naturalHeight = fixedHeader.scrollHeight;
+    // Get current set height (from inline style or default)
+    const currentHeight = fixedHeader.getBoundingClientRect().height;
+    const sidebarHeight = dom.editorSidebar.getBoundingClientRect().height;
+    // Max allowed: sidebar height minus minimum scroll area (120px for card fields)
+    const maxHeight = sidebarHeight - 120;
+    // New height: max of natural content height and current, but capped at maxHeight
+    const newHeight = Math.min(Math.max(naturalHeight, currentHeight), maxHeight);
+    if (newHeight !== currentHeight) {
+      fixedHeader.style.height = `${newHeight}px`;
+      fixedHeader.style.flex = 'none';
+    }
   }
 
   /* ---------- 12. Build context ---------- */
