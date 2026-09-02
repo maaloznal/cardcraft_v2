@@ -43,6 +43,7 @@ import type { OrchestratorContext, DomRefs, OrchestratorState, ListenerTracker }
 import { scheduleSave, saveNow, loadFromLocalStorage, clearSaveTimer } from './save-load';
 import {
   applyThemeToWorkspace,
+  applyGradientAngle,
   applyNumberingVisibility,
   applyProgressBarVisibility,
   applyProgressBarStyle,
@@ -136,6 +137,7 @@ export function initCardCraftApp(root: HTMLElement): () => void {
     wordStyleList: $<HTMLElement>('#wordStyleList'),
     addCardBtn: $<HTMLButtonElement>('#addCardBtn'),
     saveAllBtn: $<HTMLButtonElement>('#saveAll'),
+    clearAllTextBtn: $<HTMLButtonElement>('#clearAllTextBtn'),
     deleteAllBtn: $<HTMLButtonElement>('#deleteAllBtn'),
     confirmOverlay: $<HTMLElement>('#confirmOverlay'),
     confirmOk: $<HTMLButtonElement>('#confirmOk'),
@@ -601,6 +603,7 @@ export function initCardCraftApp(root: HTMLElement): () => void {
     }
     // Apply CSS state
     applyThemeToWorkspace(ctx);
+    applyGradientAngle(ctx);
     applyNumberingVisibility(ctx);
     applyProgressBarVisibility(ctx);
     applyProgressBarStyle(ctx);
@@ -665,6 +668,25 @@ export function initCardCraftApp(root: HTMLElement): () => void {
       moveCard(Number(data.index), Number(data.dir));
     } else if (action === 'focus') {
       updateCharCounter(ctx, Number(data.index));
+    } else if (action === 'clear-field') {
+      // Clear a single field on a card
+      const idx = Number(data.index);
+      const field = String(data.field) as keyof Card;
+      stateManager.dispatch({ type: 'UPDATE_CARD_FIELD', payload: { idx, field, value: '' } });
+      const card = stateManager.getCard(idx);
+      if (card) {
+        const orphans = findOrphanWordStyleKeys(card);
+        for (const key of orphans) {
+          stateManager.dispatch({ type: 'DELETE_CARD_WORD_STYLE', payload: { idx, key } });
+        }
+        const updated = stateManager.getCard(idx);
+        if (updated) previewRenderer.updateCardField(updated, field, idx);
+      }
+      // Re-render editor to update input values
+      renderEditor();
+      updateCharCounter(ctx, idx);
+      scheduleSave(ctx, { silent: true });
+      scheduleHistoryPush();
     }
   });
 
@@ -790,11 +812,12 @@ export function initCardCraftApp(root: HTMLElement): () => void {
       scheduleSave(ctx, { silent: true });
     });
 
-    // Gradient angle slider — NO save, NO history (preserve old behavior)
+    // Gradient angle slider
     addEl(dom.gradientAngleSlider, 'input', (e) => {
       const target = e.target as HTMLInputElement;
       const angle = Number(target.value);
       stateManager.dispatch({ type: 'SET_GRADIENT_ANGLE', payload: angle });
+      scheduleSave(ctx, { silent: true });
     });
 
     // Numbering toggle
@@ -847,6 +870,29 @@ export function initCardCraftApp(root: HTMLElement): () => void {
     // Sidebar buttons
     addEl(dom.addCardBtn, 'click', () => addCard());
     addEl(dom.saveAllBtn, 'click', () => void downloadAllPng(ctx));
+
+    // Clear all text — clears all text fields on all cards (keeps card structure)
+    addEl(dom.clearAllTextBtn, 'click', () => {
+      const cards = stateManager.getCards();
+      const fields: Array<keyof Card> = ['title', 'subtitle', 'text', 'listItems', 'footer', 'cta'];
+      cards.forEach((_, idx) => {
+        for (const field of fields) {
+          stateManager.dispatch({ type: 'UPDATE_CARD_FIELD', payload: { idx, field, value: '' } });
+        }
+        // Clear all word styles for this card
+        const card = stateManager.getCard(idx);
+        if (card && card.wordStyles) {
+          for (const key of Object.keys(card.wordStyles)) {
+            stateManager.dispatch({ type: 'DELETE_CARD_WORD_STYLE', payload: { idx, key } });
+          }
+        }
+      });
+      renderEditor();
+      renderPreview();
+      pushHistory();
+      scheduleSave(ctx, { silent: true });
+      showToast('Текст очищен во всех карточках');
+    });
 
     // Delete all — with confirm flow
     addEl(dom.deleteAllBtn, 'click', () => {

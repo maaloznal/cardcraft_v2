@@ -54,6 +54,7 @@ export interface DomRefs {
   wordStyleList: HTMLElement | null;
   addCardBtn: HTMLButtonElement | null;
   saveAllBtn: HTMLButtonElement | null;
+  clearAllTextBtn: HTMLButtonElement | null;
   deleteAllBtn: HTMLButtonElement | null;
   confirmOverlay: HTMLElement | null;
   confirmOk: HTMLButtonElement | null;

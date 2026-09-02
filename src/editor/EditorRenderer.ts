@@ -16,7 +16,7 @@ import { escapeHtml } from '../core/utils';
 import { EDITOR_FIELDS } from '../core/constants';
 
 type EditorActionHandler = (
-  action: 'input' | 'paste' | 'palette' | 'collapse' | 'delete' | 'duplicate' | 'move' | 'focus',
+  action: 'input' | 'paste' | 'palette' | 'collapse' | 'delete' | 'duplicate' | 'move' | 'focus' | 'clear-field',
   data: Record<string, unknown>,
 ) => void;
 
@@ -87,7 +87,12 @@ export class EditorRenderer {
         ${EDITOR_FIELDS.map(
           (f) => `
         <div class="form-group">
-          <label>${f.label}</label>
+          <div class="form-group-header">
+            <label>${f.label}</label>
+            <button class="btn-clear-field" data-action="clear-field" data-index="${index}" data-field="${f.key}" title="Очистить ${f.label}" aria-label="Очистить ${f.label}" type="button">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
           ${
             f.multiline
               ? `<textarea data-field="${f.key}" data-index="${index}" maxlength="${f.maxlength}" placeholder="${f.label}…">${escapeHtml(card[f.key])}</textarea>`
@@ -118,11 +123,12 @@ export class EditorRenderer {
         return;
       }
 
-      if (['palette', 'delete', 'duplicate', 'move'].includes(action)) {
+      if (['palette', 'delete', 'duplicate', 'move', 'clear-field'].includes(action)) {
         e.stopPropagation();
-        this.actionHandler?.(action as 'palette' | 'delete' | 'duplicate' | 'move', {
+        this.actionHandler?.(action as 'palette' | 'delete' | 'duplicate' | 'move' | 'clear-field', {
           index: Number(btn.dataset.index || 0),
           dir: Number(btn.dataset.dir || 0),
+          field: btn.dataset.field || '',
         });
       }
     });

@@ -1827,12 +1827,52 @@
   flex-direction: column;
   gap: 5px;
 }
+.form-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
 .form-group label {
   color: var(--ui-text-tertiary);
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+.btn-clear-field {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--ui-text-tertiary);
+  cursor: pointer;
+  border-radius: var(--r-sm);
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease), background var(--dur) var(--ease), color var(--dur) var(--ease);
+  flex-shrink: 0;
+  padding: 0;
+}
+.form-group:hover .btn-clear-field {
+  opacity: 1;
+}
+.btn-clear-field:hover {
+  background: var(--ui-danger-bg);
+  color: var(--ui-danger);
+}
+.btn-clear-field:active {
+  transform: scale(0.9);
+}
+/* On touch devices, always show clear button (no hover) */
+@media (hover: none) and (pointer: coarse) {
+  .btn-clear-field {
+    opacity: 1;
+    width: 32px;
+    height: 32px;
+  }
 }
 
 /* ================= THEME ACCORDION DROPDOWN ================= */
