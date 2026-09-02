@@ -530,8 +530,12 @@ export function initCardCraftApp(root: HTMLElement): () => void {
     if (!dom.editorSidebar) return;
     const fixedHeader = dom.editorSidebar.querySelector<HTMLElement>('.sidebar-fixed-header');
     if (!fixedHeader) return;
-    // Calculate the natural height of all content in fixed-header
-    const naturalHeight = fixedHeader.scrollHeight;
+    // Reset to auto first so scrollHeight measures actual content,
+    // not the previously-set fixed height (scrollHeight = max(content, client))
+    fixedHeader.style.height = 'auto';
+    fixedHeader.style.flex = '';
+    // Force reflow then measure natural content height
+    const naturalHeight = fixedHeader.offsetHeight;
     const sidebarHeight = dom.editorSidebar.getBoundingClientRect().height;
     // Max allowed: sidebar height minus minimum scroll area (120px for card fields)
     const maxHeight = sidebarHeight - 120;
