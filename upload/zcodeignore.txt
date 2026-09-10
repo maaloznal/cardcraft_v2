@@ -1,0 +1,62 @@
+# ===== Зависимости =====
+node_modules/
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+site-packages/
+
+# ===== Билды Next.js / Bun =====
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# ===== Лок-файлы (тяжёлые, регенерируются) =====
+bun.lock
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ===== Секреты / окружение =====
+.env*
+.env.local
+
+# ===== Логи =====
+*.log
+dev.log
+dev.out.log
+server.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ===== База данных (бинарная, регенерируется) =====
+db/*.db
+db/*.db-journal
+db/*.sqlite
+db/*.sqlite-journal
+prisma/migrations/dev.db*
+
+# ===== Пользовательские медиа =====
+upload/
+download/
+
+# ===== Мусор от прошлых запусков агента =====
+tool-results/
+agent-ctx/
+
+# ===== OS-мусор =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== Временные/скратч-файлы =====
+worklog.md
+Pasted markdown*.md
+.claude
+.z-ai-config
