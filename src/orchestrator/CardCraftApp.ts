@@ -677,7 +677,11 @@ export function initCardCraftApp(root: HTMLElement): () => void {
   }
 
   function deleteCard(idx: number): void {
-    if (stateManager.getCardCount() <= 1) return;
+    const cardCount = stateManager.getCardCount();
+    if (cardCount <= 1) return;
+    // Protect against NaN and invalid indices
+    if (Number.isNaN(idx) || !Number.isFinite(idx)) return;
+    if (idx < 0 || idx >= cardCount) return;
     stateManager.dispatch({ type: 'DELETE_CARD', payload: idx });
     renderEditor();
     renderPreview();
@@ -719,6 +723,12 @@ export function initCardCraftApp(root: HTMLElement): () => void {
     renderPreview();
     scheduleSave({ silent: true });
     updateUndoRedoButtons();
+    // Close modal and word popup, reset stale active indices
+    closeColorModal();
+    closeWordStylePopup();
+    activeCardIndexForColors = null;
+    activeCardIndexForWord = null;
+    lastActiveField = 'title';
   }
 
   function undo(): void {
@@ -887,7 +897,7 @@ export function initCardCraftApp(root: HTMLElement): () => void {
       scheduleSave({ silent: true });
     });
 
-    // List num size slider — NO history, only save
+    // List num size slider — DO push history
     addEl(listNumSizeSlider, 'input', function () {
       const size = Number(this.value);
       if (listNumSizeValue) listNumSizeValue.textContent = `${size}px`;
@@ -897,6 +907,7 @@ export function initCardCraftApp(root: HTMLElement): () => void {
         if (!card.colors) card.colors = {};
         card.colors.listNumSize = String(size);
         previewRenderer.updateCardField(card, 'listNumSize', activeCardIndexForColors);
+        scheduleHistoryPush();
         scheduleSave({ silent: true });
       }
     });
@@ -963,6 +974,7 @@ export function initCardCraftApp(root: HTMLElement): () => void {
         }
         selectRowField(f.key);
         previewRenderer.updateCardStyle(card, f.key, activeCardIndexForColors);
+        scheduleHistoryPush();
         scheduleSave({ silent: true });
       });
     });
@@ -978,13 +990,14 @@ export function initCardCraftApp(root: HTMLElement): () => void {
         delete card.colors?.[f];
         const hexText = $<HTMLElement>(`#hex-${f}`);
         const input = $<HTMLInputElement>(`#col-${f}`);
+        if (input) input.value = '';
         if (hexText) {
-          hexText.textContent = 'АВТО';
+          hexText.textContent = '';
           hexText.classList.add('is-auto');
         }
-        if (input) input.value = '#000000';
         selectRowField(f);
         previewRenderer.updateCardStyle(card, f, activeCardIndexForColors);
+        scheduleHistoryPush();
         scheduleSave({ silent: true });
       });
     });
@@ -1009,6 +1022,7 @@ export function initCardCraftApp(root: HTMLElement): () => void {
         }
         selectRowField(f);
         previewRenderer.updateCardStyle(card, f, activeCardIndexForColors);
+        scheduleHistoryPush();
         scheduleSave({ silent: true });
       });
     });
@@ -1066,7 +1080,7 @@ export function initCardCraftApp(root: HTMLElement): () => void {
       });
     });
 
-    // Section size sliders — NO history, only save
+    // Section size sliders — DO push history
     root.querySelectorAll<HTMLInputElement>('.size-slider-section').forEach((sl) => {
       addEl(sl, 'input', (e) => {
         e.stopPropagation();
@@ -1081,6 +1095,7 @@ export function initCardCraftApp(root: HTMLElement): () => void {
         const sv = $<HTMLElement>(`.size-value-section[data-field="${field}"]`);
         if (sv) sv.textContent = `${size}px`;
         previewRenderer.updateCardStyle(card, field, activeCardIndexForColors);
+        scheduleHistoryPush();
         scheduleSave({ silent: true });
       });
     });

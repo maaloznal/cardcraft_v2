@@ -63,3 +63,48 @@ export function stripMeta<T extends { text?: string }>(s: T): Omit<T, 'text'> {
   void _omit;
   return rest;
 }
+
+/** Escape HTML attribute values to prevent XSS */
+export function escapeAttr(str: string): string {
+  return (str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+    .replace(/\x00/g, '')
+    .replace(/\x0A/g, '&#10;')
+    .replace(/\x0D/g, '&#13;');
+}
+
+/** Sanitize card ID to prevent XSS - only allow alphanumeric, underscore, hyphen */
+export function sanitizeCardId(id: unknown): string {
+  if (typeof id !== 'string') return generateId();
+  if (!/^[a-zA-Z0-9_-]{1,64}$/.test(id)) return generateId();
+  return id;
+}
+
+/** Validate hex color format */
+export function isValidHexColor(color: unknown): color is string {
+  if (typeof color !== 'string') return false;
+  return /^#([0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(color);
+}
+
+/** Clamp font size to safe range */
+export function clampFontSize(size: unknown): number {
+  if (typeof size !== 'number') return 16;
+  if (!Number.isFinite(size)) return 16;
+  return Math.max(8, Math.min(96, size));
+}
+
+/** Validate theme against whitelist */
+export function isValidTheme(theme: unknown, allowedThemes: readonly string[]): boolean {
+  if (typeof theme !== 'string') return false;
+  return allowedThemes.includes(theme);
+}
+
+/** Validate format against whitelist */
+export function isValidFormat(format: unknown, allowedFormats: readonly string[]): boolean {
+  if (typeof format !== 'string') return false;
+  return allowedFormats.includes(format);
+}

@@ -26,6 +26,26 @@ export const DEFAULT_LIST_STYLE = 'numbers';
 export const DEFAULT_PROGRESS_STYLE = 'default';
 export const DEFAULT_LIST_NUM_SIZE = 22;
 
+export const ALLOWED_THEMES = [
+  'default',
+  'ocean',
+  'forest',
+  'sunset',
+  'lavender',
+  'midnight',
+  'cherry',
+  'slate',
+] as const;
+
+export const ALLOWED_FORMATS = [
+  'auto',
+  'aspect-4-5',
+  'telegram',
+  'whatsapp',
+  'vk',
+  'aspect-9-16',
+] as const;
+
 export const PRESET_COLORS = [
   '#0f172a',
   '#4f46e5',

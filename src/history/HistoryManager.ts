@@ -27,9 +27,11 @@ export class HistoryManager<T> {
     this.history.push(deepClone(snapshot));
     if (this.history.length > this.maxHistory) {
       this.history.shift();
-    } else {
-      this.histIndex++;
+      this.histIndex--;
     }
+    this.histIndex++;
+    // Clamp histIndex to valid range
+    this.histIndex = Math.max(0, Math.min(this.histIndex, this.history.length - 1));
   }
 
   /** Debounced push — merges rapid changes into one snapshot */

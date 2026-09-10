@@ -4,7 +4,8 @@
  */
 
 import type { Card } from '../core/types';
-import { deepClone } from '../core/utils';
+import { deepClone, sanitizeCardId, isValidHexColor, clampFontSize, isValidTheme, isValidFormat } from '../core/utils';
+import { ALLOWED_THEMES, ALLOWED_FORMATS } from '../core/constants';
 
 const KEYS = {
   CARDS: 'flashcard-cards',
@@ -87,10 +88,14 @@ export function load(): Partial<SavedState> {
   }
 
   const theme = localStorage.getItem(KEYS.THEME);
-  if (theme) result.theme = theme;
+  if (theme && isValidTheme(theme, ALLOWED_THEMES)) {
+    result.theme = theme;
+  }
 
   const format = localStorage.getItem(KEYS.FORMAT);
-  if (format) result.format = format;
+  if (format && isValidFormat(format, ALLOWED_FORMATS)) {
+    result.format = format;
+  }
 
   const showNumbers = localStorage.getItem(KEYS.SHOW_NUMBERS);
   if (showNumbers !== null) result.showCardNumbers = showNumbers === 'true';
@@ -126,21 +131,31 @@ export function clear(): void {
 /** Migrate old card format to current structure */
 function migrateCard(card: Partial<Card>): Card {
   const migrated: Card = {
-    id: card.id || crypto.randomUUID?.() || Date.now().toString(36),
+    id: sanitizeCardId(card.id),
     title: card.title || '',
     subtitle: card.subtitle || '',
     text: card.text || '',
     listItems: card.listItems || '',
     footer: card.footer || '',
     cta: card.cta || '',
-    colors: card.colors || {},
+    colors: {},
     wordStyles: {},
-    sectionStyles: card.sectionStyles || {},
+    sectionStyles: {},
     theme: card.theme,
   };
 
+  // Validate and sanitize colors - only keep valid hex colors
+  if (card.colors && typeof card.colors === 'object') {
+    Object.keys(card.colors).forEach((key) => {
+      const value = card.colors![key];
+      if (isValidHexColor(value)) {
+        migrated.colors[key] = value;
+      }
+    });
+  }
+
   // Migrate wordStyles: old keys (without ::) → new (with field::)
-  if (card.wordStyles) {
+  if (card.wordStyles && typeof card.wordStyles === 'object') {
     Object.keys(card.wordStyles).forEach((key) => {
       if (key.includes('::')) {
         migrated.wordStyles[key] = card.wordStyles![key];
@@ -151,9 +166,13 @@ function migrateCard(card: Partial<Card>): Card {
   }
 
   // Migrate sectionStyles: { bold: "bold" } → { fontWeight: "bold" }
-  if (card.sectionStyles) {
+  if (card.sectionStyles && typeof card.sectionStyles === 'object') {
     Object.keys(card.sectionStyles).forEach((field) => {
       const old = card.sectionStyles![field] as Record<string, unknown>;
+      
+      // Guard against null or non-object values
+      if (!old || typeof old !== 'object') return;
+      
       const ns: Record<string, string | number> = {};
       if (old.bold === 'bold' || old.fontWeight === 'bold') ns.fontWeight = 'bold';
       if (old.italic === 'italic' || old.fontStyle === 'italic') ns.fontStyle = 'italic';
@@ -162,9 +181,14 @@ function migrateCard(card: Partial<Card>): Card {
       if (old.underline || deco.includes('underline')) parts.push('underline');
       if (old.strikethrough || deco.includes('line-through')) parts.push('line-through');
       if (parts.length) ns.textDecoration = parts.join(' ');
-      if (old.fontSize) ns.fontSize = Number(old.fontSize);
+      if (old.fontSize) ns.fontSize = clampFontSize(old.fontSize);
       migrated.sectionStyles[field] = ns as Card['sectionStyles'][string];
     });
+  }
+
+  // Validate theme against whitelist
+  if (migrated.theme && !isValidTheme(migrated.theme, ALLOWED_THEMES)) {
+    delete migrated.theme;
   }
 
   return migrated;

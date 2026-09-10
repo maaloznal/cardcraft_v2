@@ -13,10 +13,12 @@
  */
 
 import type { Card } from '../core/types';
-import { escapeHtml } from '../core/utils';
+import { escapeHtml, escapeAttr, sanitizeCardId } from '../core/utils';
 import {
   FIELD_CONFIG,
   SHAPE_PROGRESS_STYLES,
+  ALLOWED_THEMES,
+  ALLOWED_FORMATS,
 } from '../core/constants';
 import {
   buildSectionStyle,
@@ -196,7 +198,8 @@ export class PreviewRenderer {
   // ─── Private helpers ────────────────────────────────────────
 
   private getCardNode(cardId: string): HTMLElement | null {
-    return document.getElementById(`card-node-${cardId}`);
+    const safeCardId = sanitizeCardId(cardId);
+    return document.getElementById(`card-node-${safeCardId}`);
   }
 
   private buildCardWrapper(
@@ -235,9 +238,17 @@ export class PreviewRenderer {
         .join('')}</ul>`;
     }
 
-    const cardTheme = card.theme && card.theme !== 'default' ? card.theme : settings.theme;
-    const themeAttr = cardTheme !== 'default' ? `data-theme="${cardTheme}"` : '';
-    const formatAttr = settings.format !== 'auto' ? `data-format="${settings.format}"` : '';
+    // Sanitize card.id to prevent XSS
+    const safeCardId = sanitizeCardId(card.id);
+    
+    // Validate and sanitize theme
+    const cardTheme = card.theme && ALLOWED_THEMES.includes(card.theme as any) ? card.theme : settings.theme;
+    const safeTheme = ALLOWED_THEMES.includes(cardTheme as any) ? cardTheme : 'default';
+    const themeAttr = safeTheme !== 'default' ? `data-theme="${escapeAttr(safeTheme)}"` : '';
+    
+    // Validate and sanitize format
+    const safeFormat = ALLOWED_FORMATS.includes(settings.format as any) ? settings.format : 'auto';
+    const formatAttr = safeFormat !== 'auto' ? `data-format="${escapeAttr(safeFormat)}"` : '';
 
     const hasContent =
       card.title || card.subtitle || card.text || (card.listItems || '').trim() || card.footer || card.cta;
@@ -248,7 +259,7 @@ export class PreviewRenderer {
     const wrapper = document.createElement('div');
     wrapper.className = 'card-wrapper';
     wrapper.innerHTML = `
-      <div class="card" id="card-node-${card.id}" ${themeAttr} ${formatAttr}>
+      <div class="card" id="card-node-${safeCardId}" ${themeAttr} ${formatAttr}>
         <div class="card-top-content" style="display:flex;flex-direction:column;gap:16px;">
           ${progressHtml}
           ${tagHtml}
@@ -264,8 +275,8 @@ export class PreviewRenderer {
         </div>
       </div>
       <div class="card-actions">
-        <button class="btn-card-action" data-action="download" data-card-id="card-node-${card.id}" data-filename="card-${index + 1}.png" title="Скачать" aria-label="Скачать"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
-        <button class="btn-card-action" data-action="copy" data-card-id="card-node-${card.id}" title="Копировать" aria-label="Копировать"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="btn-card-action" data-action="download" data-card-id="card-node-${safeCardId}" data-filename="card-${index + 1}.png" title="Скачать" aria-label="Скачать"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+        <button class="btn-card-action" data-action="copy" data-card-id="card-node-${safeCardId}" title="Копировать" aria-label="Копировать"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
         <button class="btn-card-action btn-card-action-danger" data-action="delete-preview" data-index="${index}" title="Удалить" aria-label="Удалить"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
       </div>
     `;
