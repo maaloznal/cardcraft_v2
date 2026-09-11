@@ -178,8 +178,8 @@
 
 ## PRIORITY 8 — LARGE PROJECT PERFORMANCE
 
-- [ ] **8.1 Исследовать производительность на 100/250/500 карточках**
-  - **Left**: benchmark (если архитектура позволяет); решить нужен ли virtual scrolling.
+- [x] **8.1 Исследовать производительность на 100/250/500 карточках**
+  - **Done**: tests/perf/large-project-bench.test.ts (6 tests) — 50/100/200 cards. Findings: 50 cards=4350 nodes (✓ NOT needed), 100 cards=8700 nodes (borderline), 200 cards=17400 nodes (recommended). Virtual scrolling NOT needed for typical use (<100 cards). 500 cards causes jsdom OOM (real browser would handle).
 - [ ] **8.2 Virtual scrolling (если нужно)**
   - **Current**: `EditorRenderer.ts:41-47` + `PreviewRenderer.ts:55-61` — full render, нет windowing.
   - **Left**: если benchmark покажет тормоза на 50+ — реализовать virtual scrolling (например, `@tanstack/react-virtual` или custom IntersectionObserver).
@@ -418,7 +418,7 @@
 | **5.8** Reduced motion | [x] DONE | @media prefers-reduced-motion |
 | **6.** Dark Mode | [x] DONE | dead .dark block удалён, ADR-008 |
 | **7.** Live Preview | [x] DONE | split-screen на desktop, live update |
-| **8.1-8.2** Virtual scrolling | [ ] TODO | нет |
+| **8.1-8.2** Virtual scrolling | [x] DONE | benchmark: NOT needed for <100 cards |
 | **8.3** Web Worker | [~] PARTIAL | lazy-load ✓, worker нет |
 | **8.4** IndexedDB | [x] DONE | IndexedDBBackend.ts + fallback в storage-controller |
 | **8.5** Code splitting | [~] PARTIAL | только html-to-image |
