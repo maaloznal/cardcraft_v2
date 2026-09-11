@@ -18,7 +18,7 @@
  */
 export default {
   $schema: './node_modules/@stryker-mutator/core/schema/stryker-core.schema.json',
-  packageManager: 'bun',
+  packageManager: 'npm', // Stryker doesn't support 'bun' — npm is installed alongside
   reporters: ['html', 'clear-text', 'progress'],
   testRunner: 'vitest',
   vitest: {

@@ -41,7 +41,18 @@ export function middleware(request: NextRequest): NextResponse {
     `base-uri 'self'`,
     `frame-ancestors 'none'`,
     `form-action 'self'`,
+    // P19.8: CSP reporting — violations reported to /api/csp-report
+    `report-uri /api/csp-report`,
+    `report-to csp-endpoint`,
   ].join('; ');
+
+  // P19.8: Reporting-Endpoints header (modern CSP reporting API)
+  const reportingEndpoints = JSON.stringify({
+    'csp-endpoint': {
+      url: '/api/csp-report',
+      max_age: 86400,
+    },
+  });
 
   // Clone the response and set headers
   const response = NextResponse.next({
@@ -58,6 +69,8 @@ export function middleware(request: NextRequest): NextResponse {
   response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   // X-XSS-Protection is deprecated but harmless; keep for legacy browsers
   response.headers.set('X-XSS-Protection', '1; mode=block');
+  // P19.8: Reporting-Endpoints for CSP violation reports
+  response.headers.set('Reporting-Endpoints', reportingEndpoints);
 
   // Expose nonce to client via a custom header (client code can read it if needed)
   response.headers.set('x-csp-nonce', nonce);

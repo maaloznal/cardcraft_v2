@@ -55,7 +55,10 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     "build/**",
     "next-env.d.ts",
     "examples/**",
-    "skills/**"
+    "skills/**",
+    ".stryker-tmp/**",
+    ".changeset/**",
+    "tests/e2e/__screenshots__/**"
   ]
 }];
 

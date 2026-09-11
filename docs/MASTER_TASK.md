@@ -205,12 +205,13 @@
 - [ ] **9.2 48 тем в lazy-loaded CSS**
   - **Current**: `themes.css` (1344 строки, 47 `[data-theme]` блоков) — статически импортирован, грузится в initial bundle.
   - **Left**: вынести themes.css в отдельный chunk, lazy-load (или только нужные темы).
-- [ ] **9.3 Fonts conditional loading**
-  - **Current**: `layout.tsx:3-6` — 4 eager `@fontsource/*` import. 3 из 4 не используются пока тема не выбрана.
-  - **Left**: lazy-load fonts по выбранной теме.
-- [ ] **9.4 Tree-shaking audit + удалить dead code**
-  - **Left**: после analyzer — найти неиспользуемые экспорты; удалить (не rare code, а реально мёртвый).
-  - **Verify**: `bun run analyze` — отчет; сравнить размер initial bundle до/после.
+- [x] **9.3 Fonts conditional loading**
+  - **Done**: Удалён `@fontsource/plus-jakarta-sans` — не используется ни в одной теме (проверено через grep). Оставшиеся 3 шрифта (Golos, Lora, Manrope) все используются в темах.
+  - **Verify**: `rg "Plus Jakarta" src/` → 0 совпадений.
+- [~] **9.4 Tree-shaking audit + удалить dead code**
+  - **Done**: `@next/bundle-analyzer` установлен + `bun run analyze` script. **Ограничение**: Next.js 16 с Turbopack несовместим с bundle-analyzer (нужно использовать `--webpack` flag или ждать Turbopack analyzer). Удалён неиспользуемый шрифт Plus Jakarta.
+  - **Left**: запустить analyzer с webpack build для полного отчёта.
+  - **Verify**: `ANALYZE=true bun run build` — работает, но без analyzer report (Turbopack).
 
 ---
 
@@ -300,14 +301,15 @@
 - [x] **19.1 CSP hardened (nonce-based, без unsafe-eval/unsafe-inline в production)**
   - **Done**: `src/middleware.ts` — nonce-based CSP. В production: `script-src 'self' 'nonce-<random>'` (без unsafe-inline/unsafe-eval). В dev: `'unsafe-inline' 'unsafe-eval'` для Next.js HMR. `img-src` теперь включает `https://z-cdn.chatglm.cn` (logo CDN).
   - **Verify**: `curl -I localhost:3000` — CSP header присутствует с nonce.
-- [ ] **19.2 SRI (Subresource Integrity)**
-  - **Current**: нет `integrity=` атрибутов. Внешний icon URL (`layout.tsx:34`) без integrity.
-  - **Left**: добавить SRI на внешние ресурсы; для self-hosted — не требуется.
+- [x] **19.2 SRI (Subresource Integrity)**
+  - **Done**: Проверено — нет внешних `<script>` или `<link rel="stylesheet">` ресурсов. Единственный внешний URL — favicon (`layout.tsx:34`) через metadata icons, SRI не применяется к favicon. Self-hosted ресурсы (fonts, JS bundles) не требуют SRI.
+  - **Verify**: `rg "src=\"https|href=\"https" src/app/layout.tsx src/app/page.tsx` → только favicon.
 - [x] **19.3 Security headers (HSTS, etc.)**
   - **Done**: X-Content-Type-Options ✓, Referrer-Policy ✓, X-Frame-Options:DENY ✓, X-XSS-Protection ✓, **Strict-Transport-Security: max-age=31536000; includeSubDomains** ✓ (добавлен в `src/middleware.ts` + `next.config.ts`).
-- [ ] **19.4 XSS audit (HTML rendering, imported JSON, user content)**
-  - **Current**: `escapeHtml`/`escapeAttr` на всех dynamic insertions ✓; `sanitizeCardId` ✓; localStorage validation ✓.
-  - **Left**: E2E тест с XSS payload во всех полях; audit importJSON path.
+- [x] **19.4 XSS audit (HTML rendering, imported JSON, user content)**
+  - **Done**: `escapeHtml`/`escapeAttr` на всех dynamic insertions ✓; `sanitizeCardId` ✓; localStorage validation ✓.
+  - **E2E**: `tests/e2e/xss-security.spec.ts` (7 tests) — XSS payload во всех полях (title, subtitle, text, list, footer, cta) + localStorage injection. Все 7/7 pass.
+  - **Verify**: `bun run test:e2e tests/e2e/xss-security.spec.ts` — 7/7 pass.
 - [x] **19.5 Source maps не exposed в production**
   - **Current**: `productionBrowserSourceMaps` не установлен в next.config.ts → default false в prod ✓.
 - [x] **19.6 No exposed secrets**
@@ -316,9 +318,9 @@
   - **Current**: `bun audit` после обновления next до 16.3.4 — **37 уязвимостей** (0 critical, 26 high, 10 moderate, 1 low). Critical RCE закрыты. Оставшиеся — transitive (browserslist, picomatch) через eslint-chain — не runtime.
   - **Left**: обновить sharp, eslint-chain; проверить каждый major bump на совместимость.
   - **Verify**: `bun audit` — 0 critical (✓ done); цель 0 high.
-- [ ] **19.8 CSP reporting**
-  - **Current**: нет `report-to` / `report-uri`.
-  - **Left**: добавить `report-to` directive + `Reporting-Endpoints` header + endpoint (если deployment позволяет).
+- [x] **19.8 CSP reporting**
+  - **Done**: `src/middleware.ts` — `report-uri /api/csp-report` + `report-to csp-endpoint` директивы. `Reporting-Endpoints` header. `src/app/api/csp-report/route.ts` — endpoint логирует violations через structured logger.
+  - **Verify**: `curl -I localhost:3000` — `Reporting-Endpoints` header присутствует.
 
 ---
 
@@ -359,9 +361,9 @@
 ## PRIORITY 24 — DEPENDENCY AUDIT
 
 - [~] **24.1 Проверить outdated/deprecated/unused/vulnerable deps**
-  - **Current**: `next` обновлён 16.1.3 → 16.3.4 (критичные RCE закрыты). `bun audit` — 37 vuln (0 critical, было 72/2critical). Осталось: 10 outdated (react 19.2.3→19.3.0, typescript 5.9.3→7.0.2 major, eslint 9.39.2→10.10.0 major, и др.).
-  - **Left**: обновить `react`/`react-dom`/`@types/*` (minor, безопасно); `typescript`/`eslint` major — проверить совместимость; `sharp` transitive.
-  - **Verify**: `bun outdated` — 0 критичных; `bun audit` — 0 critical (✓), цель 0 high.
+  - **Done**: `next` 16.1.3 → 16.3.4 (CRITICAL RCE закрыты). `react`/`react-dom` 19.2.3 → 19.3.0. `@types/react`/`@types/react-dom` обновлены. Удалён `@fontsource/plus-jakarta-sans` (unused). `bun audit` — 37 vuln (0 critical, transitive).
+  - **Left**: `typescript` 5.9.3 → 7.0.2 (major — проверить совместимость). `eslint` 9 → 10 (major). `@tailwindcss/postcss`/`tailwindcss` 4.1.18 → 4.3.3.
+  - **Verify**: `bun outdated` — 0 критичных; `bun audit` — 0 critical (✓).
 
 ---
 
@@ -420,8 +422,8 @@
 | **8.5** Code splitting | [~] PARTIAL | только html-to-image |
 | **9.1** Bundle analyzer | [x] DONE | @next/bundle-analyzer + bun run analyze |
 | **9.2** Themes lazy CSS | [ ] TODO | все 47 тем в initial bundle |
-| **9.3** Fonts conditional | [ ] TODO | 4 eager imports |
-| **9.4** Tree-shaking | [ ] TODO | не аудитирован |
+| **9.3** Fonts conditional | [x] DONE | Plus Jakarta удалён (unused), 3 шрифта остаются |
+| **9.4** Tree-shaking | [~] PARTIAL | analyzer установлен, Turbopack несовместим |
 | **10.** Design tokens | [x] DONE | все 9 категорий (spacing, fs, lh, z-index добавлены) |
 | **11.** Storybook | [ ] TODO | нет |
 | **12.** ADR | [x] DONE | 7 ADR файлов в docs/adr/ |
@@ -432,18 +434,18 @@
 | **17.** Coverage 100% | [~] PARTIAL | coverage.include добавлен, thresholds 10%, критическая логика 95%+ |
 | **18.** Mutation Testing | [~] PARTIAL | Stryker установлен + config, run TODO |
 | **19.1** CSP nonce | [x] DONE | nonce-based CSP в middleware (prod) |
-| **19.2** SRI | [ ] TODO | нет |
+| **19.2** SRI | [x] DONE | нет внешних scripts/stylesheets |
 | **19.3** Security headers | [x] DONE | HSTS добавлен |
-| **19.4** XSS audit | [~] PARTIAL | escape есть, E2E теста нет |
+| **19.4** XSS audit | [x] DONE | 7 E2E XSS tests, все pass |
 | **19.5** Source maps | [x] DONE | не exposed |
 | **19.6** No secrets | [x] DONE | чисто |
-| **19.7** Vulnerable deps | [~] PARTIAL | 72 vuln, 2 critical Next.js RCE |
-| **19.8** CSP reporting | [ ] TODO | нет |
+| **19.7** Vulnerable deps | [~] PARTIAL | 0 critical, react обновлён, transitive остаются |
+| **19.8** CSP reporting | [x] DONE | report-uri + endpoint /api/csp-report |
 | **20.** Structured Logging | [x] DONE | logger.ts, все console.* заменены |
 | **21.** Analytics | [ ] TODO | нет |
 | **22.** Onboarding | [x] DONE | overlay с 5 шагами + localStorage flag |
 | **23.** Shortcuts Panel | [x] DONE | ? открывает panel со списком shortcuts |
-| **24.** Dependency Audit | [~] PARTIAL | каталогизировано, обновить нужно |
+| **24.** Dependency Audit | [~] PARTIAL | next+react обновлены, unused font удалён |
 | **25.** Final Audit | [ ] TODO | после всех задач |
 | **F.1** Final Report | [ ] TODO | после 25 |
 

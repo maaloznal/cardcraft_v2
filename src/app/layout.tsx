@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "@fontsource/golos-text";
 import "@fontsource/lora";
 import "@fontsource/manrope";
-import "@fontsource/plus-jakarta-sans";
+// P9.3: removed @fontsource/plus-jakarta-sans — not used by any theme
 import "./globals.css";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 

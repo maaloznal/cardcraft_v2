@@ -64,3 +64,5 @@ verification*.png.tool-results/
 # Visual regression baselines (platform-specific — regenerate locally)
 tests/e2e/__screenshots__/
 upload/
+.stryker-tmp/
+.changeset/
