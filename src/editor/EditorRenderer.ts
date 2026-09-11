@@ -25,6 +25,11 @@ type EditorActionHandler = (
 export class EditorRenderer {
   private container: HTMLElement;
   private actionHandler: EditorActionHandler | null = null;
+  /** Tracked listeners for cleanup (StrictMode double-mount safety) */
+  private clickHandler: ((e: MouseEvent) => void) | null = null;
+  private inputHandler: ((e: Event) => void) | null = null;
+  private focusinHandler: ((e: Event) => void) | null = null;
+  private pasteHandler: ((e: ClipboardEvent) => void) | null = null;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -34,6 +39,19 @@ export class EditorRenderer {
   /** Set callback for user actions */
   onAction(handler: EditorActionHandler): void {
     this.actionHandler = handler;
+  }
+
+  /** Remove all event listeners (StrictMode double-mount safety) */
+  destroy(): void {
+    if (this.clickHandler) this.container.removeEventListener('click', this.clickHandler);
+    if (this.inputHandler) this.container.removeEventListener('input', this.inputHandler);
+    if (this.focusinHandler) this.container.removeEventListener('focusin', this.focusinHandler);
+    if (this.pasteHandler) this.container.removeEventListener('paste', this.pasteHandler);
+    this.clickHandler = null;
+    this.inputHandler = null;
+    this.focusinHandler = null;
+    this.pasteHandler = null;
+    this.actionHandler = null;
   }
 
   // ─── Full render ────────────────────────────────────────────
@@ -190,7 +208,7 @@ export class EditorRenderer {
           <button class="btn-icon" data-action="duplicate" data-index="${index}" title="Дублировать" aria-label="Дублировать"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
           <button class="btn-icon" data-action="move" data-index="${index}" data-dir="-1" title="Переместить выше" aria-label="Выше" ${index === 0 ? 'disabled' : ''}><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></button>
           <button class="btn-icon" data-action="move" data-index="${index}" data-dir="1" title="Переместить ниже" aria-label="Ниже" ${index === total - 1 ? 'disabled' : ''}><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
-          ${total > 1 ? `<button class="btn-delete" data-action="delete" data-index="${index}" title="Удалить карточку" aria-label="Удалить"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
+          <button class="btn-delete" data-action="delete" data-index="${index}" title="Удалить карточку" aria-label="Удалить" style="${total > 1 ? '' : 'display:none;'}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
         </div>
       </div>
       <div class="card-editor-body">
@@ -217,7 +235,7 @@ export class EditorRenderer {
   /** Event delegation — set up ONCE on container */
   private setupDelegation(): void {
     // Click delegation for action buttons
-    this.container.addEventListener('click', (e) => {
+    this.clickHandler = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const btn = target.closest<HTMLElement>('[data-action]');
       if (!btn) return;
@@ -239,10 +257,11 @@ export class EditorRenderer {
           dir: Number(btn.dataset.dir || 0),
         });
       }
-    });
+    };
+    this.container.addEventListener('click', this.clickHandler);
 
     // Input delegation for text fields
-    this.container.addEventListener('input', (e) => {
+    this.inputHandler = (e: Event) => {
       const target = e.target as HTMLElement;
       if (target.matches('input[data-field], textarea[data-field]')) {
         const el = target as HTMLInputElement | HTMLTextAreaElement;
@@ -252,10 +271,11 @@ export class EditorRenderer {
           value: el.value,
         });
       }
-    });
+    };
+    this.container.addEventListener('input', this.inputHandler);
 
     // Focus delegation for char counter
-    this.container.addEventListener('focusin', (e) => {
+    this.focusinHandler = (e: Event) => {
       const target = e.target as HTMLElement;
       if (target.matches('input[data-field], textarea[data-field]')) {
         const el = target as HTMLInputElement | HTMLTextAreaElement;
@@ -263,10 +283,11 @@ export class EditorRenderer {
           index: Number(el.dataset.index || 0),
         });
       }
-    });
+    };
+    this.container.addEventListener('focusin', this.focusinHandler);
 
     // Paste delegation with text cleanup
-    this.container.addEventListener('paste', (e) => {
+    this.pasteHandler = (e: ClipboardEvent) => {
       const target = e.target as HTMLElement;
       if (!target.matches('input[data-field], textarea[data-field]')) return;
       e.preventDefault();
@@ -284,6 +305,7 @@ export class EditorRenderer {
         field,
         value: el.value,
       });
-    });
+    };
+    this.container.addEventListener('paste', this.pasteHandler);
   }
 }

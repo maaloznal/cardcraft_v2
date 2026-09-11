@@ -39,6 +39,9 @@ type ActionHandler = (action: string, data: Record<string, unknown>) => void;
 export class PreviewRenderer {
   private container: HTMLElement;
   private actionHandler: ActionHandler | null = null;
+  /** Tracked listeners for cleanup (StrictMode double-mount safety) */
+  private clickHandler: ((e: MouseEvent) => void) | null = null;
+  private dblclickHandler: ((e: MouseEvent) => void) | null = null;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -48,6 +51,15 @@ export class PreviewRenderer {
   /** Set callback for user actions (download, copy, delete, dblclick) */
   onAction(handler: ActionHandler): void {
     this.actionHandler = handler;
+  }
+
+  /** Remove all event listeners (StrictMode double-mount safety) */
+  destroy(): void {
+    if (this.clickHandler) this.container.removeEventListener('click', this.clickHandler);
+    if (this.dblclickHandler) this.container.removeEventListener('dblclick', this.dblclickHandler);
+    this.clickHandler = null;
+    this.dblclickHandler = null;
+    this.actionHandler = null;
   }
 
   // ─── Full render ────────────────────────────────────────────
@@ -392,7 +404,7 @@ export class PreviewRenderer {
   /** Event delegation — set up once on container */
   private setupDelegation(): void {
     // Click delegation for action buttons
-    this.container.addEventListener('click', (e) => {
+    this.clickHandler = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const btn = target.closest<HTMLElement>('[data-action]');
       if (!btn) return;
@@ -411,10 +423,11 @@ export class PreviewRenderer {
           cardId: btn.dataset.cardId || '',
         });
       }
-    });
+    };
+    this.container.addEventListener('click', this.clickHandler);
 
     // Dblclick delegation for word styling
-    this.container.addEventListener('dblclick', (e) => {
+    this.dblclickHandler = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const el = target.closest<HTMLElement>('[data-field]');
       if (!el) return;
@@ -434,7 +447,8 @@ export class PreviewRenderer {
         });
       }
       e.stopPropagation();
-    });
+    };
+    this.container.addEventListener('dblclick', this.dblclickHandler);
   }
 }
 

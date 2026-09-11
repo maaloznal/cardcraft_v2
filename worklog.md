@@ -2613,3 +2613,36 @@ Stage Summary:
 - P1-8 correctness bug fixed: undo/redo now captures + restores ALL settings (not just theme+format). 7 topbar handlers now push history.
 - 253 unit tests pass. 0 TypeScript errors. 0 lint errors.
 - Next: PRIORITY 1.9 (performance benchmark) + PRIORITY 2 (E2E Playwright).
+
+---
+Task ID: master-task-phase1b
+Agent: main-orchestrator
+Task: MasterTask.md PRIORITY 1.9 (perf benchmark) + PRIORITY 2 (E2E Playwright) + renderer destroy bug fix
+
+Work Log:
+- P1-9: Created tests/perf/render-bench.test.ts (9 tests) — benchmarks add/delete/duplicate/move + snapshot/restore on 10/50/100 cards. Compares O(1) insertCard/removeCard/moveCard vs full rebuild. vitest.perf.config.ts + `bun run test:perf` script. Results: snapshot/restore 0.02ms→0.14ms (linear). O(1) in jsdom not faster than rebuild (reindexBlocks O(n)), but in real browser O(1) DOM ops are cheaper than innerHTML rebuild.
+- P2-0: Installed @playwright/test@1.63.0 + chromium browser. Created playwright.config.ts (webServer reuse, 1 worker for shared localStorage).
+- P2: Created 7 E2E test files (29 tests total):
+  - app.spec.ts (4): launch, interface, console errors, smoke
+  - cards.spec.ts (5): create, edit, delete, duplicate, move
+  - history.spec.ts (5): undo, redo, undo theme, undo progress style
+  - settings.spec.ts (3): theme change, progress style, progress toggle
+  - modal.spec.ts (5): open, ESC, close btn, apply btn, word popup
+  - export.spec.ts (2): single PNG download, batch cancel
+  - persistence.spec.ts (2): localStorage save, JSON import (skipped — no UI)
+  - keyboard.spec.ts (4): Tab, Ctrl+S, Ctrl+Z/Y, Ctrl+Shift+Z
+- BUG FIX (found via E2E): EditorRenderer + PreviewRenderer had event delegation listeners added in constructor but NOT cleaned up in destroy(). StrictMode double-mount = 2 listeners = 2 actionHandler calls = duplicate card added twice. Fixed: added tracked handler fields (clickHandler, inputHandler, focusinHandler, pasteHandler for editor; clickHandler, dblclickHandler for preview) + destroy() methods that remove all listeners. CardCraftApp cleanup now calls previewRenderer.destroy() + editorRenderer.destroy().
+- helpers.ts: gotoApp() uses addInitScript for clean localStorage per test. changeHiddenSelect() helper for reliable hidden select interaction (selectOption doesn't fire change on hidden selects). getSelectOptions() helper.
+
+Verification:
+- npx tsc --noEmit: 0 errors
+- bun run lint: 0 errors, 21 warnings (cosmetic, in e2e tests)
+- bun run test: 253/253 unit tests pass
+- bun run test:perf: 9/9 perf tests pass
+- bun run test:e2e: 28 passed, 1 skipped (JSON import — no UI), 0 failed (45.4s)
+
+Stage Summary:
+- P1-9 DONE: performance benchmark created.
+- P2 DONE: 28/29 E2E tests pass (1 skipped — JSON import UI missing).
+- Critical bug fixed: renderer listener leak on StrictMode double-mount (would have caused double-dispatch on every click in production with StrictMode).
+- Next: PRIORITY 3 (CI/CD) + PRIORITY 5 (a11y) + PRIORITY 19 (security hardening).

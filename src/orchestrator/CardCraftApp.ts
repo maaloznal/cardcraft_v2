@@ -233,6 +233,9 @@ export function initCardCraftApp(root: HTMLElement): () => void {
     verticalResize.destroy();
     horizontalResize.destroy();
     toastQueue.destroy();
+    // P1: destroy renderers (cleans up event delegation listeners — StrictMode safe)
+    previewRenderer.destroy();
+    editorRenderer.destroy();
     // Unsubscribe from state changes (prevents leak on React remount)
     unsubscribeState();
     // Clear history

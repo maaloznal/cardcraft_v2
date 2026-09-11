@@ -1,14 +1,15 @@
 import { defineConfig } from 'vitest/config';
 import { resolve } from 'path';
 
+/**
+ * Vitest config for performance benchmarks.
+ * Includes tests/perf/** (excluded from default vitest.config.ts).
+ */
 export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    include: ['tests/unit/**/*.test.ts'],
-    // Perf benchmarks run separately via `bun run test:perf`
-    // (excluded from default `bun run test` to keep unit-test CI fast)
-    exclude: ['tests/perf/**', 'node_modules/**', '.next/**'],
+    include: ['tests/perf/**/*.test.ts'],
   },
   resolve: {
     alias: {
