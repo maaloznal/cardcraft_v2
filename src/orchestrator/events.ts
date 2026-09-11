@@ -245,16 +245,27 @@ export function bindSidebarEvents(ctx: OrchestratorContext): void {
   const onboardingOverlay = document.getElementById('onboardingOverlay');
   const closeOnboardingBtn = document.getElementById('closeOnboardingBtn');
   const onboardingStartBtn = document.getElementById('onboardingStartBtn');
+  const restartOnboardingBtn = document.getElementById('restartOnboardingBtn');
   const ONBOARDING_KEY = 'flashcard-onboarding-seen';
 
   function closeOnboarding(): void {
     onboardingOverlay?.classList.remove('active');
     localStorage.setItem(ONBOARDING_KEY, '1');
   }
+  function showOnboarding(): void {
+    // Close shortcuts panel first (if open)
+    shortcutsOverlay?.classList.remove('active');
+    onboardingOverlay?.classList.add('active');
+  }
   ctx.listeners.addEl(closeOnboardingBtn, 'click', closeOnboarding);
   ctx.listeners.addEl(onboardingStartBtn, 'click', closeOnboarding);
   ctx.listeners.addEl(onboardingOverlay, 'click', (e) => {
     if (e.target === onboardingOverlay) closeOnboarding();
+  });
+  // P22: Restart onboarding — clears flag + shows overlay again
+  ctx.listeners.addEl(restartOnboardingBtn, 'click', () => {
+    localStorage.removeItem(ONBOARDING_KEY);
+    showOnboarding();
   });
   // Show onboarding on first visit (no localStorage flag)
   if (onboardingOverlay && !localStorage.getItem(ONBOARDING_KEY)) {

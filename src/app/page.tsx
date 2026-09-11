@@ -560,6 +560,9 @@ export default function Home() {
             <div className="shortcut-row"><kbd>↑</kbd> / <kbd>↓</kbd><span>Переместить карточку (когда фокус на заголовке)</span></div>
             <div className="shortcut-row"><kbd>?</kbd><span>Показать эту справку</span></div>
           </div>
+          <div className="shortcuts-footer">
+            <button className="btn-secondary" id="restartOnboardingBtn" type="button">Показать онбординг снова</button>
+          </div>
         </div>
       </div>
 

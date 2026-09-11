@@ -89,6 +89,27 @@ kbd {
   text-align: center;
 }
 
+.shortcuts-footer {
+  padding: var(--space-3) var(--space-6) var(--space-5);
+  border-top: 1px solid var(--ui-border);
+}
+
+.shortcuts-footer .btn-secondary {
+  padding: var(--space-2) var(--space-4);
+  background: var(--ui-surface-hover);
+  color: var(--ui-text);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--r-md);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease);
+}
+
+.shortcuts-footer .btn-secondary:hover {
+  background: var(--ui-border);
+}
+
 @media (max-width: 480px) {
   .shortcuts-panel {
     max-width: calc(100vw - 16px);
