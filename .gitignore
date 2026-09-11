@@ -65,4 +65,3 @@ verification*.png.tool-results/
 tests/e2e/__screenshots__/
 upload/
 .stryker-tmp/
-.changeset/
