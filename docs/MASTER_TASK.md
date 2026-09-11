@@ -320,7 +320,7 @@
   - **Current**: `bun audit` после обновления next до 16.3.4 — **37 уязвимостей** (0 critical, 26 high, 10 moderate, 1 low). Critical RCE закрыты. Оставшиеся — transitive (browserslist, picomatch) через eslint-chain — не runtime.
   - **Left**: обновить sharp, eslint-chain; проверить каждый major bump на совместимость.
   - **Verify**: `bun audit` — 0 critical (✓ done); цель 0 high.
-- [~] **19.8 CSP reporting**
+- [x] **19.8 CSP reporting**
   - **Done**: `src/middleware.ts` — `report-uri /api/csp-report` + `report-to csp-endpoint` директивы. `Reporting-Endpoints` header. `src/app/api/csp-report/route.ts` — endpoint логирует violations через structured logger.
   - **Verify**: `curl -I localhost:3000` — `Reporting-Endpoints` header присутствует.
 
@@ -442,7 +442,7 @@
 | **19.5** Source maps | [x] DONE | не exposed |
 | **19.6** No secrets | [x] DONE | чисто |
 | **19.7** Vulnerable deps | [~] PARTIAL | 0 critical, react обновлён, transitive остаются |
-| **19.8** CSP reporting | [~] PARTIAL | infrastructure exists, no test, not verified E2E |
+| **19.8** CSP reporting | [x] DONE | 5 E2E tests (headers + endpoint + malformed) |
 | **20.** Structured Logging | [x] DONE | logger.ts, все console.* заменены |
 | **21.** Analytics | [ ] TODO | нет |
 | **22.** Onboarding | [x] DONE | restart via shortcuts panel + 5 E2E tests CI-verified |
