@@ -6,21 +6,18 @@ import { test, expect, type Page } from '@playwright/test';
  * navigation. This guarantees a clean default state (1 empty card) for each
  * test. Tests that need to verify persistence (test 16) must NOT use reload —
  * they should check localStorage directly instead.
+ *
+ * P22 fix: also sets the onboarding-seen flag so the onboarding overlay
+ * doesn't show and block clicks during tests.
  */
 export async function gotoApp(page: Page): Promise<void> {
   await page.addInitScript(() => {
     localStorage.clear();
     sessionStorage.clear();
+    // P22: dismiss onboarding overlay so it doesn't intercept clicks in tests
+    localStorage.setItem('flashcard-onboarding-seen', '1');
   });
   await page.goto('/');
-  // Extra safety: if cards > 1 (storage wasn't cleared by initScript in time),
-  // clear + reload once more. This handles edge cases where beforeunload
-  // saved state after initScript ran.
-  const initialCount = await page.locator('#cardsArea .card-wrapper').count();
-  if (initialCount > 1) {
-    await page.evaluate(() => localStorage.clear());
-    await page.goto('/');
-  }
   // Wait for init — at least 1 card in editor + preview
   await expect
     .poll(() => page.locator('#cardsArea .card-wrapper, #editorCardsList .card-editor-block').count())

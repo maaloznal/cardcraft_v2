@@ -1,0 +1,543 @@
+   800→
+   801→#7 Localized deletion:
+   802→- deleteCard() now removes only the specific card-wrapper and card-editor-block DOM nodes.
+   803→- Updates remaining cards' numbers (badges, tags, progress bars, data-index attributes).
+   804→- No full renderPreview() call — O(1) deletion.
+   805→
+   806→#8 Removed obsolete buttons:
+   807→- Removed "Сохранить" (#saveChangesBtn), "Экспорт" (#exportJsonBtn), "Импорт" (#importJsonBtn).
+   808→- Removed all associated handlers and importJSON/exportJSON function references.
+   809→
+   810→#9 Gradient themes expanded:
+   811→- Added 20 new gradient themes (69-88): aurora-borealis, sakura-bloom, deep-ocean, warm-sunset, northern-lights, rose-quartz-dream, amber-glow, mint-fresh, twilight-blaze, ice-crystal, velvet-night, citrus-burst, storm-cloud, tropical-paradise, wine-cellar, frost-morning, neon-pulse, earth-tones, mystic-forest, pearl-shimmer.
+   812→- Total: 88 themes (48 solid + 40 gradient), all use var(--gradient-angle, 135deg).
+   813→- Group label updated to "Градиентные (49–88)".
+   814→
+   815→#10 Card theme moved to styles modal:
+   816→- Removed card-theme dropdown from card editor blocks.
+   817→- Added card-theme dropdown as first section in the styles modal (#modalCardThemeDropdown).
+   818→- Synced in openColorModal — shows current card's theme.
+   819→- Handlers for trigger toggle, group expand, theme select with updateCardTheme.
+   820→- Closes on outside click.
+   821→
+   822→#11 Undo/Redo in top bar:
+   823→- Moved Undo/Redo buttons from sidebar to top bar as icon buttons (#undoBtn, #redoBtn).
+   824→- 36x36 btn-icon style, SVG icons, disabled state when no history.
+   825→
+   826→#12 Removed duplicate labels:
+   827→- Removed all inner sidebar-label elements that duplicated accordion header text.
+   828→- Each sidebar accordion now has only one title (the header).
+   829→- Gradient angle value moved to a separate .gradient-value-row.
+   830→
+   831→Verification (107/107 tests pass):
+   832→- Top bar: Undo/Redo SVG icons, no "Скачать все".
+   833→- Sidebar: "Скачать все" + "Удалить все" at bottom, no Save/Export/Import.
+   834→- Card actions: 3 SVG icons (download, copy, delete).
+   835→- Card title: "Карточка 1" (not "Без названия").
+   836→- New cards: collapsed by default.
+   837→- Deletion: localized (no full re-render).
+   838→- Confirmation dialog: shows for "Удалить все", cancel/confirm work.
+   839→- 88 themes total, new gradient themes render correctly.
+   840→- Card theme in modal as first section.
+   841→- 6 sidebar accordions, all closed by default, 0 duplicate labels.
+   842→- 0 browser errors, 0 console errors, lint clean.
+   843→
+   844→Stage Summary:
+   845→- All 12 UX/UI revision points implemented.
+   846→- Editor is cleaner, faster, more professional.
+   847→- 107/107 tests pass, zero regressions.
+   848→
+   849→---
+   850→Task ID: 20
+   851→Agent: main
+   852→Task: Final UX/UI polish — 3 bugs + 5 improvements.
+   853→
+   854→Work Log:
+   855→
+   856→БАГ#1 — Card title no longer duplicates content:
+   857→- Changed cardTitlePreview from card.title to fixed `Карточка ${index + 1}`.
+   858→- Removed title input handler that updated h3 with card title.
+   859→- Card names are now purely technical: "Карточка 1", "Карточка 2", etc.
+   860→
+   861→БАГ#2 — Delete from both editor and preview:
+   862→- Delete button in card-editor-block already existed (data-action="delete").
+   863→- Delete button in preview already existed (data-action="delete-preview").
+   864→- Verified both work with 2+ cards.
+   865→
+   866→БАГ#3 — Control sizes fixed:
+   867→- Added max-width: 220px to .gradient-angle-slider.
+   868→- Added max-width: 220px + margin: 0 auto to .btn-card-editor-palette.
+   869→- Controls no longer stretch with panel width.
+   870→
+   871→Улучшение#1 — Theme groups merged:
+   872→- Merged "Оригинальные светлые" + "Новые светлые" → "Светлые темы" (29 themes).
+   873→- Merged "Оригинальные тёмные" + "Новые тёмные" → "Тёмные темы" (19 themes).
+   874→- "Градиентные темы" unchanged (40 themes).
+   875→- Total: 3 groups, 88 themes.
+   876→- Both global and per-card theme dropdowns use same THEME_GROUPS.
+   877→
+   878→Улучшение#2 — New section order:
+   879→- Reordered: 1.Формат, 2.Тема оформления, 3.Угол градиента, 4.Стиль списков, 5.Шкала прогресса.
+   880→- Removed "Отображение" section completely.
+   881→
+   882→Улучшение#3 — Numbering moved to list section:
+   883→- Moved numberingToggle into "Стиль списков" accordion.
+   884→- "Отображение" section deleted.
+   885→
+   886→Улучшение#4 — Diverse progress bar styles:
+   887→- 9 distinct styles: default (solid), thin, thick, dashed, dots (circles), squares, gradient, glow, minimal (dot indicator).
+   888→- Each visually distinct: different heights, patterns, backgrounds.
+   889→
+   890→Улучшение#5 — Separate progress toggle:
+   891→- Added #progressBarToggle switch (show/hide progress bar).
+   892→- showProgressBar state, applyProgressBarVisibility() toggles .no-progress-bar class.
+   893→- When off: .progress display:none.
+   894→- When on: style select controls appearance.
+   895→- Persisted to localStorage.
+   896→
+   897→Verification (111/111 tests pass):
+   898→- Card title: "Карточка 1" (not title content).
+   899→- Delete in both editor and preview.
+   900→- Slider maxWidth 220px, palette maxWidth 220px.
+   901→- 3 theme groups: Светлые, Тёмные, Градиентные.
+   902→- Section order: Формат, Тема, Градиент, Списки, Прогресс.
+   903→- "Отображение" gone, numbering in "Стиль списков".
+   904→- 9 progress bar styles all apply correctly.
+   905→- Progress toggle shows/hides bar.
+   906→- 0 browser errors, 0 console errors, lint clean.
+   907→
+   908→Stage Summary:
+   909→- All 8 polish items completed.
+   910→- 111/111 tests pass, zero regressions.
+   911→- Interface is cleaner, simpler, more logical.
+   912→
+   913→---
+   914→Task ID: 21
+   915→Agent: main
+   916→Task: New features — progress bar rework, format expansion, char limit, no-bg themes.
+   917→
+   918→Work Log:
+   919→
+   920→#1 PROGRESS BAR REWORK:
+   921→- Removed: thin, thick, gradient, glow, minimal, old dots/squares styles.
+   922→- New 7 styles: solid (bar), dashed (bar), circles, squares, diamonds, hexagons, stars (shapes).
+   923→- Shape styles render N discrete elements (.ps-item) — filled if index <= current, outline if > current.
+   924→- buildProgressBarHtml(index, total) generates correct HTML based on progressBarStyle.
+   925→- Bar styles use .progress-fill with width %; shape styles use flex of .ps-item spans.
+   926→- CSS: .ps-item.filled = background:var(--accent-color); .ps-item:not(.filled) = border + opacity 0.35.
+   927→- Hexagons/stars use clip-path; diamonds use transform: rotate(45deg).
+   928→- Auto-adapts to theme via --accent-color (dark on light, light on dark, visible on gradient).
+   929→- Progress bar style change triggers renderPreview for shape HTML rebuild.
+   930→- Localized deletion rebuilds progress bars for all remaining cards.
+   931→
+   932→#2 FORMAT EXPANSION:
+   933→- Added WhatsApp (1080×1920), Telegram (1080×1350), VK (1200×630).
+   934→- All labels show pixel dimensions: "Instagram — 1080×1350", etc.
+   935→- CSS: whatsapp = same as aspect-9-16; telegram = same as aspect-4-5; vk = landscape min-height 200px.
+   936→
+   937→#3 CHARACTER LIMIT:
+   938→- Toggle in Format section: "Лимит символов" (on/off).
+   939→- FORMAT_CHAR_LIMITS: Instagram 2200, Telegram 2048, WhatsApp 700, VK 200, Stories 2200.
+   940→- When enabled: sets maxlength on all text fields to format limit.
+   941→- Counter (#charCounter) shows total chars / limit (e.g. "542 / 700").
+   942→- Counter updates on input and focus. Near-limit (90%+) turns red.
+   943→- When disabled: restores original maxlengths, hides counter.
+   944→- Persisted to localStorage.
+   945→
+   946→#4 "NO BACKGROUND" THEMES:
+   947→- New theme group "Без фона" with 2 themes:
+   948→  - nobg-dark: dark text for light backgrounds (transparent card bg).
+   949→  - nobg-light: light text for dark backgrounds (transparent card bg).
+   950→- --card-bg: transparent, --card-border: transparent, --card-shadow: none.
+   951→- Preview shows checkerboard pattern (--preview-bg) to indicate transparency.
+   952→- PNG export: html-to-image defaults to transparent background when card bg is transparent.
+   953→- isNoBgTheme() helper checks for nobg-* prefix.
+   954→
+   955→Verification (109/109 tests pass):
+   956→- 7 progress bar styles all apply correctly (default, dashed, circles, squares, diamonds, hexagons, stars).
+   957→- Shape styles: 3 cards × 3 items = 9 total; card 1 has 1 filled, card 3 has 3 filled.
+   958→- 6 formats with pixel dimensions displayed.
+   959→- Char limit: toggle works, counter shows "0 / 700" for WhatsApp.
+   960→- No-bg themes: cardBg=transparent, cardBorder=transparent, cardShadow=none.
+   961→- 90 themes total (48 solid + 40 gradient + 2 no-bg).
+   962→- 0 browser errors, 0 console errors, lint clean.
+   963→
+   964→Stage Summary:
+   965→- All 4 new features implemented and verified.
+   966→- 109/109 tests pass, zero regressions.
+   967→- Features feel native to the Cardcraft design system.
+   968→
+   969→---
+   970→Task ID: 22
+   971→Agent: main
+   972→Task: Regression audit — fix deleteCard TypeError + progress bar background line.
+   973→
+   974→Work Log:
+   975→
+   976→БАГ#1 — deleteCard() TypeError (Cannot read properties of undefined):
+   977→- Root cause: The localized deletion approach (updating data-index on DOM elements without rebuilding event listeners) caused a desynchronization between the `cards` array indices and the `data-index` attributes on DOM elements. When a card was deleted from preview, the `data-index` attributes were updated on remaining DOM elements, but the event listeners (bound during renderEditor/renderPreview) still referenced old indices via closures. If the user then clicked delete on a card whose index had shifted, `cards[idx]` could be undefined.
+   978→- Fix: Replaced localized deletion with full `renderEditor()` + `renderPreview()`. This ensures all data-index attributes, event listeners, and the cards array are perfectly synchronized. The performance impact is negligible (O(n) rebuild, avg 0.3ms per renderPreview call).
+   979→- Also added bounds check `if (idx < 0 || idx >= cards.length) return` as defense-in-depth.
+   980→- Verified: single delete, consecutive deletes, delete from preview, delete from editor, delete last (blocked), delete all, undo after delete, redo after delete — all work without errors.
+   981→
+   982→БАГ#2 — Progress bar shape styles showing background line:
+   983→- Root cause: The base `.progress` CSS rule sets `background-color: var(--progress-bg)` and `margin-bottom: -4px`. For shape styles (`.progress-shapes`), this background was not overridden, so a solid line appeared behind the discrete shapes.
+   984→- Fix: Added `background: transparent !important` and `margin-bottom: 0` to `.progress-shapes` class. Also changed dashed style's `.progress` background from `var(--progress-bg)` to `transparent`.
+   985→- Verified: default has background (rgb(226,232,240)), all shape styles (circles, squares, diamonds, hexagons, stars) have transparent background (rgba(0,0,0,0)), dashed also transparent. Only `default` (solid line) shows background.
+   986→
+   987→Additional regression testing:
+   988→- Card operations: create, delete, duplicate, undo, redo, mass delete, mass download — all pass.
+   989→- Editor: text input, title change, color change, theme change, word styling — all pass.
+   990→- Preview: localized updates (updatePreviewField), no excess re-renders — confirmed.
+   991→- Interface: resize dividers, accordions, modal, word popup drag — all functional.
+   992→- LocalStorage: auto-save, restore state, restore sizes — working.
+   993→- Performance: renderPreview avg 0.3ms, updatePreviewField avg 0.0ms, updateCardField avg 0.1ms — no excess re-renders.
+   994→- 0 browser errors, 0 console errors, 0 warnings, lint clean.
+   995→- 109/109 smoke tests pass.
+   996→
+   997→Stage Summary:
+   998→- Both bugs fixed architecturally.
+   999→- Full regression audit completed — project is stable.
+  1000→
+  1001→---
+  1002→Task ID: 23
+  1003→Agent: main
+  1004→Task: Architectural decomposition — extract 10 modules from God Function.
+  1005→
+  1006→Work Log:
+  1007→Phase 1 (Feature Freeze): Completed — no new features, only stabilization.
+  1008→
+  1009→Created 10 new modules in dedicated directories:
+  1010→
+  1011→src/core/
+  1012→  types.ts (102 lines) — All TypeScript interfaces: Card, WordStyle, SectionStyle, Snapshot, ThemeGroup, EditorField, ModalField, FieldConfig, Action, ActionType
+  1013→  constants.ts (101 lines) — All magic numbers: CONFIG, CARD_WIDTH, SIDEBAR_WIDTH, DEFAULT_THEME, PRESET_COLORS, FORMAT_CHAR_LIMITS, FIELD_LABELS, EDITOR_FIELDS, MODAL_FIELDS, FIELD_CONFIG, SHAPE_PROGRESS_STYLES, MODAL_GROUPS
+  1014→  utils.ts (65 lines) — Pure functions: escapeHtml, generateId, deepClone, splitOnce, isWordChar, containsWholeWord, stripMeta
+  1015→
+  1016→src/storage/
+  1017→  StorageManager.ts (171 lines) — save(), load(), clear(), migrateCard(). All 11 localStorage keys centralized. No other code should access localStorage directly.
+  1018→
+  1019→src/history/
+  1020→  HistoryManager.ts (76 lines) — Class-based undo/redo: push(), schedulePush(), undo(), redo(), init(), canUndo, canRedo, clear(). Debounce built-in.
+  1021→
+  1022→src/themes/
+  1023→  themeData.ts (118 lines) — THEME_GROUPS array with all 90 themes (4 groups: Светлые, Тёмные, Градиентные, Без фона)
+  1024→  ThemeManager.ts (41 lines) — getThemeLabel(), isNoBgTheme(), resolveCardTheme(), applyThemeToElement(), getThemeGroups()
+  1025→
+  1026→src/state/
+  1027→  StateManager.ts (172 lines) — Class-based centralized state with dispatch/action system. Actions: ADD_CARD, DELETE_CARD, DUPLICATE_CARD, MOVE_CARD, UPDATE_CARD_FIELD, SET_CARD_THEME, SET_GLOBAL_THEME, SET_FORMAT, SET_GRADIENT_ANGLE, SET_SHOW_CARD_NUMBERS, SET_SHOW_PROGRESS_BAR, SET_PROGRESS_BAR_STYLE, SET_LIST_STYLE, SET_CHAR_LIMIT, CLEAR_ALL. subscribe() for reactive updates. snapshot() for history.
+  1028→
+  1029→src/export/
+  1030→  ExportManager.ts (77 lines) — generatePng(), generateBlob(), downloadPng(), copyToClipboard(). All html-to-image interaction centralized.
+  1031→
+  1032→src/styles/
+  1033→  StyleHelpers.ts (127 lines) — buildSectionStyle(), buildListNumStyle(), applyWordStylesToText(), containsWholeWord(), pruneOrphanWordStyles(). Pure functions, no DOM.
+  1034→
+  1035→Total new code: 1050 lines across 10 modules.
+  1036→Average module size: 105 lines (vs 2731 lines in old God Function).
+  1037→No non-null assertions (!) in new code.
+  1038→No `as` casts except for error handling.
+  1039→No `any` types.
+  1040→All functions are pure (except StorageManager/ExportManager which have necessary side effects).
+  1041→
+  1042→Verification:
+  1043→- Lint: 0 errors, 0 warnings on all new modules
+  1044→- Existing app: 109/109 smoke tests pass — zero regressions
+  1045→- New modules compile and export correctly
+  1046→- card-constructor.ts still works as before (will be migrated incrementally)
+  1047→
+  1048→Next steps:
+  1049→- EditorRenderer and PreviewRenderer (extract from card-constructor.ts)
+  1050→- WordEditorManager (extract popup/drag logic)
+  1051→- CardStyleManager (extract modal color/style logic)
+  1052→- UI components (Accordion, Modal, Switch, etc.)
+  1053→- Migrate card-constructor.ts to use new modules as orchestrator
+  1054→
+  1055→---
+  1056→Task ID: 24
+  1057→Agent: main
+  1058→Task: StateManager improvements + generic HistoryManager + architecture docs.
+  1059→
+  1060→Work Log:
+  1061→
+  1062→1. StateManager restructured with sub-states:
+  1063→   - AppState now has: cards (CardsState), settings (SettingsState), ui (UIState)
+  1064→   - Each sub-state groups related fields — prevents flat monolith
+  1065→   - Added 10+ selectors: getCards(), getCard(idx), getCardCount(), getTheme(), getFormat(), getGradientAngle(), getProgressConfig(), getListStyle(), getSettings(), getUI()
+  1066→   - UI code should use selectors, not direct field access
+  1067→   - This allows changing internal structure without breaking consumers
+  1068→
+  1069→2. HistoryManager made generic:
+  1070→   - class HistoryManager<T> instead of HistoryManager<Snapshot>
+  1071→   - Can be used for any state shape (cards history, UI history, etc.)
+  1072→   - All methods type-safe with generic T
+  1073→
+  1074→3. Created docs/architecture.md:
+  1075→   - Visual dependency graph (5 layers: Core → Infrastructure → State → Rendering → UI)
+  1076→   - Dependency rules table (lower layers cannot import upper layers)
+  1077→   - Module responsibilities for each layer
+  1078→   - State structure documentation
+  1079→   - Data flow diagram (User → Orchestrator → StateManager → Listeners → Renderers → Storage/History)
+  1080→   - Planned modules documented (PreviewRenderer, EditorRenderer, WordEditorManager, UI Kit)
+  1081→
+  1082→Verification:
+  1083→- Lint: 0 errors, 0 warnings
+  1084→- Smoke test: 109/109 pass — zero regressions
+  1085→- StateManager compiles with sub-structures
+  1086→- HistoryManager compiles as generic
+  1087→- architecture.md created with complete dependency rules
+  1088→
+  1089→---
+  1090→Task ID: 25
+  1091→Agent: main
+  1092→Task: ЭТАП 2 — PreviewRenderer extracted.
+  1093→
+  1094→Work Log:
+  1095→
+  1096→Created src/preview/PreviewRenderer.ts (441 lines) — the most significant module extraction.
+  1097→
+  1098→Public API:
+  1099→- render(cards, settings)         — full rebuild O(n)
+  1100→- updateCardField(card, field)    — O(1) text update (in-place / create / remove)
+  1101→- updateCardStyle(card, field)    — O(1) style update (colors, word styles, section styles)
+  1102→- updateCardTheme(card, theme)    — O(1) data-theme attribute
+  1103→- removeCard(cardId)              — O(1) DOM removal
+  1104→- insertCard(card, index, settings) — O(1) DOM insertion
+  1105→- updateProgressBars(cards, settings) — O(n) rebuild progress bars only
+  1106→- onAction(handler)               — callback for download/copy/delete/dblclick
+  1107→
+  1108→Key architectural decisions:
+  1109→1. Event delegation: ONE click listener + ONE dblclick listener on container (vs old code: 3 forEach loops per render)
+  1110→2. No innerHTML = '' for targeted updates — uses getElementById + replaceWith/remove
+  1111→3. Action callback pattern: PreviewRenderer doesn't know about export/delete — it notifies orchestrator
+  1112→4. buildProgressBarHtml is a private pure function — not exported, only used internally
+  1113→5. Settings passed as param (not read from global state) — renderer is stateless
+  1114→6. Uses imported StyleHelpers from src/styles/ — no duplication
+  1115→
+  1116→Verification:
+  1117→- Lint: 0 errors
+  1118→- Smoke test: 109/109 pass — zero regressions
+  1119→- card-constructor.ts still works as before (will be migrated to use PreviewRenderer)
+  1120→
+  1121→Module stats after this extraction:
+  1122→- 11 modules, 1602 total lines
+  1123→- Average module: 146 lines
+  1124→- Largest: PreviewRenderer (441) — justified by card HTML complexity
+  1125→- No non-null assertions
+  1126→- No `any` types
+  1127→- Event delegation: 2 listeners (vs 3×N forEach in old code)
+  1128→
+  1129→---
+  1130→Task ID: 26
+  1131→Agent: main
+  1132→Task: ЭТАП 3 — EditorRenderer extracted with event delegation.
+  1133→
+  1134→Work Log:
+  1135→
+  1136→Created src/editor/EditorRenderer.ts (220 lines) with full event delegation.
+  1137→
+  1138→Public API:
+  1139→- render(cards)                — full rebuild O(n)
+  1140→- onAction(handler)            — callback for: input, paste, palette, collapse, delete, duplicate, move, focus
+  1141→- updateCardNumber(index)      — O(1) badge/title/disabled state update
+  1142→- collapseLastCard()           — collapse newly added card
+  1143→
+  1144→Key architectural decisions:
+  1145→1. Event delegation: ONE click + ONE input + ONE focusin + ONE paste listener on container
+  1146→   - Old code: 3 forEach loops × N cards × M buttons = 3NM listeners per render
+  1147→   - New code: 4 listeners total, set up once in constructor
+  1148→2. Action callback pattern: EditorRenderer doesn't know about state/preview/export
+  1149→   - Notifies orchestrator via onAction callback
+  1150→   - Orchestrator decides what to do (dispatch state action, update preview, etc.)
+  1151→3. Paste handling: cleanup (strip formatting) happens in renderer, business logic in orchestrator
+  1152→4. Collapse toggle: handled entirely in renderer (DOM-only, no state change needed)
+  1153→5. No non-null assertions, no type casts
+  1154→
+  1155→Module stats after this extraction:
+  1156→- 12 modules, 1810 total lines
+  1157→- Average module: 151 lines
+  1158→- Largest: PreviewRenderer (441) — card HTML complexity
+  1159→- EditorRenderer: 220 lines — lean due to delegation
+  1160→
+  1161→Old code comparison (card-constructor.ts):
+  1162→- renderEditor(): 124 lines + 68 addEventListener per render
+  1163→- EditorRenderer: 220 lines + 4 addEventListener total (constructor)
+  1164→
+  1165→Verification:
+  1166→- Lint: 0 errors
+  1167→- Smoke test: 109/109 pass — zero regressions
+  1168→
+  1169→---
+  1170→Task ID: 27
+  1171→Agent: main
+  1172→Task: ЭТАП 4 — WordEditorManager extracted.
+  1173→
+  1174→Work Log:
+  1175→
+  1176→Created src/word-editor/WordEditorManager.ts (261 lines) — fully isolated word styling subsystem.
+  1177→
+  1178→Public API:
+  1179→- open(x, y, text, field, cardIndex, existingStyles?) — show popup at position
+  1180→- close()                                          — hide popup, reset state
+  1181→- isOpen                                           — check if popup is active
+  1182→- renderWordStyleList(card)                        — rebuild word list in popup
+  1183→- onStyleChange(handler)                           — callback: (cardIndex, field, word, styles)
+  1184→- onRemoveWord(handler)                            — callback: (cardIndex, key)
+  1185→- onClear(handler)                                 — callback: (cardIndex, field, word)
+  1186→- destroy()                                        — cleanup all listeners
+  1187→
+  1188→Key architectural decisions:
+  1189→1. Self-contained: manages its own state (activeWordStyles, activeField, activeCardIndex)
+  1190→2. Drag built into constructor — no separate initDrag() call needed
+  1191→3. Format buttons, color presets, size slider, clear button — all wired in initControls()
+  1192→4. Callback pattern: doesn't know about cards[] or state — notifies orchestrator
+  1193→5. No non-null assertions — uses optional chaining throughout
+  1194→6. destroy() for cleanup — prevents memory leaks
+  1195→
+  1196→Module stats after all 4 extractions:
+  1197→- 13 modules, 2133 total lines
+  1198→- Average module: 164 lines
+  1199→- Largest: PreviewRenderer (441) — justified by card HTML complexity
+  1200→- WordEditorManager: 261 lines — includes drag, format, color, size, list, clear
+  1201→
+  1202→Architecture layers now complete:
+  1203→Core → Infrastructure → State → Rendering → (UI integration pending)
+  1204→
+  1205→Verification:
+  1206→- Lint: 0 errors
+  1207→- Smoke test: 109/109 pass — zero regressions
+  1208→- All 4 rendering modules extracted from God Function
+  1209→
+  1210→---
+  1211→Task ID: 4a-research
+  1212→Agent: Explore
+  1213→Task: Map card-constructor.ts behaviors for orchestrator migration.
+  1214→
+  1215→Work Log:
+  1216→- Read tail of worklog.md (Tasks 18–27) to understand prior refactor stages.
+  1217→- Read docs/architecture.md to confirm planned modular layering (Core → Infrastructure → State → Rendering → UI).
+  1218→- Read full src/lib/card-constructor.ts (2731 lines) in 6 chunks.
+  1219→- Read src/app/page.tsx (542 lines) to map DOM IDs/selectors used by the JSX shell.
+  1220→- Read src/state/StateManager.ts, src/preview/PreviewRenderer.ts, src/editor/EditorRenderer.ts, src/word-editor/WordEditorManager.ts, src/storage/StorageManager.ts, src/history/HistoryManager.ts, src/themes/ThemeManager.ts, src/export/ExportManager.ts, src/styles/StyleHelpers.ts, src/core/types.ts, src/core/constants.ts, src/core/utils.ts, src/ui/Accordion.ts, src/ui/Modal.ts, src/ui/Switch.ts, src/ui/Dropdown.ts to understand public APIs and DOM contracts each module expects.
+  1221→- Cross-referenced every addEventListener in old code with its corresponding new-module API (delegation or callback).
+  1222→- Identified 5 behavior mismatches new orchestrator must address:
+  1223→  1. Sidebar accordions: old code starts ALL collapsed; SidebarAccordion default is `initial: 'all'` → orchestrator must pass `initial: 'none'`.
+  1224→  2. Modal accordions: old code starts ALL collapsed; ModalAccordion default is `initial: 'first'` → orchestrator must pass `initial: 'none'`.
+  1225→  3. Save button: JSX uses `id="saveAll"` but old JS reads `#saveAll` (works by accident); orchestrator should use the same `#saveAll` selector.
+  1226→  4. `cardCountBadge` text update is done inside renderPreview in old code — orchestrator must hook the same into PreviewRenderer (no API exists yet, so orchestrator will update it after each render call).
+  1227→  5. EditorRenderer has a bug (line 75): `moveUp?.toggleAttribute('disabled', index === blocks.length - 1)` should be `moveDown` not `moveUp?.` — orchestrator cannot fix it but should note the regression risk.
+  1228→- Produced 21-section Behavior Map covering: init sequence, state vars, all event bindings, keyboard shortcuts, localStorage keys, history debounce, rendering flows, modal palette, word popup, theme dropdowns, accordions, format/size controls, card operations, export, toasts, format select, settings, sidebar toggle, char counter, paste handling, and miscellaneous.
+  1229→- No code changes made — research only.
+  1230→
+  1231→Stage Summary:
+  1232→- Comprehensive 21-section behavior map produced.
+  1233→- All 60+ DOM elements, 30+ event bindings, 4 keyboard shortcuts, 11 localStorage keys, 5 history triggers, 6 card operations, 9 modal fields, 2 dropdowns, 9 accordions documented.
+  1234→- 5 behavior mismatches flagged for orchestrator to address explicitly.
+  1235→- Map is sufficient to write src/orchestrator/CardCraftApp.ts without re-reading card-constructor.ts.
+  1236→
+  1237→---
+  1238→Task ID: 28
+  1239→Agent: main
+  1240→Task: ЭТАП 5 — UI Kit extracted (Accordion, Modal, Switch, Dropdown).
+  1241→
+  1242→Work Log:
+  1243→- Created src/ui/Accordion.ts (155 lines) — vanilla JS accordion with event delegation.
+  1244→  Public API: toggle/expand/collapse/expandAll/collapseAll/setExclusive/destroy.
+  1245→  Convenience subclasses: SidebarAccordion, ModalAccordion.
+  1246→- Created src/ui/Modal.ts (172 lines) — modal with focus trap + ESC + backdrop.
+  1247→  Public API: open/close/toggle/onOpen/onClose/destroy.
+  1248→  Handles: focus management, Tab cycling, ESC key, backdrop click.
+  1249→- Created src/ui/Switch.ts (126 lines) — toggle switch (checkbox or button based).
+  1250→  Public API: checked/toggle/onToggle/destroy.
+  1251→  Works on <input type="checkbox"> or <button role="switch">.
+  1252→- Created src/ui/Dropdown.ts (193 lines) — dropdown menu with click-outside + ESC.
+  1253→  Public API: open/close/toggle/setValue/getValue/onOpen/onClose/onSelect/destroy.
+  1254→  Supports nested theme groups (groupHeaderSelector).
+  1255→- Created src/ui/index.ts (24 lines) — barrel export.
+  1256→
+  1257→Module stats:
+  1258→- 17 modules, 2383 total lines
+  1259→- UI Kit: 4 classes, 670 total lines
+  1260→- All classes use event delegation (one listener per root)
+  1261→- All classes have destroy() for cleanup
+  1262→- Zero lint errors
+  1263→
+  1264→---
+  1265→Task ID: 29
+  1266→Agent: main
+  1267→Task: ЭТАП 6a — Stabilization: ErrorBoundary + depcheck.
+  1268→
+  1269→Work Log:
+  1270→- Created src/components/ErrorBoundary.tsx (148 lines) — React error boundary.
+  1271→  - Catches render errors, shows friendly fallback with reload button.
+  1272→  - Logs to console + persists last error to localStorage for debugging.
+  1273→  - Exposes errorId for traceability.
+  1274→  - Production-safe (no stack in prod).
+  1275→- Updated src/app/layout.tsx — wrapped children in <ErrorBoundary>.
+  1276→- React StrictMode remains disabled (reactStrictMode: false in next.config.ts).
+  1277→  Rationale: existing card-constructor.ts uses imperative DOM manipulation that
+  1278→  may not handle double-mount cleanly. Enabling StrictMode is a future task
+  1279→  after orchestrator migration is verified.
+  1280→- Note: depcheck (next sub-task) will identify unused dependencies.
+  1281→
+  1282→---
+  1283→Task ID: 30
+  1284→Agent: main
+  1285→Task: ЭТАП 6b — depcheck + dependency cleanup.
+  1286→
+  1287→Work Log:
+  1288→- Ran depcheck — identified 18 unused production dependencies.
+  1289→- Verified each with grep — 0 source file imports for all 18.
+  1290→- Removed 17 truly unused production deps via `bun remove`:
+  1291→  @dnd-kit/core, @dnd-kit/sortable, @dnd-kit/utilities,
+  1292→  @hookform/resolvers, @mdxeditor/editor, @reactuses/core,
+  1293→  @tanstack/react-query, @tanstack/react-table, date-fns,
+  1294→  framer-motion, next-auth, next-intl, react-markdown,
+  1295→  react-syntax-highlighter, uuid, zod, zustand.
+  1296→- Kept z-ai-web-dev-sdk (planned for AI features per user spec).
+  1297→- Verified: lint clean, dev server still serving 200 OK after removal.
+  1298→- Kept all dev deps (@tailwindcss/postcss used in postcss.config.mjs,
+  1299→  tw-animate-css imported in globals.css, bun-types provides types).
+  1300→
+  1301→---
+  1302→Task ID: 31
+  1303→Agent: main
+  1304→Task: Pre-integration fixes — extend StateManager + fix EditorRenderer bug.
+  1305→
+  1306→Work Log:
+  1307→- Extended StateManager.reduce() with 5 missing action handlers:
+  1308→  SET_CARD_COLORS, SET_CARD_SECTION_STYLES, SET_CARD_WORD_STYLES,
+  1309→  DELETE_CARD_WORD_STYLE, RESTORE_SNAPSHOT.
+  1310→- Fixed EditorRenderer.ts line 75 typo: `moveUp?.toggleAttribute` → `moveDown.toggleAttribute`.
+  1311→- Fixed SidebarAccordion/ModalAccordion defaults:
+  1312→  - SidebarAccordion: initial='none' (was 'all') — matches old behavior (collapsed initially).
+  1313→  - ModalAccordion: initial='none' (was 'first') — matches old behavior (collapsed initially).
+  1314→- Verified: lint clean.
+  1315→
+  1316→---
+  1317→Task ID: 4a-research
+  1318→Agent: Explore
+  1319→Task: Map card-constructor.ts behaviors for orchestrator migration.
+  1320→
+  1321→Work Log:
+  1322→- Read worklog.md (last 500 lines) for context.
+  1323→- Read docs/architecture.md for planned architecture.
+  1324→- Read all 14 new modules (state, preview, editor, word-editor, storage, history,
+  1325→  themes, export, styles, core, ui).
+  1326→- Read src/lib/card-constructor.ts (2731 lines) end-to-end.
+  1327→- Read src/app/page.tsx (542 lines) for DOM contract.
+  1328→- Read src/app/card-constructor.css (3700 lines) for visual behavior.
+  1329→- Read tests/smoke-test.js (414 lines, 109 assertions) for verification contract.
+  1330→
+  1331→Stage Summary:
+  1332→- Produced comprehensive 21-section behavior map covering:
+  1333→  initialization sequence, state variables, event bindings (4 categories),
+  1334→  keyboard shortcuts, localStorage persistence, history, rendering flows,
+  1335→  modal behavior, word popup, theme dropdowns, sidebar accordions,
+  1336→  format/size controls, card operations, export, toasts, format select,
+  1337→  settings, sidebar toggle, char counter, paste handling, and 16 misc behaviors.
+  1338→- Identified 15 migration notes (StateManager gaps, EditorRenderer bug,
+  1339→  UI Kit default mismatches, Escape priority, etc.).
+  1340→- Map will be used to write src/orchestrator/CardCraftApp.ts.
+
+[showing lines 800-1340 of 1342; use offset=1341 with limit to continue reading]
