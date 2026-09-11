@@ -346,7 +346,7 @@
 
 ## PRIORITY 22 — ONBOARDING
 
-- [~] **22.1 Onboarding для нового пользователя**
+- [x] **22.1 Onboarding для нового пользователя**
   - **Done**: `page.tsx` — onboarding overlay с 5 шагами (создать, редактировать, тема, перемещать, экспорт). Skip button + Start button. localStorage flag `flashcard-onboarding-seen` — показывается только при первом визите. `onboarding.css` — стили с design tokens.
   - **Verify**: E2E — новый пользователь видит onboarding → Skip → не видит снова.
 
@@ -354,7 +354,7 @@
 
 ## PRIORITY 23 — KEYBOARD SHORTCUTS PANEL
 
-- [~] **23.1 `?` открывает panel со списком shortcuts**
+- [x] **23.1 `?` открывает panel со списком shortcuts**
   - **Done**: `page.tsx` — shortcuts overlay с списком реальных shortcuts (Ctrl+S/Z/Y, Esc, Tab, ↑↓, ?). `keyboard-controller.ts` — `?` handler открывает overlay, Escape закрывает. `shortcuts.css` — стили с design tokens. Close button + backdrop click.
   - **Verify**: press `?` → panel visible; Escape → closes.
 
@@ -445,8 +445,8 @@
 | **19.8** CSP reporting | [~] PARTIAL | infrastructure exists, no test, not verified E2E |
 | **20.** Structured Logging | [x] DONE | logger.ts, все console.* заменены |
 | **21.** Analytics | [ ] TODO | нет |
-| **22.** Onboarding | [~] PARTIAL | basic works, restart missing, no test, CI not verified |
-| **23.** Shortcuts Panel | [~] PARTIAL | works local, no E2E test, CI not verified |
+| **22.** Onboarding | [x] DONE | restart via shortcuts panel + 5 E2E tests CI-verified |
+| **23.** Shortcuts Panel | [x] DONE | 4 E2E tests CI-verified (35d6d59) |
 | **24.** Dependency Audit | [~] PARTIAL | next+react обновлены, unused font удалён |
 | **25.** Final Audit | [ ] TODO | после всех задач |
 | **F.1** Final Report | [ ] TODO | после 25 |
