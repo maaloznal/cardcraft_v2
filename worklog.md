@@ -2673,3 +2673,19 @@ Stage Summary:
 - Production build verified working in CI environment.
 - GitHub Pages deployment already active.
 - Next: PRIORITY 5 (a11y) + PRIORITY 19 (security hardening).
+
+---
+Task ID: p12-adr
+Agent: general-purpose
+Task: Create 6 ADR documents (PRIORITY 12)
+
+Work Log:
+- Created docs/adr/001-rendering-strategy.md (58 lines) — vanilla TS imperative renderers vs React state-driven re-rendering; cites PreviewRenderer + EditorRenderer O(1) update paths + event delegation.
+- Created docs/adr/002-state-management.md (67 lines) — custom StateManager with discriminated Action union vs Redux/Zustand/Valtio; cites exhaustive `never` reducer, granular P1-1 actions, HistoryManager snapshot seam.
+- Created docs/adr/003-card-identifiers.md (53 lines) — stable `data-card-id` (UUID) replacing positional `data-index`; cites sanitizeCardId regex + orchestrator findIndex resolution in callbacks.ts.
+- Created docs/adr/004-theme-system.md (54 lines) — `[data-theme="..."]` CSS attribute selectors (90 themes + :root default, 1344 lines) vs CSS-in-JS / Tailwind variants; notes ALLOWED_THEMES 8-entry whitelist mismatch with 90 actual themes.
+- Created docs/adr/005-persistence.md (62 lines) — localStorage with per-field validation + sanitizeCardId/isValidHexColor/isValidTheme/isValidFormat + migrateCard schema migration; QuotaExceededError toast; IndexedDB fallback TODO P8.4.
+- Created docs/adr/006-export-architecture.md (60 lines) — lazy-loaded html-to-image (~100KB out of initial bundle via dynamic import cache) + AbortController cancel pipeline + Escape-to-cancel + main-thread block accepted as trade-off (Worker migration non-trivial: requires XMLSerializer → worker → OffscreenCanvas re-implementation).
+
+Stage Summary:
+- 6 ADRs created in docs/adr/ (001-006), all 50-100 lines, each citing real file paths + line numbers from the actual codebase. ADR-007 intentionally skipped; ADR-008 (dark mode) already existed.

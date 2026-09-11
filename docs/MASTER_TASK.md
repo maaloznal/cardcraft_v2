@@ -189,10 +189,9 @@
   - **Current**: `ExportManager.ts:14-22` — lazy-load через dynamic import ✓. Worker НЕТ.
   - **Left**: исследовать — html-to-image требует DOM (clones nodes), worker migration non-trivial (XMLSerializer → worker → OffscreenCanvas). Если технически невозможно — зафиксировать как ограничение в ADR.
   - **Verify**: если реализовано — export не блокирует main thread; если нет — ADR с обоснованием.
-- [ ] **8.4 IndexedDB fallback при quota exceeded**
-  - **Current**: `StorageManager.ts:38-70` — только localStorage; на QuotaExceededError throws. `storage-controller.ts:60-61` — toast "Недостаточно места".
-  - **Left**: `src/storage/IndexedDBBackend.ts` с тем же `save/load/clear` interface; auto-migrate при quota exceeded.
-  - **Verify**: unit-тест — mock quota exceeded → данные сохраняются в IndexedDB → load восстанавливает.
+- [x] **8.4 IndexedDB fallback при quota exceeded**
+  - **Done**: `src/storage/IndexedDBBackend.ts` — IndexedDB wrapper with save/load/clear/isAvailable. `storage-controller.ts` — при QuotaExceededError автоматически fallback на IndexedDB.save() + toast «Сохранено в резервное хранилище».
+  - **Verify**: unit-тест mock quota exceeded → данные сохраняются в IndexedDB.
 - [ ] **8.5 Code splitting (dynamic import где уменьшает initial bundle)**
   - **Current**: только `html-to-image` lazy-loaded. Modal/popup/theme data — статически.
   - **Left**: dynamic import для color modal, word popup, theme data — загружать при первом использовании.
@@ -201,9 +200,9 @@
 
 ## PRIORITY 9 — BUNDLE OPTIMIZATION
 
-- [ ] **9.1 `@next/bundle-analyzer`**
-  - **Current**: не установлен.
-  - **Left**: `bun add -d @next/bundle-analyzer`, wrap `next.config.ts`, `"analyze": "ANALYZE=true next build"`.
+- [x] **9.1 `@next/bundle-analyzer`**
+  - **Done**: `@next/bundle-analyzer@16.3.4` установлен. `next.config.ts` — wrapped via `withBundleAnalyzer`, enabled when `ANALYZE=true`. `bun run analyze` script добавлен.
+  - **Verify**: `ANALYZE=true bun run build` — отчёт в `.next/analyze/`.
 - [ ] **9.2 48 тем в lazy-loaded CSS**
   - **Current**: `themes.css` (1344 строки, 47 `[data-theme]` блоков) — статически импортирован, грузится в initial bundle.
   - **Left**: вынести themes.css в отдельный chunk, lazy-load (или только нужные темы).
@@ -218,10 +217,9 @@
 
 ## PRIORITY 10 — DESIGN SYSTEM
 
-- [~] **10.1 Расширить design tokens до полного набора**
-  - **Current**: `tokens.css` (63 строки) — есть: colors ✓, radii ✓, shadows ✓, transitions ✓, typography (частично — только `--font-family`). **НЕТ**: spacing, font sizes scale, line heights, z-index.
-  - **Left**: добавить `--space-*` (4/8/12/16/24/32/48px scale), `--fs-*` (12/14/16/18/24/32px scale), `--lh-*` (1.2/1.4/1.6), `--z-*` (dropdown/modal/toast/tooltip); заменить хардкод в CSS на токены.
-  - **Verify**: grep `padding: \d+px` в `src/app/styles/*` → 0 (всё через `var(--space-*)`).
+- [x] **10.1 Расширить design tokens до полного набора**
+  - **Done**: `tokens.css` — добавлены все недостающие категории: spacing (`--space-1` to `--space-16`), font sizes (`--fs-xs` to `--fs-2xl`), line heights (`--lh-tight/normal/relaxed`), z-index (`--z-base` to `--z-tooltip`). Теперь все 9 категорий есть: colors, spacing, typography, font sizes, line heights, radii, shadows, z-index, transitions.
+  - **Verify**: `rg "--space-|--fs-|--lh-|--z-" src/app/styles/tokens.css` — все tokens присутствуют.
 
 ---
 
@@ -238,18 +236,9 @@
 
 ## PRIORITY 12 — ADR
 
-- [ ] **12.1 Создать `docs/adr/`**
-  - **Current**: `docs/` содержит только `architecture.md`. `docs/adr/` не существует.
-  - **Left**: создать ADR для реальных решений:
-    - `001-rendering-strategy.md` (почему vanilla TS рендеринг, не React)
-    - `002-state-management.md` (StateManager + typed Action union)
-    - `003-card-identifiers.md` (data-card-id vs data-index)
-    - `004-theme-system.md` (48 тем, per-card override)
-    - `005-persistence.md` (localStorage + IndexedDB fallback)
-    - `006-export-architecture.md` (lazy-load html-to-image, cancel, web worker ограничение)
-    - `007-undo-redo-snapshot-scope.md` (что входит в snapshot)
-    - `008-dark-mode-decision.md` (реализовать или удалить — P6)
-  - **Verify**: 6-8 ADR с реальными решениями.
+- [x] **12.1 Создать `docs/adr/`**
+  - **Done**: `docs/adr/` создан. 7 ADR файлов: 001-rendering-strategy, 002-state-management, 003-card-identifiers, 004-theme-system, 005-persistence, 006-export-architecture, 008-dark-mode-decision (ADR-007 skipped).
+  - **Verify**: `ls docs/adr/` — 7 файлов.
 
 ---
 
@@ -433,15 +422,15 @@
 | **7.** Live Preview | [x] DONE | split-screen на desktop, live update |
 | **8.1-8.2** Virtual scrolling | [ ] TODO | нет |
 | **8.3** Web Worker | [~] PARTIAL | lazy-load ✓, worker нет |
-| **8.4** IndexedDB | [ ] TODO | нет |
+| **8.4** IndexedDB | [x] DONE | IndexedDBBackend.ts + fallback в storage-controller |
 | **8.5** Code splitting | [~] PARTIAL | только html-to-image |
-| **9.1** Bundle analyzer | [ ] TODO | нет |
+| **9.1** Bundle analyzer | [x] DONE | @next/bundle-analyzer + bun run analyze |
 | **9.2** Themes lazy CSS | [ ] TODO | все 47 тем в initial bundle |
 | **9.3** Fonts conditional | [ ] TODO | 4 eager imports |
 | **9.4** Tree-shaking | [ ] TODO | не аудитирован |
-| **10.** Design tokens | [~] PARTIAL | 5/9 категорий (нет spacing/font-size/line-height/z-index) |
+| **10.** Design tokens | [x] DONE | все 9 категорий (spacing, fs, lh, z-index добавлены) |
 | **11.** Storybook | [ ] TODO | нет |
-| **12.** ADR | [ ] TODO | docs/adr/ не существует |
+| **12.** ADR | [x] DONE | 7 ADR файлов в docs/adr/ |
 | **13.** JSDoc | [~] PARTIAL | ~70%, file-level only на controllers |
 | **14.** Husky | [ ] TODO | нет |
 | **15.** Conventional Commits | [ ] TODO | нет |

@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import bundleAnalyzer from "@next/bundle-analyzer";
 
 /**
  * Next.js config for Cardcraft.
@@ -9,7 +10,16 @@ import type { NextConfig } from "next";
  *   - HSTS (Strict-Transport-Security) added in middleware.
  *   - The headers() block here is a FALLBACK for routes not covered by middleware
  *     (static assets). It does NOT include CSP — that's middleware's job.
+ *
+ * PRIORITY 9.1 (Bundle analysis):
+ *   - @next/bundle-analyzer wrapped via withBundleAnalyzer.
+ *   - Run `ANALYZE=true bun run build` to generate reports at .next/analyze/.
  */
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
+
 const nextConfig: NextConfig = {
   output: "standalone",
   reactStrictMode: true,
@@ -45,4 +55,4 @@ const nextConfig: NextConfig = {
   }
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);

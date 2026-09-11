@@ -19,6 +19,7 @@
  */
 
 import * as Storage from '@/storage/StorageManager';
+import * as IndexedDB from '@/storage/IndexedDBBackend';
 import { CONFIG } from '@/core/constants';
 import type { OrchestratorContext } from './types';
 
@@ -41,24 +42,39 @@ export function createStorageController(ctx: OrchestratorContext): StorageContro
   }
 
   function saveCardsToLocalStorage({ silent = false } = {}): void {
+    const state = stateManager.get();
+    const stateToSave = {
+      cards: state.cards.list,
+      theme: state.settings.theme,
+      format: state.settings.format,
+      showCardNumbers: state.settings.showCardNumbers,
+      showProgressBar: state.settings.showProgressBar,
+      progressBarStyle: state.settings.progressBarStyle,
+      listStyleType: state.settings.listStyleType,
+      gradientAngle: state.settings.gradientAngle,
+      charLimitEnabled: state.settings.charLimitEnabled,
+    };
     try {
-      const state = stateManager.get();
-      Storage.save({
-        cards: state.cards.list,
-        theme: state.settings.theme,
-        format: state.settings.format,
-        showCardNumbers: state.settings.showCardNumbers,
-        showProgressBar: state.settings.showProgressBar,
-        progressBarStyle: state.settings.progressBarStyle,
-        listStyleType: state.settings.listStyleType,
-        gradientAngle: state.settings.gradientAngle,
-        charLimitEnabled: state.settings.charLimitEnabled,
-      });
+      Storage.save(stateToSave);
       if (!silent) showToast('Карточки успешно сохранены!');
     } catch (e) {
       const err = e as Error;
       if (err.message === 'QuotaExceededError') {
-        if (!silent) showToast('Недостаточно места. Удалите старые карточки.');
+        // P8.4: Fallback to IndexedDB when localStorage quota is exceeded
+        if (IndexedDB.isAvailable()) {
+          void IndexedDB.save(stateToSave)
+            .then(() => {
+              if (!silent) showToast('Сохранено в резервное хранилище');
+            })
+            .catch(() => {
+              if (!silent)
+                showToast('Недостаточно места. Удалите старые карточки.', 2500, {
+                  priority: true,
+                });
+            });
+        } else if (!silent) {
+          showToast('Недостаточно места. Удалите старые карточки.', 2500, { priority: true });
+        }
       } else if (!silent) {
         showToast('Ошибка при сохранении карточек');
       }
