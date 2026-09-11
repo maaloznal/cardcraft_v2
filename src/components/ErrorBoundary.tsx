@@ -1,6 +1,7 @@
 'use client';
 
 import { createLogger } from '@/lib/logger';
+import * as Sentry from '@sentry/nextjs';
 
 const log = createLogger('ErrorBoundary');
 
@@ -43,8 +44,18 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo): void {
-    // Log to console — production should send to telemetry
-    log.error('ErrorBoundary caught', { error: String(error), componentStack: info.componentStack });
+    // P4: Send to Sentry with full context
+    Sentry.captureException(error, {
+      contexts: { react: { componentStack: info.componentStack } },
+      tags: { source: 'ErrorBoundary', errorId: this.state.errorId },
+    });
+
+    // Log via structured logger
+    log.error('ErrorBoundary caught', {
+      error: String(error),
+      componentStack: info.componentStack,
+      errorId: this.state.errorId,
+    });
 
     // Persist last error to localStorage for debugging
     try {
@@ -54,6 +65,7 @@ export class ErrorBoundary extends Component<Props, State> {
         componentStack: info.componentStack,
         timestamp: new Date().toISOString(),
         url: typeof window !== 'undefined' ? window.location.href : '',
+        sentry: true, // Mark that it was sent to Sentry
       };
       localStorage.setItem('cardcraft:last-error', JSON.stringify(payload));
     } catch {

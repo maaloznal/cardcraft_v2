@@ -71,6 +71,7 @@ import { wireRendererCallbacks } from './callbacks';
 import { bindAll } from './events';
 import type { OrchestratorContext } from './types';
 import { createLogger } from '@/lib/logger';
+import * as Sentry from '@sentry/nextjs';
 
 const log = createLogger('Cardcraft');
 
@@ -83,9 +84,17 @@ export function initCardCraftApp(root: HTMLElement): () => void {
   /* ---------- 1. Error traps (boot-level) ---------- */
   const errorHandler = (e: ErrorEvent): void => {
     log.error('Runtime error', { message: e.message, source: e.filename + ':' + e.lineno });
+    // P4: Send to Sentry
+    Sentry.captureException(e.error || new Error(e.message), {
+      tags: { source: 'window.onerror', filename: e.filename, lineno: e.lineno },
+    });
   };
   const unhandledRejection = (e: PromiseRejectionEvent): void => {
     log.error('Unhandled promise rejection', { reason: e.reason });
+    // P4: Send to Sentry
+    Sentry.captureException(e.reason, {
+      tags: { source: 'unhandledrejection' },
+    });
   };
   window.addEventListener('error', errorHandler);
   window.addEventListener('unhandledrejection', unhandledRejection);

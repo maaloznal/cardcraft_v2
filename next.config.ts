@@ -1,15 +1,16 @@
 import type { NextConfig } from "next";
 import bundleAnalyzer from "@next/bundle-analyzer";
+import { withSentryConfig } from "@sentry/nextjs";
 
 /**
  * Next.js config for Cardcraft.
  *
+ * PRIORITY 4 (Monitoring): Sentry wrapper added for error tracking +
+ * source maps upload (requires SENTRY_AUTH_TOKEN env var).
+ *
  * PRIORITY 19 (Security hardening):
  *   - CSP is now nonce-based, generated per-request in src/middleware.ts.
- *     This removes 'unsafe-inline' + 'unsafe-eval' from script-src in production.
  *   - HSTS (Strict-Transport-Security) added in middleware.
- *   - The headers() block here is a FALLBACK for routes not covered by middleware
- *     (static assets). It does NOT include CSP — that's middleware's job.
  *
  * PRIORITY 9.1 (Bundle analysis):
  *   - @next/bundle-analyzer wrapped via withBundleAnalyzer.
@@ -24,35 +25,31 @@ const nextConfig: NextConfig = {
   output: "standalone",
   reactStrictMode: true,
   allowedDevOrigins: ["*.space-z.ai"],
+  // P4: Sentry source maps — upload to Sentry during build
+  productionBrowserSourceMaps: true, // Generate source maps for Sentry upload
   async headers() {
     return [
       {
         source: '/:path*',
         headers: [
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff'
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY'
-          },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains'
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block'
-          }
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
         ]
       }
     ];
   }
 };
 
-export default withBundleAnalyzer(nextConfig);
+// P4: Sentry config wrapper
+const sentryConfig = withSentryConfig(nextConfig, {
+  org: 'maaloznal',
+  project: 'cardcraft',
+  silent: true,
+  // Source maps upload requires SENTRY_AUTH_TOKEN env var
+  // (set in .env — uploaded during production build)
+});
+
+export default withBundleAnalyzer(sentryConfig);

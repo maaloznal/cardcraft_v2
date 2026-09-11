@@ -5,6 +5,8 @@ import "@fontsource/lora";
 import "@fontsource/manrope";
 // P9.3: removed @fontsource/plus-jakarta-sans — not used by any theme
 import "./globals.css";
+// P4: Sentry client init — client component wrapper for Turbopack dev
+import { SentryProvider } from '@/components/SentryProvider';
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const geistSans = Geist({
@@ -45,9 +47,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
-        <ErrorBoundary>
-          {children}
-        </ErrorBoundary>
+        <SentryProvider>
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
+        </SentryProvider>
       </body>
     </html>
   );
