@@ -70,6 +70,9 @@ import { createStateSubscriber } from './state-subscriber';
 import { wireRendererCallbacks } from './callbacks';
 import { bindAll } from './events';
 import type { OrchestratorContext } from './types';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('Cardcraft');
 
 // Re-export theme data for page.tsx static rendering
 export { THEME_GROUPS } from '@/themes/themeData';
@@ -79,10 +82,10 @@ export { THEME_GROUPS } from '@/themes/themeData';
 export function initCardCraftApp(root: HTMLElement): () => void {
   /* ---------- 1. Error traps (boot-level) ---------- */
   const errorHandler = (e: ErrorEvent): void => {
-    console.error('[Cardcraft] Runtime error:', e.message, e.filename + ':' + e.lineno);
+    log.error('Runtime error', { message: e.message, source: e.filename + ':' + e.lineno });
   };
   const unhandledRejection = (e: PromiseRejectionEvent): void => {
-    console.error('[Cardcraft] Unhandled promise rejection:', e.reason);
+    log.error('Unhandled promise rejection', { reason: e.reason });
   };
   window.addEventListener('error', errorHandler);
   window.addEventListener('unhandledrejection', unhandledRejection);
@@ -205,7 +208,7 @@ export function initCardCraftApp(root: HTMLElement): () => void {
   } else {
     ctx.sidebar.setSidebarOpen(false);
   }
-  console.log('[Cardcraft] Initialized successfully:', stateManager.getCardCount(), 'cards loaded');
+  log.info('Initialized successfully', { cardCount: stateManager.getCardCount() });
 
   /* ---------- 11. Cleanup ---------- */
   return () => {

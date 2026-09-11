@@ -61,3 +61,5 @@ server.log
 
 # Verification screenshots
 verification*.png.tool-results/
+# Visual regression baselines (platform-specific — regenerate locally)
+tests/e2e/__screenshots__/

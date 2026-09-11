@@ -25,6 +25,9 @@ import * as Theme from '@/themes/ThemeManager';
 import type { PreviewSettings } from '@/preview/PreviewRenderer';
 import type { OrchestratorContext } from './types';
 import { perfMark } from './helpers';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('Cardcraft');
 
 export interface UIAppliers {
   applyThemeToWorkspace(): void;
@@ -120,7 +123,7 @@ export function createUIAppliers(ctx: OrchestratorContext): UIAppliers {
       previewRenderer.render(stateManager.getCards(), previewSettings);
       updateCardCountBadge();
     } catch (err) {
-      console.error('[Cardcraft] Error in renderPreview:', err);
+      log.error('Error in renderPreview', { error: err });
     } finally {
       end();
     }
@@ -131,7 +134,7 @@ export function createUIAppliers(ctx: OrchestratorContext): UIAppliers {
     try {
       editorRenderer.render(stateManager.getCards());
     } catch (err) {
-      console.error('[Cardcraft] Error in renderEditor:', err);
+      log.error('Error in renderEditor', { error: err });
     }
   }
 

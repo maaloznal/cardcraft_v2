@@ -1,7 +1,11 @@
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('Cardcraft');
+
 /**
  * helpers.ts — shared orchestrator helpers:
  *   - ListenerTracker: tracks every addEventListener call for cleanup
- *   - guard(): try/catch wrapper that logs to console.error
+ *   - guard(): try/catch wrapper that logs via structured logger (P20)
  *   - perfMark(): returns an end-function that warns if >16ms elapsed
  *
  * Extracted from CardCraftApp.ts section 2 (helpers) + section 21
@@ -73,7 +77,7 @@ export function guard<T>(label: string, fn: () => T): T | undefined {
   try {
     return fn();
   } catch (err) {
-    console.error('[Cardcraft] Error in ' + label + ':', err);
+    log.error('Error in ' + label, { error: err });
     return undefined;
   }
 }
@@ -91,7 +95,7 @@ export function perfMark(label: string): () => void {
   return () => {
     const dur = performance.now() - start;
     if (dur > 16) {
-      console.warn('[Cardcraft:perf] Slow ' + label + ': ' + dur.toFixed(1) + 'ms');
+      log.warn('Slow ' + label, { durationMs: dur.toFixed(1) });
     }
   };
 }

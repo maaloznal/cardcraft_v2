@@ -1,5 +1,9 @@
 'use client';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ErrorBoundary');
+
 /**
  * ErrorBoundary — React error boundary for the Cardcraft app.
  *
@@ -40,7 +44,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo): void {
     // Log to console — production should send to telemetry
-    console.error('[Cardcraft ErrorBoundary]', error, info.componentStack);
+    log.error('ErrorBoundary caught', { error: String(error), componentStack: info.componentStack });
 
     // Persist last error to localStorage for debugging
     try {

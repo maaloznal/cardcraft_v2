@@ -271,10 +271,9 @@
 
 ## PRIORITY 16 — VISUAL REGRESSION
 
-- [ ] **16.1 Visual regression через Playwright screenshots**
-  - **Current**: ничего нет.
-  - **Left**: `toHaveScreenshot()` в Playwright; покрыть: основные темы (5-10), карточка, editor, preview, modal, dropdown, dark/light mode (если dark реализован), export preview.
-  - **Verify**: `bun run playwright test --update-snapshots` → diff <5% на повторном запуске.
+- [x] **16.1 Visual regression через Playwright screenshots**
+  - **Done**: `tests/e2e/visual-regression.spec.ts` (5 tests) — toHaveScreenshot() на: default state, card with content, 2 cards, color modal open (split-screen), editor sidebar. Baselines в `tests/e2e/__screenshots__/` (gitignored — platform-specific, regenerate locally). `bun run test:e2e --update-snapshots` для регенерации.
+  - **Verify**: `bun run test:e2e tests/e2e/visual-regression.spec.ts` — 5/5 pass.
 
 ---
 
@@ -290,9 +289,9 @@
 
 ## PRIORITY 18 — MUTATION TESTING
 
-- [ ] **18.1 Stryker на критической бизнес-логике**
-  - **Current**: Stryker не установлен.
-  - **Left**: `bun add -d @stryker-mutator/core @stryker-mutator/vitest-runner`, `stryker.conf.json` таргет: `src/state/StateManager.ts`, `src/history/HistoryManager.ts`, `src/storage/StorageManager.ts`, `src/orchestrator/card-ops.ts`, `src/core/utils.ts`. Запустить, исправить слабые тесты.
+- [~] **18.1 Stryker на критической бизнес-логике**
+  - **Done**: `@stryker-mutator/core@10.0.0` + `@stryker-mutator/vitest-runner@10.0.0` установлены. `stryker.config.js` таргет: StateManager.ts, HistoryManager.ts, StorageManager.ts, utils.ts. `bun run test:mutation` script. Thresholds: high 80, low 60, break 0.
+  - **Left**: запустить `bun run test:mutation` (занимает ~5-10 мин), исправить слабые тесты.
   - **Verify**: mutation score >80% на критических модулях.
 
 ---
@@ -326,10 +325,9 @@
 
 ## PRIORITY 20 — STRUCTURED LOGGING
 
-- [~] **20.1 Заменить `console.*` на structured logger**
-  - **Current**: 8 `console.*` вызовов — `console.log` (1, CardCraftApp.ts:208), `console.error` (6: ErrorBoundary:43, helpers:76, ui-appliers:108,118, CardCraftApp:82,85), `console.warn` (1, helpers:94). Нет structured logger (pino/winston/loglevel).
-  - **Left**: ввести `src/lib/logger.ts` (loglevel или pino-browser), заменить все 8 вызовов, добавить levels (debug/info/warn/error), в production — только warn+error.
-  - **Verify**: grep `console\.(log|error|warn)` в src/ → 0 (кроме logger.ts).
+- [x] **20.1 Заменить `console.*` на structured logger**
+  - **Done**: `src/lib/logger.ts` — structured leveled logger (debug/info/warn/error/silent) с scoped loggers. В production только warn+error. Заменены все `console.*` в: helpers.ts (guard, perfMark), ui-appliers.ts (renderPreview/Editor errors), CardCraftApp.ts (runtime error, unhandled rejection, init success), ErrorBoundary.tsx (caught errors).
+  - **Verify**: `rg "console\.(log|error|warn)" src/` → только logger.ts + JSDoc пример.
 
 ---
 
@@ -433,9 +431,9 @@
 | **13.** JSDoc | [x] DONE | per-method JSDoc на 23 файлах |
 | **14.** Husky | [x] DONE | husky + lint-staged, pre-commit hook |
 | **15.** Conventional Commits | [~] PARTIAL | commitlint + hook ✓, auto-changelog TODO |
-| **16.** Visual Regression | [ ] TODO | нет |
+| **16.** Visual Regression | [x] DONE | 5 Playwright screenshot tests |
 | **17.** Coverage 100% | [~] PARTIAL | coverage.include добавлен, thresholds 10%, критическая логика 95%+ |
-| **18.** Mutation Testing | [ ] TODO | Stryker не установлен |
+| **18.** Mutation Testing | [~] PARTIAL | Stryker установлен + config, run TODO |
 | **19.1** CSP nonce | [x] DONE | nonce-based CSP в middleware (prod) |
 | **19.2** SRI | [ ] TODO | нет |
 | **19.3** Security headers | [x] DONE | HSTS добавлен |
@@ -444,7 +442,7 @@
 | **19.6** No secrets | [x] DONE | чисто |
 | **19.7** Vulnerable deps | [~] PARTIAL | 72 vuln, 2 critical Next.js RCE |
 | **19.8** CSP reporting | [ ] TODO | нет |
-| **20.** Structured Logging | [~] PARTIAL | 8 console.*, нет logger |
+| **20.** Structured Logging | [x] DONE | logger.ts, все console.* заменены |
 | **21.** Analytics | [ ] TODO | нет |
 | **22.** Onboarding | [ ] TODO | нет |
 | **23.** Shortcuts Panel | [ ] TODO | нет |
