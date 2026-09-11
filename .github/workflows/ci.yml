@@ -99,3 +99,9 @@ jobs:
         env:
           # Skip static copy if .next/standalone doesn't exist (standalone output)
           CI: true
+
+  # Note: SENTRY_AUTH_TOKEN must be set as GitHub Actions Secret
+  # for production source maps upload during build job.
+  # The build job uses .env from repo (gitignored) — in CI, set env:
+  # env:
+  #   SENTRY_AUTH_TOKEN: \${{ secrets.SENTRY_AUTH_TOKEN }}

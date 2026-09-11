@@ -115,7 +115,14 @@
 
 ## PRIORITY 4 — MONITORING / ERROR REPORTING
 
-- [x] **4.1 Production error monitoring (Sentry)**
+- [x] **4.1 Production error monitoring (Sentry)** — VERIFIED
+  - SDK: @sentry/nextjs@10.74.0, initialized (enabled: true verified in browser)
+  - Real event: 2 events received by Sentry (verified via API: environment=development, handled=yes, interface_type=exception)
+  - ErrorBoundary: Sentry.captureException with contexts + tags (code verified)
+  - Global handlers: window.onerror + unhandledrejection → Sentry.captureException (code verified)
+  - Double init: PREVENTED — SentryProvider only imports sentry-client in dev; production uses webpack plugin
+  - Auth token: NEVER in git history, NEVER in tracked files, .env gitignored, NOT exposed as NEXT_PUBLIC_
+  - Source maps: productionBrowserSourceMaps: true + withSentryConfig configured. NOT CI-verified (bun run build prohibited in sandbox). CI build will upload. SENTRY_AUTH_TOKEN must be set as GitHub Actions Secret.
   - **Current**: `ErrorBoundary.tsx:41-58` — `componentDidCatch` пишет в `console.error` + localStorage. `CardCraftApp.ts:81-88` — window error/unhandledrejection → console. Нет Sentry/другого SDK.
   - **Left**: установить `@sentry/nextjs`, настроить DSN через env, интегрировать в ErrorBoundary + boot error handlers, настроить source maps upload, release identification, breadcrumbs для dispatch-ей.
   - **Blocker**: требует Sentry DSN (нужен аккаунт). Если невозможно без секретов — сделать максимально возможную интеграцию + отметить блокер.

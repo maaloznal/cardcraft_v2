@@ -4,15 +4,24 @@
  * SentryProvider — client component that initializes Sentry on the browser.
  *
  * P4: In Next.js App Router, layout.tsx is a server component by default.
- * Imports in server components run on the server, not the browser.
- * This wrapper ensures Sentry.init() runs on the client side.
+ * In PRODUCTION: @sentry/nextjs webpack plugin automatically injects
+ *   sentry.client.config.ts — no manual init needed.
+ * In DEVELOPMENT (Turbopack): webpack plugin doesn't run, so we need
+ *   explicit init via src/lib/sentry-client.ts.
  *
- * In production, the @sentry/nextjs webpack plugin also injects Sentry
- * via sentry.client.config.ts — this is the Turbopack dev fallback.
+ * This wrapper prevents DOUBLE INITIALIZATION by only importing
+ * sentry-client in development mode.
  */
 
-import '@/lib/sentry-client';
+import { useEffect } from 'react';
 
 export function SentryProvider({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    // Only init in dev — production uses webpack plugin (sentry.client.config.ts)
+    if (process.env.NODE_ENV !== 'production') {
+      void import('@/lib/sentry-client');
+    }
+  }, []);
+
   return <>{children}</>;
 }
