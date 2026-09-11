@@ -148,7 +148,7 @@
   - **Verify**: screen reader тест — announce слышны при операциях.
 
 ### Color contrast
-- [~] **5.7 WCAG 2.1 AA contrast audit**
+- [x] **5.7 WCAG 2.1 AA contrast audit** (CI-verified ac1ea98)
   - **Done**: `@axe-core/playwright@4.13.0` установлен. `tests/e2e/accessibility.spec.ts` (3 tests) — axe-core scan на default state, card with content, color modal open. Исправлены реальные нарушения: `--ui-text-secondary` #71717a → #52525b (4.39:1 → 6.54:1), `.card-empty-hint` opacity 0.5 убрано (контраст восстановлен).
   - **Verify**: `bun run test:e2e tests/e2e/accessibility.spec.ts` — 3/3 pass, 0 critical/serious violations.
 
@@ -306,7 +306,7 @@
   - **Verify**: `rg "src=\"https|href=\"https" src/app/layout.tsx src/app/page.tsx` → только favicon.
 - [x] **19.3 Security headers (HSTS, etc.)**
   - **Done**: X-Content-Type-Options ✓, Referrer-Policy ✓, X-Frame-Options:DENY ✓, X-XSS-Protection ✓, **Strict-Transport-Security: max-age=31536000; includeSubDomains** ✓ (добавлен в `src/middleware.ts` + `next.config.ts`).
-- [~] **19.4 XSS audit (HTML rendering, imported JSON, user content)**
+- [x] **19.4 XSS audit (HTML rendering, imported JSON, user content)**
   - **Done**: `escapeHtml`/`escapeAttr` на всех dynamic insertions ✓; `sanitizeCardId` ✓; localStorage validation ✓.
   - **E2E**: `tests/e2e/xss-security.spec.ts` (7 tests) — XSS payload во всех полях (title, subtitle, text, list, footer, cta) + localStorage injection. Все 7/7 pass.
   - **Verify**: `bun run test:e2e tests/e2e/xss-security.spec.ts` — 7/7 pass.
@@ -412,7 +412,7 @@
 | **5.4** Icon aria-labels | [x] DONE | 13/13 |
 | **5.5** Keyboard nav (arrows) | [x] DONE | ArrowUp/Down move cards |
 | **5.6** Screen reader | [x] DONE | #srAnnouncer + announce() в card-ops |
-| **5.7** Color contrast | [~] PARTIAL | axe-core tests pass local, CI not verified |
+| **5.7** Color contrast | [x] DONE | axe-core 3/3 pass in CI (ac1ea98) |
 | **5.8** Reduced motion | [x] DONE | @media prefers-reduced-motion |
 | **6.** Dark Mode | [x] DONE | dead .dark block удалён, ADR-008 |
 | **7.** Live Preview | [x] DONE | split-screen на desktop, live update |
@@ -436,7 +436,7 @@
 | **19.1** CSP nonce | [x] DONE | nonce-based CSP в middleware (prod) |
 | **19.2** SRI | [x] DONE | нет внешних scripts/stylesheets |
 | **19.3** Security headers | [x] DONE | HSTS добавлен |
-| **19.4** XSS audit | [~] PARTIAL | 7 tests pass local, CI not verified |
+| **19.4** XSS audit | [x] DONE | 7 E2E XSS tests pass in CI (ac1ea98) |
 | **19.5** Source maps | [x] DONE | не exposed |
 | **19.6** No secrets | [x] DONE | чисто |
 | **19.7** Vulnerable deps | [~] PARTIAL | 0 critical, react обновлён, transitive остаются |

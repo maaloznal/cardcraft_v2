@@ -1,0 +1,1627 @@
+    22→    <style>
+    23→      /* ================= БАЗОВЫЕ ПЕРЕМЕННЫЕ ================= */
+    24→      :root {
+    25→        --card-bg: #ffffff;
+    26→        --card-border: #e2e8f0;
+    27→        --card-shadow:
+    28→          0 10px 25px -5px rgba(0, 0, 0, 0.05),
+    29→          0 8px 10px -6px rgba(0, 0, 0, 0.01);
+    30→        --text-primary: #0f172a;
+    31→        --text-secondary: #475569;
+    32→        --accent-color: #4f46e5;
+    33→        --accent-glow: rgba(79, 70, 229, 0.15);
+    34→        --progress-bg: #e2e8f0;
+    35→        --btn-accent-bg: #f8fafc;
+    36→        --btn-accent-border: #cbd5e1;
+    37→        --font-family: "Golos Text", sans-serif;
+    38→        --card-radius: 0px; /* Острые углы */
+    39→        --preview-bg: #f1f5f9;
+    40→        --cta-text-color: #0f172a;
+    41→      }
+    42→
+    43→      /* ================= ТЕМЫ ================= */
+    44→      [data-theme="editorial-paper"] {
+    45→        --card-bg: #faf7f2;
+    46→        --card-border: #e7e5e4;
+    47→        --card-shadow: 0 12px 28px -8px rgba(68, 64, 60, 0.08);
+    48→        --text-primary: #1c1917;
+    49→        --text-secondary: #57534e;
+    50→        --accent-color: #c2410c;
+    51→        --accent-glow: rgba(194, 65, 12, 0.15);
+    52→        --progress-bg: #e7e5e4;
+    53→        --btn-accent-bg: #f5f5f4;
+    54→        --btn-accent-border: #d6d3d1;
+    55→        --font-family: "Lora", Georgia, serif;
+    56→        --preview-bg: #f5f2eb;
+    57→        --cta-text-color: #1c1917;
+    58→      }
+    59→      [data-theme="pastel-gradient"] {
+    60→        --card-bg: #ffffff;
+    61→        --card-border: #f1f5f9;
+    62→        --card-shadow: 0 20px 35px -10px rgba(124, 58, 237, 0.12);
+    63→        --text-primary: #1e1b4b;
+    64→        --text-secondary: #4c1d95;
+    65→        --accent-color: #7c3aed;
+    66→        --accent-glow: rgba(124, 58, 237, 0.2);
+    67→        --progress-bg: #f3e8ff;
+    68→        --btn-accent-bg: #faf5ff;
+    69→        --btn-accent-border: #e9d5ff;
+    70→        --font-family: "Manrope", sans-serif;
+    71→        --preview-bg: #f8f5ff;
+    72→        --cta-text-color: #1e1b4b;
+    73→      }
+    74→      [data-theme="fresh-mint"] {
+    75→        --card-bg: #f0fdf4;
+    76→        --card-border: #bbf7d0;
+    77→        --card-shadow: 0 12px 25px -5px rgba(22, 101, 52, 0.06);
+    78→        --text-primary: #052e16;
+    79→        --text-secondary: #166534;
+    80→        --accent-color: #15803d;
+    81→        --accent-glow: rgba(21, 128, 61, 0.2);
+    82→        --progress-bg: #dcfce7;
+    83→        --btn-accent-bg: #ffffff;
+    84→        --btn-accent-border: #86efac;
+    85→        --font-family: "Golos Text", sans-serif;
+    86→        --preview-bg: #ecfdf5;
+    87→        --cta-text-color: #052e16;
+    88→      }
+    89→      [data-theme="neo-brutalist"] {
+    90→        --card-bg: #fffdf0;
+    91→        --card-border: #000000;
+    92→        --card-shadow: 6px 6px 0px #000000;
+    93→        --text-primary: #000000;
+    94→        --text-secondary: #262626;
+    95→        --accent-color: #2563eb;
+    96→        --accent-glow: transparent;
+    97→        --progress-bg: #e5e5e5;
+    98→        --btn-accent-bg: #ffde59;
+    99→        --btn-accent-border: #000000;
+   100→        --font-family: "Manrope", sans-serif;
+   101→        --preview-bg: #fff9e6;
+   102→        --cta-text-color: #000000;
+   103→      }
+   104→      [data-theme="warm-peach"] {
+   105→        --card-bg: #fff7ed;
+   106→        --card-border: #fed7aa;
+   107→        --card-shadow: 0 12px 25px -5px rgba(234, 88, 12, 0.08);
+   108→        --text-primary: #431407;
+   109→        --text-secondary: #9a3412;
+   110→        --accent-color: #ea580c;
+   111→        --accent-glow: rgba(234, 88, 12, 0.2);
+   112→        --progress-bg: #ffedd5;
+   113→        --btn-accent-bg: #ffffff;
+   114→        --btn-accent-border: #fdba74;
+   115→        --font-family: "Golos Text", sans-serif;
+   116→        --preview-bg: #fff7ed;
+   117→        --cta-text-color: #431407;
+   118→      }
+   119→      [data-theme="dark-slate"] {
+   120→        --card-bg: #0f172a;
+   121→        --card-border: #1e293b;
+   122→        --card-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.7);
+   123→        --text-primary: #ffffff;
+   124→        --text-secondary: #94a3b8;
+   125→        --accent-color: #38bdf8;
+   126→        --accent-glow: rgba(56, 189, 248, 0.4);
+   127→        --progress-bg: #1e293b;
+   128→        --btn-accent-bg: #1e293b;
+   129→        --btn-accent-border: #334155;
+   130→        --font-family: "Golos Text", sans-serif;
+   131→        --preview-bg: #020617;
+   132→        --cta-text-color: #ffffff;
+   133→      }
+   134→      [data-theme="obsidian-gold"] {
+   135→        --card-bg: #121212;
+   136→        --card-border: #27272a;
+   137→        --card-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.8);
+   138→        --text-primary: #ffffff;
+   139→        --text-secondary: #a1a1aa;
+   140→        --accent-color: #f59e0b;
+   141→        --accent-glow: rgba(245, 158, 11, 0.4);
+   142→        --progress-bg: #27272a;
+   143→        --btn-accent-bg: #18181b;
+   144→        --btn-accent-border: #3f3f46;
+   145→        --font-family: "Golos Text", sans-serif;
+   146→        --preview-bg: #020617;
+   147→        --cta-text-color: #ffffff;
+   148→      }
+   149→
+   150→      [data-theme="ocean-breeze"] {
+   151→        --card-bg: #ffffff;
+   152→        --card-border: #bae6fd;
+   153→        --card-shadow: 0 15px 30px -10px rgba(14, 116, 144, 0.1);
+   154→        --text-primary: #0c4a6e;
+   155→        --text-secondary: #0e7490;
+   156→        --accent-color: #0284c7;
+   157→        --accent-glow: rgba(2, 132, 199, 0.2);
+   158→        --progress-bg: #e0f2fe;
+   159→        --btn-accent-bg: #f0f9ff;
+   160→        --btn-accent-border: #7dd3fc;
+   161→        --font-family: "Golos Text", sans-serif;
+   162→        --preview-bg: #e0f2fe;
+   163→        --cta-text-color: #0c4a6e;
+   164→      }
+   165→      [data-theme="golden-hour"] {
+   166→        --card-bg: #ffffff;
+   167→        --card-border: #fde68a;
+   168→        --card-shadow: 0 12px 24px -6px rgba(217, 119, 6, 0.08);
+   169→        --text-primary: #78350f;
+   170→        --text-secondary: #92400e;
+   171→        --accent-color: #d97706;
+   172→        --accent-glow: rgba(217, 119, 6, 0.25);
+   173→        --progress-bg: #fef3c7;
+   174→        --btn-accent-bg: #fffbeb;
+   175→        --btn-accent-border: #fcd34d;
+   176→        --font-family: "Lora", Georgia, serif;
+   177→        --preview-bg: #fef3c7;
+   178→        --cta-text-color: #78350f;
+   179→      }
+   180→      [data-theme="rose-quartz"] {
+   181→        --card-bg: #ffffff;
+   182→        --card-border: #fecdd3;
+   183→        --card-shadow: 0 10px 25px -5px rgba(225, 29, 72, 0.06);
+   184→        --text-primary: #881337;
+   185→        --text-secondary: #9f1239;
+   186→        --accent-color: #e11d48;
+   187→        --accent-glow: rgba(225, 29, 72, 0.15);
+   188→        --progress-bg: #ffe4e6;
+   189→        --btn-accent-bg: #fff5f6;
+   190→        --btn-accent-border: #fda4af;
+   191→        --font-family: "Manrope", sans-serif;
+   192→        --preview-bg: #fff1f2;
+   193→        --cta-text-color: #881337;
+   194→      }
+   195→      [data-theme="lavender-dreams"] {
+   196→        --card-bg: #ffffff;
+   197→        --card-border: #e9d5ff;
+   198→        --card-shadow: 0 15px 30px -8px rgba(124, 58, 237, 0.1);
+   199→        --text-primary: #3b0764;
+   200→        --text-secondary: #6b21a8;
+   201→        --accent-color: #8b5cf6;
+   202→        --accent-glow: rgba(139, 92, 246, 0.2);
+   203→        --progress-bg: #ede9fe;
+   204→        --btn-accent-bg: #faf5ff;
+   205→        --btn-accent-border: #d8b4fe;
+   206→        --font-family: "Golos Text", sans-serif;
+   207→        --preview-bg: #f3e8ff;
+   208→        --cta-text-color: #3b0764;
+   209→      }
+   210→      [data-theme="sandy-beach"] {
+   211→        --card-bg: #ffffff;
+   212→        --card-border: #f3e1c7;
+   213→        --card-shadow: 0 10px 25px -5px rgba(154, 109, 62, 0.08);
+   214→        --text-primary: #4a3b2c;
+   215→        --text-secondary: #7c6a54;
+   216→        --accent-color: #d49a3e;
+   217→        --accent-glow: rgba(212, 154, 62, 0.2);
+   218→        --progress-bg: #fef3e2;
+   219→        --btn-accent-bg: #fffbf5;
+   220→        --btn-accent-border: #f0d6a6;
+   221→        --font-family: "Lora", Georgia, serif;
+   222→        --preview-bg: #fef8ec;
+   223→        --cta-text-color: #4a3b2c;
+   224→      }
+   225→      [data-theme="spring-meadow"] {
+   226→        --card-bg: #ffffff;
+   227→        --card-border: #bbf7d0;
+   228→        --card-shadow: 0 12px 25px -5px rgba(22, 101, 52, 0.05);
+   229→        --text-primary: #14532d;
+   230→        --text-secondary: #15803d;
+   231→        --accent-color: #16a34a;
+   232→        --accent-glow: rgba(22, 163, 74, 0.2);
+   233→        --progress-bg: #dcfce7;
+   234→        --btn-accent-bg: #f0fdf4;
+   235→        --btn-accent-border: #86efac;
+   236→        --font-family: "Manrope", sans-serif;
+   237→        --preview-bg: #f0fdf4;
+   238→        --cta-text-color: #14532d;
+   239→      }
+   240→      [data-theme="arctic-frost"] {
+   241→        --card-bg: #ffffff;
+   242→        --card-border: #dceefb;
+   243→        --card-shadow: 0 15px 30px -10px rgba(30, 64, 175, 0.06);
+   244→        --text-primary: #1e3a5f;
+   245→        --text-secondary: #3b82f6;
+   246→        --accent-color: #2563eb;
+   247→        --accent-glow: rgba(37, 99, 235, 0.2);
+   248→        --progress-bg: #e0f2fe;
+   249→        --btn-accent-bg: #f0f9ff;
+   250→        --btn-accent-border: #bae6fd;
+   251→        --font-family: "Golos Text", sans-serif;
+   252→        --preview-bg: #f4f9fd;
+   253→        --cta-text-color: #1e3a5f;
+   254→      }
+   255→      [data-theme="terracotta-clay"] {
+   256→        --card-bg: #ffffff;
+   257→        --card-border: #fad7c4;
+   258→        --card-shadow: 0 10px 25px -5px rgba(180, 83, 9, 0.06);
+   259→        --text-primary: #5c2e1a;
+   260→        --text-secondary: #9c4221;
+   261→        --accent-color: #c2410c;
+   262→        --accent-glow: rgba(194, 65, 12, 0.2);
+   263→        --progress-bg: #ffedd5;
+   264→        --btn-accent-bg: #fff7ed;
+   265→        --btn-accent-border: #fdba74;
+   266→        --font-family: "Golos Text", sans-serif;
+   267→        --preview-bg: #fef5ee;
+   268→        --cta-text-color: #5c2e1a;
+   269→      }
+   270→      [data-theme="candy-pop"] {
+   271→        --card-bg: #ffffff;
+   272→        --card-border: #f9a8d4;
+   273→        --card-shadow: 0 15px 30px -8px rgba(236, 72, 153, 0.1);
+   274→        --text-primary: #831843;
+   275→        --text-secondary: #be185d;
+   276→        --accent-color: #ec4899;
+   277→        --accent-glow: rgba(236, 72, 153, 0.25);
+   278→        --progress-bg: #fce7f3;
+   279→        --btn-accent-bg: #fff5fb;
+   280→        --btn-accent-border: #f9a8d4;
+   281→        --font-family: "Manrope", sans-serif;
+   282→        --preview-bg: #fdf2f8;
+   283→        --cta-text-color: #831843;
+   284→      }
+   285→      [data-theme="seafoam-mist"] {
+   286→        --card-bg: #ffffff;
+   287→        --card-border: #ccfbf1;
+   288→        --card-shadow: 0 12px 25px -5px rgba(15, 118, 110, 0.06);
+   289→        --text-primary: #134e4a;
+   290→        --text-secondary: #115e59;
+   291→        --accent-color: #0d9488;
+   292→        --accent-glow: rgba(13, 148, 136, 0.2);
+   293→        --progress-bg: #e6fffa;
+   294→        --btn-accent-bg: #f0fdfa;
+   295→        --btn-accent-border: #99f6e4;
+   296→        --font-family: "Golos Text", sans-serif;
+   297→        --preview-bg: #f0fdfa;
+   298→        --cta-text-color: #134e4a;
+   299→      }
+   300→      [data-theme="retro-diner"] {
+   301→        --card-bg: #ffffff;
+   302→        --card-border: #fecaca;
+   303→        --card-shadow: 0 10px 20px -4px rgba(185, 28, 28, 0.08);
+   304→        --text-primary: #450a0a;
+   305→        --text-secondary: #b91c1c;
+   306→        --accent-color: #dc2626;
+   307→        --accent-glow: rgba(220, 38, 38, 0.25);
+   308→        --progress-bg: #fee2e2;
+   309→        --btn-accent-bg: #fef2f2;
+   310→        --btn-accent-border: #fca5a5;
+   311→        --font-family: "Golos Text", sans-serif;
+   312→        --preview-bg: #fef2f2;
+   313→        --cta-text-color: #450a0a;
+   314→      }
+   315→      [data-theme="blush-nude"] {
+   316→        --card-bg: #ffffff;
+   317→        --card-border: #f7d6d4;
+   318→        --card-shadow: 0 10px 25px -5px rgba(190, 18, 60, 0.04);
+   319→        --text-primary: #4c1d2c;
+   320→        --text-secondary: #9d174d;
+   321→        --accent-color: #be123c;
+   322→        --accent-glow: rgba(190, 18, 60, 0.15);
+   323→        --progress-bg: #fce4ec;
+   324→        --btn-accent-bg: #fff5f6;
+   325→        --btn-accent-border: #f9a8d4;
+   326→        --font-family: "Lora", Georgia, serif;
+   327→        --preview-bg: #fdf2f0;
+   328→        --cta-text-color: #4c1d2c;
+   329→      }
+   330→      [data-theme="peach-fuzz"] {
+   331→        --card-bg: #ffffff;
+   332→        --card-border: #ffd8c5;
+   333→        --card-shadow: 0 12px 25px -5px rgba(255, 125, 82, 0.08);
+   334→        --text-primary: #5c2e1a;
+   335→        --text-secondary: #9c4221;
+   336→        --accent-color: #ff7d52;
+   337→        --accent-glow: rgba(255, 125, 82, 0.25);
+   338→        --progress-bg: #ffede5;
+   339→        --btn-accent-bg: #fffaf7;
+   340→        --btn-accent-border: #ffbba3;
+   341→        --font-family: "Manrope", sans-serif;
+   342→        --preview-bg: #fff3ec;
+   343→        --cta-text-color: #5c2e1a;
+   344→      }
+   345→      [data-theme="monochrome-graphite"] {
+   346→        --card-bg: #ffffff;
+   347→        --card-border: #e5e5e5;
+   348→        --card-shadow: 0 10px 20px -4px rgba(0, 0, 0, 0.04);
+   349→        --text-primary: #171717;
+   350→        --text-secondary: #525252;
+   351→        --accent-color: #404040;
+   352→        --accent-glow: rgba(64, 64, 64, 0.1);
+   353→        --progress-bg: #e5e5e5;
+   354→        --btn-accent-bg: #fafafa;
+   355→        --btn-accent-border: #d4d4d4;
+   356→        --font-family: "Golos Text", sans-serif;
+   357→        --preview-bg: #f8f8f8;
+   358→        --cta-text-color: #171717;
+   359→      }
+   360→      [data-theme="cotton-candy"] {
+   361→        --card-bg: #ffffff;
+   362→        --card-border: #bfdbfe;
+   363→        --card-shadow: 0 12px 25px -5px rgba(219, 39, 119, 0.06);
+   364→        --text-primary: #831843;
+   365→        --text-secondary: #9d174d;
+   366→        --accent-color: #3b82f6;
+   367→        --accent-glow: rgba(59, 130, 246, 0.2);
+   368→        --progress-bg: #fce7f3;
+   369→        --btn-accent-bg: #fff5fb;
+   370→        --btn-accent-border: #f9a8d4;
+   371→        --font-family: "Golos Text", sans-serif;
+   372→        --preview-bg: #fdf2f8;
+   373→        --cta-text-color: #831843;
+   374→      }
+   375→      [data-theme="creamy-vanilla"] {
+   376→        --card-bg: #ffffff;
+   377→        --card-border: #fde68a;
+   378→        --card-shadow: 0 10px 20px -4px rgba(133, 77, 14, 0.06);
+   379→        --text-primary: #422006;
+   380→        --text-secondary: #854d0e;
+   381→        --accent-color: #ca8a04;
+   382→        --accent-glow: rgba(202, 138, 4, 0.2);
+   383→        --progress-bg: #fef9c3;
+   384→        --btn-accent-bg: #fefce8;
+   385→        --btn-accent-border: #fde047;
+   386→        --font-family: "Golos Text", sans-serif;
+   387→        --preview-bg: #fefce8;
+   388→        --cta-text-color: #422006;
+   389→      }
+   390→      [data-theme="spearmint-fresh"] {
+   391→        --card-bg: #ffffff;
+   392→        --card-border: #a7f3d0;
+   393→        --card-shadow: 0 10px 25px -5px rgba(4, 120, 87, 0.05);
+   394→        --text-primary: #064e3b;
+   395→        --text-secondary: #047857;
+   396→        --accent-color: #059669;
+   397→        --accent-glow: rgba(5, 150, 105, 0.2);
+   398→        --progress-bg: #d1fae5;
+   399→        --btn-accent-bg: #ecfdf5;
+   400→        --btn-accent-border: #6ee7b7;
+   401→        --font-family: "Manrope", sans-serif;
+   402→        --preview-bg: #f0fdf4;
+   403→        --cta-text-color: #064e3b;
+   404→      }
+   405→      [data-theme="vintage-sepia"] {
+   406→        --card-bg: #ffffff;
+   407→        --card-border: #f0e1cc;
+   408→        --card-shadow: 0 12px 24px -6px rgba(120, 80, 50, 0.08);
+   409→        --text-primary: #3b2f2f;
+   410→        --text-secondary: #6b5a4e;
+   411→        --accent-color: #b78460;
+   412→        --accent-glow: rgba(183, 132, 96, 0.25);
+   413→        --progress-bg: #f3e8da;
+   414→        --btn-accent-bg: #fdf9f3;
+   415→        --btn-accent-border: #e2cfb5;
+   416→        --font-family: "Lora", Georgia, serif;
+   417→        --preview-bg: #f9f4eb;
+   418→        --cta-text-color: #3b2f2f;
+   419→      }
+   420→      [data-theme="aquamarine-dream"] {
+   421→        --card-bg: #ffffff;
+   422→        --card-border: #b2f5ea;
+   423→        --card-shadow: 0 15px 30px -8px rgba(13, 148, 136, 0.08);
+   424→        --text-primary: #134e4a;
+   425→        --text-secondary: #0f766e;
+   426→        --accent-color: #0d9488;
+   427→        --accent-glow: rgba(13, 148, 136, 0.25);
+   428→        --progress-bg: #ccfbf1;
+   429→        --btn-accent-bg: #f0fdfa;
+   430→        --btn-accent-border: #5eead4;
+   431→        --font-family: "Golos Text", sans-serif;
+   432→        --preview-bg: #e6fffa;
+   433→        --cta-text-color: #134e4a;
+   434→      }
+   435→      [data-theme="honey-glaze"] {
+   436→        --card-bg: #ffffff;
+   437→        --card-border: #fde68a;
+   438→        --card-shadow: 0 10px 25px -5px rgba(180, 83, 9, 0.05);
+   439→        --text-primary: #78350f;
+   440→        --text-secondary: #92400e;
+   441→        --accent-color: #f59e0b;
+   442→        --accent-glow: rgba(245, 158, 11, 0.25);
+   443→        --progress-bg: #fef3c7;
+   444→        --btn-accent-bg: #fffdf0;
+   445→        --btn-accent-border: #fcd34d;
+   446→        --font-family: "Golos Text", sans-serif;
+   447→        --preview-bg: #fffbeb;
+   448→        --cta-text-color: #78350f;
+   449→      }
+   450→      [data-theme="nordic-fjord"] {
+   451→        --card-bg: #ffffff;
+   452→        --card-border: #cbd5e1;
+   453→        --card-shadow: 0 12px 28px -8px rgba(30, 41, 59, 0.08);
+   454→        --text-primary: #0f172a;
+   455→        --text-secondary: #334155;
+   456→        --accent-color: #475569;
+   457→        --accent-glow: rgba(71, 85, 105, 0.15);
+   458→        --progress-bg: #e2e8f0;
+   459→        --btn-accent-bg: #f8fafc;
+   460→        --btn-accent-border: #94a3b8;
+   461→        --font-family: "Golos Text", sans-serif;
+   462→        --preview-bg: #f1f5f9;
+   463→        --cta-text-color: #0f172a;
+   464→      }
+   465→      [data-theme="coral-reef"] {
+   466→        --card-bg: #ffffff;
+   467→        --card-border: #ffd4cc;
+   468→        --card-shadow: 0 12px 25px -5px rgba(255, 107, 107, 0.08);
+   469→        --text-primary: #5c1a1a;
+   470→        --text-secondary: #c0392b;
+   471→        --accent-color: #ff6b6b;
+   472→        --accent-glow: rgba(255, 107, 107, 0.3);
+   473→        --progress-bg: #ffe0dc;
+   474→        --btn-accent-bg: #fffafa;
+   475→        --btn-accent-border: #ffb3a7;
+   476→        --font-family: "Manrope", sans-serif;
+   477→        --preview-bg: #fff5f3;
+   478→        --cta-text-color: #5c1a1a;
+   479→      }
+   480→      [data-theme="zen-garden"] {
+   481→        --card-bg: #ffffff;
+   482→        --card-border: #e8e0d5;
+   483→        --card-shadow: 0 12px 25px -5px rgba(100, 80, 60, 0.05);
+   484→        --text-primary: #3b3229;
+   485→        --text-secondary: #6e6255;
+   486→        --accent-color: #8b7355;
+   487→        --accent-glow: rgba(139, 115, 85, 0.15);
+   488→        --progress-bg: #f2ece4;
+   489→        --btn-accent-bg: #fcfaf7;
+   490→        --btn-accent-border: #d4c8b6;
+   491→        --font-family: "Lora", Georgia, serif;
+   492→        --preview-bg: #f9f6f0;
+   493→        --cta-text-color: #3b3229;
+   494→      }
+   495→
+   496→      [data-theme="midnight-plum"] {
+   497→        --card-bg: #2a2538;
+   498→        --card-border: #3b334a;
+   499→        --card-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.6);
+   500→        --text-primary: #f5f3ff;
+   501→        --text-secondary: #c4b5fd;
+   502→        --accent-color: #a78bfa;
+   503→        --accent-glow: rgba(167, 139, 250, 0.3);
+   504→        --progress-bg: #3b334a;
+   505→        --btn-accent-bg: #312c42;
+   506→        --btn-accent-border: #4c4262;
+   507→        --font-family: "Golos Text", sans-serif;
+   508→        --preview-bg: #12101c;
+   509→        --cta-text-color: #ffffff;
+   510→      }
+   511→      [data-theme="forest-canopy"] {
+   512→        --card-bg: #122e1c;
+   513→        --card-border: #1b4028;
+   514→        --card-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.7);
+   515→        --text-primary: #ecfdf5;
+   516→        --text-secondary: #6ee7b7;
+   517→        --accent-color: #34d399;
+   518→        --accent-glow: rgba(52, 211, 153, 0.4);
+   519→        --progress-bg: #1b4028;
+   520→        --btn-accent-bg: #173a22;
+   521→        --btn-accent-border: #225c33;
+   522→        --font-family: "Golos Text", sans-serif;
+   523→        --preview-bg: #071a0e;
+   524→        --cta-text-color: #ffffff;
+   525→      }
+   526→      [data-theme="charcoal-crimson"] {
+   527→        --card-bg: #1f1f23;
+   528→        --card-border: #2e2e33;
+   529→        --card-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.7);
+   530→        --text-primary: #ffe4e6;
+   531→        --text-secondary: #f9a8d4;
+   532→        --accent-color: #e11d48;
+   533→        --accent-glow: rgba(225, 29, 72, 0.4);
+   534→        --progress-bg: #2e2e33;
+   535→        --btn-accent-bg: #27272a;
+   536→        --btn-accent-border: #3f3f46;
+   537→        --font-family: "Golos Text", sans-serif;
+   538→        --preview-bg: #0c0c0e;
+   539→        --cta-text-color: #ffffff;
+   540→      }
+   541→      [data-theme="electric-violet"] {
+   542→        --card-bg: #130f26;
+   543→        --card-border: #221c3d;
+   544→        --card-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.7);
+   545→        --text-primary: #f5f3ff;
+   546→        --text-secondary: #a78bfa;
+   547→        --accent-color: #8b5cf6;
+   548→        --accent-glow: rgba(139, 92, 246, 0.5);
+   549→        --progress-bg: #221c3d;
+   550→        --btn-accent-bg: #1a1533;
+   551→        --btn-accent-border: #2e2750;
+   552→        --font-family: "Golos Text", sans-serif;
+   553→        --preview-bg: #070510;
+   554→        --cta-text-color: #ffffff;
+   555→      }
+   556→      [data-theme="noir-ink"] {
+   557→        --card-bg: #141414;
+   558→        --card-border: #262626;
+   559→        --card-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.8);
+   560→        --text-primary: #f5f5f5;
+   561→        --text-secondary: #a3a3a3;
+   562→        --accent-color: #ffffff;
+   563→        --accent-glow: rgba(255, 255, 255, 0.1);
+   564→        --progress-bg: #262626;
+   565→        --btn-accent-bg: #1f1f1f;
+   566→        --btn-accent-border: #404040;
+   567→        --font-family: "Golos Text", sans-serif;
+   568→        --preview-bg: #000000;
+   569→        --cta-text-color: #ffffff;
+   570→      }
+   571→      [data-theme="warm-amber"] {
+   572→        --card-bg: #2a1f10;
+   573→        --card-border: #3d2e1a;
+   574→        --card-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.7);
+   575→        --text-primary: #fef9c3;
+   576→        --text-secondary: #fcd34d;
+   577→        --accent-color: #f59e0b;
+   578→        --accent-glow: rgba(245, 158, 11, 0.5);
+   579→        --progress-bg: #3d2e1a;
+   580→        --btn-accent-bg: #352615;
+   581→        --btn-accent-border: #554022;
+   582→        --font-family: "Golos Text", sans-serif;
+   583→        --preview-bg: #110c04;
+   584→        --cta-text-color: #ffffff;
+   585→      }
+   586→      [data-theme="slate-blue"] {
+   587→        --card-bg: #1e293b;
+   588→        --card-border: #334155;
+   589→        --card-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.6);
+   590→        --text-primary: #f8fafc;
+   591→        --text-secondary: #94a3b8;
+   592→        --accent-color: #60a5fa;
+   593→        --accent-glow: rgba(96, 165, 250, 0.3);
+   594→        --progress-bg: #334155;
+   595→        --btn-accent-bg: #1e293b;
+   596→        --btn-accent-border: #475569;
+   597→        --font-family: "Golos Text", sans-serif;
+   598→        --preview-bg: #020617;
+   599→        --cta-text-color: #ffffff;
+   600→      }
+   601→      [data-theme="cyber-lime"] {
+   602→        --card-bg: #141c14;
+   603→        --card-border: #233323;
+   604→        --card-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.7);
+   605→        --text-primary: #ecfdf5;
+   606→        --text-secondary: #6ee7b7;
+   607→        --accent-color: #10b981;
+   608→        --accent-glow: rgba(16, 185, 129, 0.5);
+   609→        --progress-bg: #233323;
+   610→        --btn-accent-bg: #1a281a;
+   611→        --btn-accent-border: #2d442d;
+   612→        --font-family: "Golos Text", sans-serif;
+   613→        --preview-bg: #030503;
+   614→        --cta-text-color: #ffffff;
+   615→      }
+   616→      [data-theme="sunset-boulevard"] {
+   617→        --card-bg: #251937;
+   618→        --card-border: #38234f;
+   619→        --card-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.6);
+   620→        --text-primary: #fdf4ff;
+   621→        --text-secondary: #d8b4fe;
+   622→        --accent-color: #f97316;
+   623→        --accent-glow: rgba(249, 115, 22, 0.4);
+   624→        --progress-bg: #38234f;
+   625→        --btn-accent-bg: #2d1f42;
+   626→        --btn-accent-border: #4b3068;
+   627→        --font-family: "Golos Text", sans-serif;
+   628→        --preview-bg: #0f0718;
+   629→        --cta-text-color: #ffffff;
+   630→      }
+   631→      [data-theme="moss-bark"] {
+   632→        --card-bg: #252b20;
+   633→        --card-border: #36402e;
+   634→        --card-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.7);
+   635→        --text-primary: #f7f7ee;
+   636→        --text-secondary: #b6c4a2;
+   637→        --accent-color: #84cc16;
+   638→        --accent-glow: rgba(132, 204, 22, 0.3);
+   639→        --progress-bg: #36402e;
+   640→        --btn-accent-bg: #2d3626;
+   641→        --btn-accent-border: #455638;
+   642→        --font-family: "Golos Text", sans-serif;
+   643→        --preview-bg: #0e110c;
+   644→        --cta-text-color: #ffffff;
+   645→      }
+   646→      [data-theme="espresso-shot"] {
+   647→        --card-bg: #261e17;
+   648→        --card-border: #3b2e23;
+   649→        --card-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.8);
+   650→        --text-primary: #faf7f5;
+   651→        --text-secondary: #c1a18a;
+   652→        --accent-color: #d4a373;
+   653→        --accent-glow: rgba(212, 163, 115, 0.4);
+   654→        --progress-bg: #3b2e23;
+   655→        --btn-accent-bg: #2f241b;
+   656→        --btn-accent-border: #4c3b2e;
+   657→        --font-family: "Lora", Georgia, serif;
+   658→        --preview-bg: #0c0906;
+   659→        --cta-text-color: #ffffff;
+   660→      }
+   661→      [data-theme="electric-blue"] {
+   662→        --card-bg: #0f172a;
+   663→        --card-border: #1e293b;
+   664→        --card-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.7);
+   665→        --text-primary: #f0f9ff;
+   666→        --text-secondary: #7dd3fc;
+   667→        --accent-color: #0ea5e9;
+   668→        --accent-glow: rgba(14, 165, 233, 0.5);
+   669→        --progress-bg: #1e293b;
+   670→        --btn-accent-bg: #1e293b;
+   671→        --btn-accent-border: #334155;
+   672→        --font-family: "Golos Text", sans-serif;
+   673→        --preview-bg: #000000;
+   674→        --cta-text-color: #ffffff;
+   675→      }
+   676→      [data-theme="twilight-violet"] {
+   677→        --card-bg: #241c35;
+   678→        --card-border: #362a4a;
+   679→        --card-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.6);
+   680→        --text-primary: #f5f3ff;
+   681→        --text-secondary: #c4b5fd;
+   682→        --accent-color: #a78bfa;
+   683→        --accent-glow: rgba(167, 139, 250, 0.4);
+   684→        --progress-bg: #362a4a;
+   685→        --btn-accent-bg: #2d2340;
+   686→        --btn-accent-border: #47385d;
+   687→        --font-family: "Golos Text", sans-serif;
+   688→        --preview-bg: #0e0a16;
+   689→        --cta-text-color: #ffffff;
+   690→      }
+   691→      [data-theme="plum-velvet"] {
+   692→        --card-bg: #281828;
+   693→        --card-border: #3d223d;
+   694→        --card-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.7);
+   695→        --text-primary: #fdf2fa;
+   696→        --text-secondary: #e2b8d8;
+   697→        --accent-color: #c026d3;
+   698→        --accent-glow: rgba(192, 38, 211, 0.4);
+   699→        --progress-bg: #3d223d;
+   700→        --btn-accent-bg: #311f31;
+   701→        --btn-accent-border: #4e2b4e;
+   702→        --font-family: "Golos Text", sans-serif;
+   703→        --preview-bg: #0f070f;
+   704→        --cta-text-color: #ffffff;
+   705→      }
+   706→      [data-theme="neon-noir"] {
+   707→        --card-bg: #18181b;
+   708→        --card-border: #27272a;
+   709→        --card-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.9);
+   710→        --text-primary: #ffe4e6;
+   711→        --text-secondary: #f9a8d4;
+   712→        --accent-color: #ec4899;
+   713→        --accent-glow: rgba(236, 72, 153, 0.6);
+   714→        --progress-bg: #27272a;
+   715→        --btn-accent-bg: #1e1e22;
+   716→        --btn-accent-border: #3b3b40;
+   717→        --font-family: "Golos Text", sans-serif;
+   718→        --preview-bg: #000000;
+   719→        --cta-text-color: #ffffff;
+   720→      }
+   721→      [data-theme="galaxy-core"] {
+   722→        --card-bg: #151225;
+   723→        --card-border: #232044;
+   724→        --card-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.8);
+   725→        --text-primary: #eef2ff;
+   726→        --text-secondary: #a5b4fc;
+   727→        --accent-color: #6366f1;
+   728→        --accent-glow: rgba(99, 102, 241, 0.5);
+   729→        --progress-bg: #232044;
+   730→        --btn-accent-bg: #1b1832;
+   731→        --btn-accent-border: #2e2a54;
+   732→        --font-family: "Golos Text", sans-serif;
+   733→        --preview-bg: #04030a;
+   734→        --cta-text-color: #ffffff;
+   735→      }
+   736→      [data-theme="midnight-forest"] {
+   737→        --card-bg: #15281f;
+   738→        --card-border: #1f3b2d;
+   739→        --card-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.7);
+   740→        --text-primary: #ecfdf5;
+   741→        --text-secondary: #6ee7b7;
+   742→        --accent-color: #059669;
+   743→        --accent-glow: rgba(5, 150, 105, 0.4);
+   744→        --progress-bg: #1f3b2d;
+   745→        --btn-accent-bg: #1b3024;
+   746→        --btn-accent-border: #2a4a38;
+   747→        --font-family: "Golos Text", sans-serif;
+   748→        --preview-bg: #050e09;
+   749→        --cta-text-color: #ffffff;
+   750→      }
+   751→
+   752→      /* ================= РЕДАКТОР СИДЕБАР ================= */
+   753→      .editor-sidebar {
+   754→        --editor-bg: #ffffff;
+   755→        --editor-border: #e2e8f0;
+   756→        --editor-text: #0f172a;
+   757→        --editor-text-secondary: #475569;
+   758→        --editor-accent: #4f46e5;
+   759→
+   760→        background: var(--editor-bg);
+   761→        border-right: 1px solid var(--editor-border);
+   762→        color: var(--editor-text);
+   763→        width: 340px;
+   764→        padding: 16px;
+   765→        display: flex;
+   766→        flex-direction: column;
+   767→        gap: 16px;
+   768→        transition: transform 0.3s ease, margin-left 0.3s ease;
+   769→      }
+   770→      .editor-sidebar.collapsed {
+   771→        transform: translateX(-340px) !important;
+   772→        margin-left: -340px !important;
+   773→      }
+   774→
+   775→      /* Кнопка toggle боковой панели */
+   776→      .toggle-sidebar-btn {
+   777→        position: fixed;
+   778→        top: 16px;
+   779→        left: 16px;
+   780→        z-index: 3000;
+   781→        background: #4f46e5;
+   782→        color: white;
+   783→        border: none;
+   784→        width: 44px;
+   785→        height: 44px;
+   786→        border-radius: 8px;
+   787→        font-size: 20px;
+   788→        cursor: pointer;
+   789→        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+   790→        transition: all 0.3s ease;
+   791→        display: flex;
+   792→        align-items: center;
+   793→        justify-content: center;
+   794→      }
+   795→      .toggle-sidebar-btn:hover {
+   796→        background: #4338ca;
+   797→        transform: translateY(-2px);
+   798→      }
+   799→      .toggle-sidebar-btn.collapsed {
+   800→        left: 16px;
+   801→      }
+   802→
+   803→      .editor-title {
+   804→        font-size: 20px;
+   805→        font-weight: 700;
+   806→        margin: 0;
+   807→        color: #4f46e5;
+   808→        display: flex;
+   809→        align-items: center;
+   810→        gap: 8px;
+   811→      }
+   812→      .card-editor-block {
+   813→        background: #ffffff;
+   814→        border: 1px solid #e2e8f0;
+   815→        border-radius: 12px;
+   816→        padding: 16px;
+   817→        display: flex;
+   818→        flex-direction: column;
+   819→        gap: 12px;
+   820→      }
+   821→      .card-editor-header {
+   822→        display: flex;
+   823→        justify-content: space-between;
+   824→        align-items: center;
+   825→        border-bottom: 1px solid #e2e8f0;
+   826→        padding-bottom: 8px;
+   827→      }
+   828→      .card-editor-header h3 {
+   829→        margin: 0;
+   830→        font-size: 15px;
+   831→        color: #0f172a;
+   832→      }
+   833→      .card-editor-actions {
+   834→        display: flex;
+   835→        gap: 6px;
+   836→        align-items: center;
+   837→      }
+   838→      .btn-icon,
+   839→      .btn-delete,
+   840→      .btn-add {
+   841→        font-family: inherit;
+   842→        transition: all 0.2s;
+   843→      }
+   844→      .btn-icon {
+   845→        background: #f8fafc;
+   846→        color: #475569;
+   847→        border: 1px solid #cbd5e1;
+   848→        padding: 4px 8px;
+   849→        border-radius: 6px;
+   850→        font-size: 12px;
+   851→        cursor: pointer;
+   852→        font-weight: 600;
+   853→      }
+   854→      .btn-icon:hover {
+   855→        background: #e2e8f0;
+   856→      }
+   857→      .btn-palette {
+   858→        background: #e0e7ff;
+   859→        color: #4338ca;
+   860→        border: 1px solid #c7d2fe;
+   861→      }
+   862→      .btn-palette:hover {
+   863→        background: #c7d2fe;
+   864→      }
+   865→      .btn-delete {
+   866→        background: rgba(239, 68, 68, 0.13);
+   867→        color: #dc2626;
+   868→        border: 1px solid rgba(239, 68, 68, 0.27);
+   869→        padding: 4px 10px;
+   870→        border-radius: 6px;
+   871→        font-size: 12px;
+   872→        cursor: pointer;
+   873→        font-weight: 600;
+   874→      }
+   875→      .btn-add {
+   876→        background: #f8fafc;
+   877→        color: #4f46e5;
+   878→        border: 1px dashed #4f46e5;
+   879→        padding: 14px;
+   880→        border-radius: 12px;
+   881→        font-size: 14px;
+   882→        font-weight: 600;
+   883→        cursor: pointer;
+   884→        text-align: center;
+   885→      }
+   886→      .btn-add:hover {
+   887→        background: rgba(79, 70, 229, 0.08);
+   888→      }
+   889→      .form-group {
+   890→        display: flex;
+   891→        flex-direction: column;
+   892→        gap: 4px;
+   893→      }
+   894→      .form-group label {
+   895→        color: #475569;
+   896→        font-size: 12px;
+   897→        font-weight: 600;
+   898→      }
+   899→
+   900→      input[type="text"],
+   901→      textarea,
+   902→      select {
+   903→        background: #f1f5f9;
+   904→        border: 1px solid #e2e8f0;
+   905→        border-radius: 8px;
+   906→        padding: 9px 12px;
+   907→        font-family: inherit;
+   908→        font-size: 13px;
+   909→        color: #0f172a;
+   910→        outline: none;
+   911→        transition: border-color 0.2s;
+   912→        word-wrap: break-word;
+   913→        overflow-wrap: break-word;
+   914→        white-space: normal;
+   915→      }
+   916→      input[type="text"]:focus,
+   917→      textarea:focus,
+   918→      select:focus {
+   919→        border-color: #4f46e5;
+   920→      }
+   921→      textarea {
+   922→        resize: vertical;
+   923→        min-height: 60px;
+   924→      }
+   925→
+   926→      /* ================= ПРЕВЬЮ ВОРКСПЕЙС ================= */
+   927→      * {
+   928→        box-sizing: border-box;
+   929→      }
+   930→      body {
+   931→        margin: 0;
+   932→        padding: 0;
+   933→        background: #f1f5f9;
+   934→        font-family:
+   935→          "Golos Text",
+   936→          -apple-system,
+   937→          sans-serif;
+   938→        color: #0f172a;
+   939→        display: flex;
+   940→        min-height: 100vh;
+   941→      }
+   942→      .app-layout {
+   943→        display: flex;
+   944→        gap: 24px;
+   945→        padding: 24px;
+   946→        max-width: 1400px;
+   947→        margin: 0 auto;
+   948→        min-height: 100vh;
+   949→        align-items: flex-start;
+   950→      }
+   951→
+   952→      .preview-workspace {
+   953→        flex: 1;
+   954→        display: flex;
+   955→        flex-direction: column;
+   956→        gap: 16px;
+   957→        min-width: 0;
+   958→        transition: margin-right 0.3s ease;
+   959→      }
+   960→      .preview-workspace.modal-open {
+   961→        margin-right: 320px;
+   962→      }
+   963→      .workspace-header {
+   964→        display: flex;
+   965→        justify-content: space-between;
+   966→        align-items: center;
+   967→        width: 100%;
+   968→        max-width: 1200px;
+   969→        flex-wrap: wrap;
+   970→        gap: 16px;
+   971→      }
+   972→      .cards-container {
+   973→        display: flex;
+   974→        flex-wrap: wrap;
+   975→        justify-content: center;
+   976→        gap: 32px;
+   977→        width: 100%;
+   978→      }
+   979→      .card-wrapper {
+   980→        display: flex;
+   981→        flex-direction: column;
+   982→        align-items: center;
+   983→        gap: 12px;
+   984→      }
+   985→
+   986→      /* ================= КАРТОЧКА С ОСТРЫМИ УГЛАМИ ================= */
+   987→      .card {
+   988→        background-color: var(--card-bg);
+   989→        border: 1px solid var(--card-border);
+   990→        border-radius: 0 !important; /* Убирает скругление и устраняет баг вылезающего прозрачного фона */
+   991→        padding: 32px;
+   992→        width: 380px;
+   993→        box-shadow: var(--card-shadow);
+   994→        display: flex;
+   995→        flex-direction: column;
+   996→        gap: 16px;
+   997→        position: relative;
+   998→        font-family: var(--font-family);
+   999→        transition: all 0.25s ease;
+  1000→      }
+  1001→
+  1002→      /* Форматы карточек */
+  1003→      .card[data-format="aspect-4-5"] {
+  1004→        min-height: 475px;
+  1005→        justify-content: space-between;
+  1006→      }
+  1007→      .card[data-format="aspect-9-16"] {
+  1008→        min-height: 675px;
+  1009→        justify-content: space-between;
+  1010→      }
+  1011→
+  1012→      .progress {
+  1013→        width: 100%;
+  1014→        height: 4px;
+  1015→        background-color: var(--progress-bg);
+  1016→        border-radius: 0px;
+  1017→        overflow: hidden;
+  1018→        margin-bottom: -4px;
+  1019→      }
+  1020→      .progress-fill {
+  1021→        height: 100%;
+  1022→        background-color: var(--accent-color);
+  1023→        box-shadow: 0 0 10px var(--accent-glow);
+  1024→        transition: width 0.3s;
+  1025→      }
+  1026→      .tag {
+  1027→        display: flex;
+  1028→        justify-content: space-between;
+  1029→        align-items: center;
+  1030→        font-size: 12px;
+  1031→        color: var(--text-secondary);
+  1032→        font-weight: 600;
+  1033→        letter-spacing: 0.05em;
+  1034→      }
+  1035→
+  1036→      /* Элементы текста */
+  1037→      .card-title {
+  1038→        font-size: 22px;
+  1039→        font-weight: 700;
+  1040→        line-height: 1.35;
+  1041→        color: var(--text-primary);
+  1042→        margin: 0;
+  1043→        word-break: break-word;
+  1044→      }
+  1045→      .card-subtitle {
+  1046→        font-size: 16px;
+  1047→        font-weight: 600;
+  1048→        line-height: 1.45;
+  1049→        color: var(--accent-color);
+  1050→        margin: 0;
+  1051→        word-break: break-word;
+  1052→      }
+  1053→      .card-text {
+  1054→        font-size: 15px;
+  1055→        line-height: 1.55;
+  1056→        color: var(--text-secondary);
+  1057→        margin: 0;
+  1058→        word-break: break-word;
+  1059→      }
+  1060→
+  1061→      /* ================= ИСПРАВЛЕННЫЙ СПИСОК (устраняет наложение при скачивании) ================= */
+  1062→      .card-list {
+  1063→        list-style: none;
+  1064→        padding: 0;
+  1065→        margin: 0;
+  1066→        display: block;
+  1067→        width: 100%;
+  1068→      }
+  1069→      .card-list-item {
+  1070→        display: block;
+  1071→        position: relative;
+  1072→        padding-left: 28px; /* Фиксированный отступ слева под номер */
+  1073→        font-size: 14px;
+  1074→        line-height: 1.5;
+  1075→        color: var(--text-secondary);
+  1076→        margin-bottom: 12px;
+  1077→      }
+  1078→      .card-list-item:last-child {
+  1079→        margin-bottom: 0;
+  1080→      }
+  1081→      .card-list-num {
+  1082→        position: absolute; /* Номер позиционируется слева от текста */
+  1083→        left: 0;
+  1084→        top: 0;
+  1085→        color: var(--accent-color);
+  1086→        font-weight: 700;
+  1087→        line-height: 1.5;
+  1088→      }
+  1089→      .card-list-num[data-custom-color] {
+  1090→        color: var(--custom-color) !important;
+  1091→      }
+  1092→      .card-list-text {
+  1093→        display: block;
+  1094→        word-break: break-word;
+  1095→        overflow-wrap: anywhere;
+  1096→        line-height: 1.5;
+  1097→      }
+  1098→
+  1099→      .card-footer-text {
+  1100→        padding-top: 14px;
+  1101→        border-top: 1px solid var(--card-border);
+  1102→        font-size: 14px;
+  1103→        font-weight: 600;
+  1104→        line-height: 1.4;
+  1105→        color: var(--accent-color);
+  1106→        word-break: break-word;
+  1107→      }
+  1108→
+  1109→      .accent-btn {
+  1110→        background-color: var(--btn-accent-bg);
+  1111→        border: 1px solid var(--btn-accent-border);
+  1112→        border-radius: 0px;
+  1113→        padding: 12px 16px;
+  1114→        text-align: center;
+  1115→        color: var(--cta-text-color);
+  1116→        font-weight: 700;
+  1117→        font-size: 14px;
+  1118→        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  1119→        word-break: break-word;
+  1120→      }
+  1121→
+  1122→      .card-actions {
+  1123→        display: flex;
+  1124→        gap: 8px;
+  1125→      }
+  1126→      button.btn-primary {
+  1127→        background: var(--accent-color);
+  1128→        color: white;
+  1129→        border: none;
+  1130→        padding: 12px 24px;
+  1131→        border-radius: 8px;
+  1132→        font-size: 14px;
+  1133→        font-weight: 700;
+  1134→        cursor: pointer;
+  1135→      }
+  1136→      button.btn-primary:hover {
+  1137→        filter: brightness(1.1);
+  1138→      }
+  1139→      button.btn-card-action {
+  1140→        background: var(--btn-accent-bg);
+  1141→        color: var(--text-secondary);
+  1142→        border: 1px solid var(--btn-accent-border);
+  1143→        padding: 8px 12px;
+  1144→        border-radius: 6px;
+  1145→        font-size: 12px;
+  1146→        font-weight: 600;
+  1147→        cursor: pointer;
+  1148→        transition: all 0.2s;
+  1149→      }
+  1150→      button.btn-card-action:hover {
+  1151→        background: var(--card-border);
+  1152→      }
+  1153→
+  1154→      hr {
+  1155→        border: 0;
+  1156→        border-top: 1px solid #e2e8f0;
+  1157→        margin: 4px 0;
+  1158→      }
+  1159→
+  1160→      .toast {
+  1161→        position: fixed;
+  1162→        bottom: 20px;
+  1163→        right: 20px;
+  1164→        background: #0f172a;
+  1165→        color: white;
+  1166→        padding: 12px 20px;
+  1167→        border-radius: 8px;
+  1168→        font-size: 14px;
+  1169→        font-weight: 600;
+  1170→        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  1171→        opacity: 0;
+  1172→        pointer-events: none;
+  1173→        transition: opacity 0.3s ease;
+  1174→        z-index: 1000;
+  1175→      }
+  1176→      .toast.show {
+  1177→        opacity: 1;
+  1178→      }
+  1179→
+  1180→      /* ================= МОДАЛЬНОЕ ОКНО ПАЛИТРЫ ================= */
+  1181→      .modal-overlay {
+  1182→        position: fixed;
+  1183→        top: 0;
+  1184→        left: 0;
+  1185→        width: 100%;
+  1186→        height: 100%;
+  1187→        background: rgba(15, 23, 42, 0.1);
+  1188→        display: flex;
+  1189→        align-items: center;
+  1190→        justify-content: flex-end;
+  1191→        z-index: 2000;
+  1192→        opacity: 0;
+  1193→        pointer-events: none;
+  1194→        transition: opacity 0.25s ease;
+  1195→      }
+  1196→      .modal-overlay.active {
+  1197→        opacity: 1;
+  1198→      }
+  1199→      .modal-overlay.active .modal-card {
+  1200→        transform: translateX(0);
+  1201→        pointer-events: auto;
+  1202→      }
+  1203→      .modal-header {
+  1204→        display: flex;
+  1205→        justify-content: space-between;
+  1206→        align-items: center;
+  1207→        border-bottom: 1px solid #e2e8f0;
+  1208→        padding-bottom: 6px;
+  1209→      }
+  1210→      .modal-header h3 {
+  1211→        margin: 0;
+  1212→        font-size: 13px;
+  1213→        color: #0f172a;
+  1214→        font-weight: 700;
+  1215→      }
+  1216→      .modal-close {
+  1217→        background: transparent;
+  1218→        border: none;
+  1219→        font-size: 22px;
+  1220→        font-weight: bold;
+  1221→        color: #64748b;
+  1222→        cursor: pointer;
+  1223→        padding: 0 4px;
+  1224→        line-height: 1;
+  1225→      }
+  1226→      .modal-close:hover {
+  1227→        color: #0f172a;
+  1228→      }
+  1229→
+  1230→      .modal-card {
+  1231→        width: 320px;
+  1232→        max-width: calc(100vw - 16px);
+  1233→        max-height: 100vh;
+  1234→        overflow-y: auto;
+  1235→        overflow-x: hidden;
+  1236→        box-sizing: border-box;
+  1237→        transform: translateX(100%);
+  1238→        transition: transform 0.25s ease;
+  1239→      }
+  1240→
+  1241→      .color-picker-grid {
+  1242→        display: flex;
+  1243→        flex-direction: column;
+  1244→        gap: 8px;
+  1245→      }
+  1246→
+  1247→      /* Кликабельные строки настройки цветов */
+  1248→      .color-picker-row {
+  1249→        display: flex;
+  1250→        flex-direction: column;
+  1251→        align-items: stretch;
+  1252→        gap: 8px;
+  1253→        background: #f8fafc;
+  1254→        padding: 8px;
+  1255→        border-radius: 6px;
+  1256→        border: 2px solid transparent;
+  1257→        cursor: pointer;
+  1258→        transition: all 0.2s;
+  1259→      }
+  1260→      .color-picker-row:hover {
+  1261→        background: #f1f5f9;
+  1262→      }
+  1263→      .color-picker-row.selected {
+  1264→        border-color: #4f46e5;
+  1265→        background: #eef2ff;
+  1266→      }
+  1267→      .color-picker-label {
+  1268→        font-size: 11px;
+  1269→        font-weight: 600;
+  1270→        color: #334155;
+  1271→        flex: 1;
+  1272→      }
+  1273→      .color-picker-controls {
+  1274→        display: flex;
+  1275→        align-items: center;
+  1276→        gap: 4px;
+  1277→        flex-wrap: wrap;
+  1278→      }
+  1279→
+  1280→      input[type="color"].color-picker-input {
+  1281→        -webkit-appearance: none;
+  1282→        border: none;
+  1283→        width: 24px;
+  1284→        height: 24px;
+  1285→        border-radius: 4px;
+  1286→        cursor: pointer;
+  1287→        background: transparent;
+  1288→        padding: 0;
+  1289→      }
+  1290→      input[type="color"].color-picker-input::-webkit-color-swatch-wrapper {
+  1291→        padding: 0;
+  1292→      }
+  1293→      input[type="color"].color-picker-input::-webkit-color-swatch {
+  1294→        border: 1px solid #cbd5e1;
+  1295→        border-radius: 6px;
+  1296→      }
+  1297→      .color-hex-text {
+  1298→        font-size: 11px;
+  1299→        font-family: monospace;
+  1300→        color: #64748b;
+  1301→        width: 55px;
+  1302→        text-transform: uppercase;
+  1303→        text-align: right;
+  1304→      }
+  1305→      .btn-reset-single {
+  1306→        background: none;
+  1307→        border: none;
+  1308→        color: #94a3b8;
+  1309→        cursor: pointer;
+  1310→        font-size: 13px;
+  1311→        padding: 2px 6px;
+  1312→        border-radius: 4px;
+  1313→        font-weight: bold;
+  1314→      }
+  1315→      .btn-reset-single:hover {
+  1316→        color: #ef4444;
+  1317→        background: #fee2e2;
+  1318→      }
+  1319→
+  1320→      .palette-presets-section {
+  1321→        margin-bottom: 8px;
+  1322→        padding-bottom: 8px;
+  1323→        border-bottom: 1px solid #e2e8f0;
+  1324→      }
+  1325→      .palette-presets-title {
+  1326→        font-size: 10px;
+  1327→        font-weight: 600;
+  1328→        color: #64748b;
+  1329→        margin-bottom: 4px;
+  1330→        display: flex;
+  1331→        justify-content: space-between;
+  1332→        align-items: center;
+  1333→      }
+  1334→      .palette-presets-title span.active-target {
+  1335→        color: #4f46e5;
+  1336→        font-weight: 700;
+  1337→      }
+  1338→      .palette-swatches {
+  1339→        display: flex;
+  1340→        gap: 4px;
+  1341→        flex-wrap: wrap;
+  1342→      }
+  1343→      .color-swatch {
+  1344→        width: 18px;
+  1345→        height: 18px;
+  1346→        border-radius: 50%;
+  1347→        border: 2px solid #ffffff;
+  1348→        box-shadow: 0 0 0 1px #cbd5e1;
+  1349→        cursor: pointer;
+  1350→        transition: transform 0.15s;
+  1351→      }
+  1352→      .color-swatch:hover {
+  1353→        transform: scale(1.2);
+  1354→      }
+  1355→
+  1356→      .modal-footer {
+  1357→        display: flex;
+  1358→        justify-content: space-between;
+  1359→        gap: 6px;
+  1360→        border-top: 1px solid #e2e8f0;
+  1361→        padding-top: 6px;
+  1362→        margin-top: 4px;
+  1363→      }
+  1364→      .btn-secondary {
+  1365→        background: #f1f5f9;
+  1366→        color: #475569;
+  1367→        border: 1px solid #cbd5e1;
+  1368→        padding: 6px 12px;
+  1369→        border-radius: 6px;
+  1370→        font-weight: 600;
+  1371→        font-size: 11px;
+  1372→        cursor: pointer;
+  1373→      }
+  1374→      .btn-secondary:hover {
+  1375→        background: #e2e8f0;
+  1376→      }
+  1377→
+  1378→      @media (max-width: 900px) {
+  1379→        .app-layout {
+  1380→          flex-direction: column;
+  1381→        }
+  1382→        .editor-sidebar {
+  1383→          width: 100%;
+  1384→          max-height: none;
+  1385→        }
+  1386→      }
+  1387→
+  1388→      body {
+  1389→        overflow-x: hidden;
+  1390→      }
+  1391→
+  1392→      /* ================= ВСПЛЫВАЮЩЕЕ ОКНО НАСТРОЙКИ СЛОВА ================= */
+  1393→      .word-style-popup {
+  1394→        position: fixed;
+  1395→        background: #ffffff;
+  1396→        border: 1px solid #e2e8f0;
+  1397→        border-radius: 12px;
+  1398→        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  1399→        padding: 16px;
+  1400→        min-width: 280px;
+  1401→        z-index: 3000;
+  1402→        display: none;
+  1403→        animation: fadeIn 0.15s ease;
+  1404→      }
+  1405→      .word-style-popup.active {
+  1406→        display: block;
+  1407→      }
+  1408→      @keyframes fadeIn {
+  1409→        from { opacity: 0; transform: translateY(-5px); }
+  1410→        to { opacity: 1; transform: translateY(0); }
+  1411→      }
+  1412→
+  1413→      .popup-section {
+  1414→        margin-bottom: 12px;
+  1415→        padding-bottom: 12px;
+  1416→        border-bottom: 1px solid #f1f5f9;
+  1417→      }
+  1418→      .popup-section:last-child {
+  1419→        margin-bottom: 0;
+  1420→        padding-bottom: 0;
+  1421→        border-bottom: none;
+  1422→      }
+  1423→      .popup-section-title {
+  1424→        font-size: 11px;
+  1425→        font-weight: 700;
+  1426→        color: #64748b;
+  1427→        text-transform: uppercase;
+  1428→        letter-spacing: 0.05em;
+  1429→        margin-bottom: 8px;
+  1430→        cursor: pointer;
+  1431→        display: flex;
+  1432→        justify-content: space-between;
+  1433→        align-items: center;
+  1434→        user-select: none;
+  1435→      }
+  1436→      .popup-section-title:hover {
+  1437→        color: #4f46e5;
+  1438→      }
+  1439→      .popup-section-title::after {
+  1440→        content: '▼';
+  1441→        font-size: 10px;
+  1442→        transition: transform 0.2s;
+  1443→      }
+  1444→      .popup-section.collapsed .popup-section-title::after {
+  1445→        transform: rotate(-90deg);
+  1446→      }
+  1447→      .popup-section-content {
+  1448→        display: block;
+  1449→      }
+  1450→      .popup-section.collapsed .popup-section-content {
+  1451→        display: none;
+  1452→      }
+  1453→
+  1454→      /* Контролы стилизации секций в модальном окне */
+  1455→      .section-style-controls {
+  1456→        margin-top: 6px;
+  1457→        padding-top: 6px;
+  1458→        border-top: 1px solid #f1f5f9;
+  1459→        width: 100%;
+  1460→        display: flex;
+  1461→        flex-direction: column;
+  1462→        gap: 8px;
+  1463→      }
+  1464→      .text-format-controls {
+  1465→        display: flex;
+  1466→        gap: 2px;
+  1467→        margin-bottom: 4px;
+  1468→      }
+  1469→      .format-btn-section {
+  1470→        width: 22px;
+  1471→        height: 22px;
+  1472→        border: 1px solid #e2e8f0;
+  1473→        background: #f8fafc;
+  1474→        border-radius: 4px;
+  1475→        cursor: pointer;
+  1476→        font-weight: bold;
+  1477→        font-size: 10px;
+  1478→        transition: all 0.2s;
+  1479→      }
+  1480→      .format-btn-section:hover {
+  1481→        background: #e2e8f0;
+  1482→      }
+  1483→      .format-btn-section.active {
+  1484→        background: #4f46e5;
+  1485→        color: white;
+  1486→        border-color: #4f46e5;
+  1487→      }
+  1488→      .size-control-section {
+  1489→        display: flex;
+  1490→        align-items: center;
+  1491→        gap: 4px;
+  1492→      }
+  1493→      .size-slider-section {
+  1494→        flex: 1;
+  1495→        height: 4px;
+  1496→        -webkit-appearance: none;
+  1497→        appearance: none;
+  1498→        background: #e2e8f0;
+  1499→        border-radius: 2px;
+  1500→        outline: none;
+  1501→      }
+  1502→      .size-slider-section::-webkit-slider-thumb {
+  1503→        -webkit-appearance: none;
+  1504→        appearance: none;
+  1505→        width: 14px;
+  1506→        height: 14px;
+  1507→        background: #4f46e5;
+  1508→        border-radius: 50%;
+  1509→        cursor: pointer;
+  1510→      }
+  1511→      .size-slider-section::-moz-range-thumb {
+  1512→        width: 14px;
+  1513→        height: 14px;
+  1514→        background: #4f46e5;
+  1515→        border-radius: 50%;
+  1516→        cursor: pointer;
+  1517→        border: none;
+  1518→      }
+  1519→      .size-value-section {
+  1520→        font-size: 11px;
+  1521→        color: #64748b;
+  1522→        min-width: 40px;
+  1523→        text-align: right;
+  1524→      }
+  1525→
+  1526→      /* Стили выбора шрифта */
+  1527→      .font-options-grid {
+  1528→        display: grid;
+  1529→        grid-template-columns: repeat(2, 1fr);
+  1530→        gap: 6px;
+  1531→      }
+  1532→      .font-option-btn {
+  1533→        background: #f8fafc;
+  1534→        border: 1px solid #e2e8f0;
+  1535→        border-radius: 6px;
+  1536→        padding: 6px 8px;
+  1537→        font-size: 11px;
+  1538→        font-weight: 600;
+  1539→        color: #475569;
+  1540→        cursor: pointer;
+  1541→        transition: all 0.2s;
+  1542→        text-align: center;
+  1543→      }
+  1544→      .font-option-btn:hover {
+  1545→        background: #e2e8f0;
+  1546→      }
+  1547→      .font-option-btn.active {
+  1548→        background: #4f46e5;
+  1549→        color: white;
+  1550→        border-color: #4f46e5;
+  1551→      }
+  1552→
+  1553→      /* Стили форматирования текста */
+  1554→      .text-format-controls {
+  1555→        display: flex;
+  1556→        flex-wrap: wrap;
+  1557→        gap: 6px;
+  1558→      }
+  1559→      .format-btn {
+  1560→        background: #f8fafc;
+  1561→        border: 1px solid #e2e8f0;
+  1562→        border-radius: 6px;
+  1563→        padding: 6px 10px;
+  1564→        font-size: 12px;
+  1565→        font-weight: 600;
+  1566→        color: #475569;
+  1567→        cursor: pointer;
+  1568→        transition: all 0.2s;
+  1569→        min-width: 32px;
+  1570→      }
+  1571→      .format-btn:hover {
+  1572→        background: #e2e8f0;
+  1573→      }
+  1574→      .format-btn.active {
+  1575→        background: #4f46e5;
+  1576→        color: white;
+  1577→        border-color: #4f46e5;
+  1578→      }
+  1579→
+  1580→      /* Размер шрифта */
+  1581→      .size-control {
+  1582→        display: flex;
+  1583→        align-items: center;
+  1584→        gap: 8px;
+  1585→        margin-top: 8px;
+  1586→      }
+  1587→      .size-slider {
+  1588→        flex: 1;
+  1589→        height: 4px;
+  1590→        -webkit-appearance: none;
+  1591→        appearance: none;
+  1592→        background: #e2e8f0;
+  1593→        border-radius: 2px;
+  1594→        outline: none;
+  1595→      }
+  1596→      .size-slider::-webkit-slider-thumb {
+  1597→        -webkit-appearance: none;
+  1598→        appearance: none;
+  1599→        width: 14px;
+  1600→        height: 14px;
+  1601→        background: #4f46e5;
+  1602→        border-radius: 50%;
+  1603→        cursor: pointer;
+  1604→      }
+  1605→      .size-value {
+  1606→        font-size: 11px;
+  1607→        font-weight: 600;
+  1608→        color: #64748b;
+  1609→        min-width: 30px;
+  1610→        text-align: right;
+  1611→      }
+  1612→
+  1613→      /* Выбор цвета */
+  1614→      .color-presets {
+  1615→        display: flex;
+  1616→        gap: 6px;
+  1617→        flex-wrap: wrap;
+  1618→        margin-top: 8px;
+  1619→      }
+  1620→      .color-preset {
+  1621→        width: 20px;
+  1622→        height: 20px;
+  1623→        border-radius: 50%;
+  1624→        border: 2px solid #ffffff;
+  1625→        box-shadow: 0 0 0 1px #cbd5e1;
+  1626→        cursor: pointer;
+  1627→        transition: transform 0.15s;
+  1628→      }
+  1629→      .color-preset:hover {
+  1630→        transform: scale(1.2);
+  1631→      }
+  1632→      .color-preset.active {
+  1633→        box-shadow: 0 0 0 2px #4f46e5;
+  1634→      }
+  1635→
+  1636→      /* Выделенное слово в редакторе */
+  1637→      .highlighted-word {
+  1638→        background: rgba(79, 70, 229, 0.1);
+  1639→        border-radius: 3px;
+  1640→        padding: 1px 2px;
+  1641→        cursor: pointer;
+  1642→      }
+  1643→      .highlighted-word:hover {
+  1644→        background: rgba(79, 70, 229, 0.2);
+  1645→      }
+  1646→    </style>
+
+[showing lines 22-1646 of 3262; use offset=1647 with limit to continue reading]
