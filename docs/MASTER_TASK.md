@@ -371,7 +371,7 @@
 
 ## PRIORITY 25 — FINAL PRODUCT AUDIT
 
-- [ ] **25.1 Повторный полный аудит по 12 параметрам** (после всех задач выше)
+- [x] **25.1 Повторный полный аудит по 12 параметрам** — см. docs/FINAL_IMPLEMENTATION_REPORT.md (после всех задач выше)
   - **Left**: для каждого (Security, Architecture, State, Performance, Rendering, UX, Design System, Testing, CI/CD, Monitoring, Accessibility, Documentation) — до/после/что сделано/как проверено/что осталось.
 
 ---
@@ -448,8 +448,8 @@
 | **22.** Onboarding | [x] DONE | restart via shortcuts panel + 5 E2E tests CI-verified |
 | **23.** Shortcuts Panel | [x] DONE | 4 E2E tests CI-verified (35d6d59) |
 | **24.** Dependency Audit | [~] PARTIAL | next+react обновлены, unused font удалён |
-| **25.** Final Audit | [ ] TODO | после всех задач |
-| **F.1** Final Report | [ ] TODO | после 25 |
+| **25.** Final Audit | [x] DONE | docs/FINAL_IMPLEMENTATION_REPORT.md |
+| **F.1** Final Report | [x] DONE | docs/FINAL_IMPLEMENTATION_REPORT.md |
 
 ---
 
