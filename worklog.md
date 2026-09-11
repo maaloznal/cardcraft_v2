@@ -2426,3 +2426,152 @@ Stage Summary:
 - html-to-image lazy-loaded — initial bundle lighter by ~100KB.
 - Export pipeline: editing blocked during export (CSS + UIState), progress shown, cancel via Escape/AbortController, error toasts use priority bypass so they're never blocked by the 60s progress toast.
 - All P0/P1/P2/P3 items from the audit's section 19 directive + the remaining P1/P2/P3 items are now complete.
+
+---
+Task ID: audit-testing-ci
+Agent: general-purpose
+Task: Read-only audit of testing/CI items from MasterTask.md (P2, P3, P16, P17, P24)
+
+Work Log:
+- Read worklog.md (prior context: 252 unit tests across 4 files, ~95.6% coverage reported).
+- Read package.json — confirmed `@playwright/test` is NOT a dependency.
+- Listed project root: no `.github/` folder, no `vercel.json`, no `netlify.toml`.
+- Globbed `**/playwright*`, `**/e2e/**`, `**/*.spec.ts` — all empty (no E2E artifacts).
+- Read `vitest.config.ts` — includes only `tests/unit/**/*.test.ts`; NO coverage config (provider, include, thresholds).
+- Read all 4 unit test files (state-manager, history-manager, utils, storage-manager).
+- Read `tests/smoke-test.js` (414 lines) — agent-browser eval script, not Playwright.
+- Ran `bun run test --coverage` → 4 files, 252 tests, 100% pass, **95.6% stmts / 94.05% branch / 96.55% funcs / 97.51% lines**.
+  - Coverage only measured across 5 src files (core/{constants,utils}, history/HistoryManager, state/StateManager, storage/StorageManager). The remaining ~40 src files (orchestrator/*, export/ExportManager, preview/PreviewRenderer, editor/EditorRenderer, themes/ThemeManager, word-editor/WordEditorManager, ui/*, styles/StyleHelpers) are NOT measured because `coverage.include` is not configured.
+  - Uncovered lines: utils.ts 27, 62-64; StateManager.ts 109-110; StorageManager.ts 163, 191.
+- Ran `bun outdated` → 11 outdated packages (next 16.1.3→16.3.4, react/react-dom 19.2.3→19.3.0, typescript 5.9.3→7.0.2, eslint 9.39.2→10.10.0, tailwindcss 4.1.18→4.3.3, plus @types/react*, @tailwindcss/postcss, bun-types, eslint-config-next).
+- Ran `bun audit` → **72 vulnerabilities (2 critical, 41 high, 25 moderate, 4 low)**. Critical: Next.js 16.1.3 has unauthenticated RCE on Windows-hosted servers (GHSA-p293-qw3h-jr36) and RCE in Image Optimization API with AVIF (GHSA-2xp9-vwfh-vxw4). Other direct vuln: `next >=16.0.0 <16.2.5` (~17 advisories). Transitive: ajv, brace-expansion (high), minimatch (high), flatted (high), js-yaml (high), nanoid (high), postcss (high), sharp (high), picomatch (high), browserslist (high), @babel/core (low), @humanfs/node, baseline-browser-mapping.
+- Grep for `chromatic|percy|toHaveScreenshot|toMatchScreenshot|screenshot()` in tests/ → no matches. Visual regression testing does NOT exist.
+- Grep for `"playwright"` in *.json → no matches.
+- `html-to-image` version: ^1.11.13 (in package.json dependencies).
+
+Stage Summary:
+- 0 DONE, 1 PARTIAL, 4 TODO, 0 BLOCKED
+- Key findings:
+  - **P2 E2E (TODO)**: No `@playwright/test`, no `playwright.config.ts`, no `e2e/` folder, no `.spec.ts` files. Only `tests/smoke-test.js` exists (an agent-browser eval script covering ~10/20 scenarios in-browser; missing move/redo/export/cancel/JSON-import/state-reload/keyboard/console-errors). Playwright E2E is NOT started.
+  - **P3 CI/CD (TODO)**: No `.github/workflows/` directory, no `ci.yml`, no PR check, no preview/production deployment config, no `vercel.json` or `netlify.toml`. CI/CD is NOT set up at all.
+  - **P17 Coverage 100% (PARTIAL)**: 95.6% reported but only across 5 src files — ~40 other src files are not tracked because `vitest.config.ts` lacks `coverage.include: ['src/**/*.ts']`. To reach true 100%: configure coverage provider + include, then add tests for orchestrator/*, export, preview, editor, themes, word-editor, ui modules.
+  - **P16 Visual Regression (TODO)**: No Playwright screenshots, no Chromatic, no Percy. Not started.
+  - **P24 Dependency Audit (PARTIAL)**: 11 outdated packages; 72 vulnerabilities including 2 CRITICAL Next.js RCEs. `next` 16.1.3 → upgrade to ≥16.2.5 urgently. TypeScript 5.9.3 (latest 7.0.2 — major bump). html-to-image ^1.11.13 (current). vitest ^5.0.0 (current).
+
+---
+Task ID: audit-security-a11y
+Agent: general-purpose
+Task: Read-only audit of security/accessibility items from MasterTask.md (P5, P19, P20, P21)
+
+Work Log:
+- Read worklog.md for context.
+- Inspected src/ui/Modal.ts (focus trap, ESC, focus return, aria-hidden toggle).
+- Inspected src/app/page.tsx for modal markup + icon-only buttons.
+- Inspected src/orchestrator/modal-controller.ts (Modal primitive wiring).
+- Inspected src/orchestrator/word-popup-controller.ts + src/word-editor/WordEditorManager.ts (no Modal class, no focus trap).
+- Inspected src/orchestrator/keyboard-controller.ts + src/orchestrator/events.ts (only ESC + Ctrl+S/Z/Y; no arrow-key handlers for card move).
+- Inspected src/editor/EditorRenderer.ts + src/preview/PreviewRenderer.ts for icon-button aria-labels.
+- Read next.config.ts (CSP + headers). Read src/app/layout.tsx (no analytics scripts).
+- Grep src/ for aria-modal/aria-hidden/role="dialog"/aria-label/aria-live/role="status"/role="alert"/aria-atomic.
+- Grep src/app/styles for prefers-reduced-motion — NO matches.
+- Grep src/ for console.(log|error|warn|info|debug) — 8 occurrences in 4 files (1 log + 6 error + 1 warn).
+- Grep src/ for process.env/SECRET/TOKEN/API_KEY/PRIVATE_KEY — only ErrorBoundary.tsx:79 uses process.env.NODE_ENV.
+- Grep root for integrity=/report-to/report-uri — only in uploaded/index.html (placeholder hash), not in app.
+- Grep src/ for track(/analytics(/gtag/plausible/umami/posthog — NO matches.
+- Grep root for loglevel/winston/pino/productionBrowserSourceMaps — NO matches (no logger lib; no source-map override).
+- Ran `bun audit` — 72 vulnerabilities (2 critical, 41 high, 25 moderate, 4 low). Critical: Next.js RCE on Windows + RCE in Image Optimization API with AVIF (GHSA-p293-qw3h-jr36, GHSA-2xp9-vwfh-vxw4). Direct dep `next@^16.1.1` is below fixed 16.2.5.
+
+Stage Summary:
+- 3 DONE, 4 PARTIAL, 13 TODO.
+- Key findings:
+  * Accessibility: Modal.ts has solid focus trap/ESC/focus-return for the colorModal; wordStylePopup + confirmOverlay lack aria-modal/focus-trap. All icon-only buttons in page.tsx/EditorRenderer/PreviewRenderer have aria-label. Only ESC + Ctrl+S/Z/Y keyboard shortcuts — NO arrow-key support for card move/reorder. aria-live="polite" exists on cardCountBadge + toast but no explicit announcements for add/delete/move/color-change. No prefers-reduced-motion in any CSS file. No contrast/Lighthouse tooling.
+  * Security: CSP present in next.config.ts with script-src 'unsafe-eval' 'unsafe-inline' (NOT nonce-based). No SRI on external scripts/icons (only placeholder in uploaded/index.html). No productionBrowserSourceMaps override (default false = safe). No leaked secrets. No CSP reporting (report-to/report-uri). Bun audit shows 72 vulns including 2 CRITICAL in next@16.1.1 — must upgrade to ≥16.2.5.
+  * Logging: 8 console.* calls across 4 files; no structured logger (no winston/pino/loglevel). helpers.ts guard() is a thin console.error wrapper.
+  * Analytics: No Plausible/Umami/PostHog; no product event tracking.
+
+---
+Task ID: audit-architecture
+Agent: general-purpose
+Task: Read-only audit of architecture/rendering/performance items from MasterTask.md
+
+Work Log:
+- Inspected /home/z/my-project/upload/MasterTask.md (Priorities 1, 8, 9, 10, 18).
+- Read PreviewRenderer.ts (src/preview/PreviewRenderer.ts).
+- Read card-ops.ts (src/orchestrator/card-ops.ts) — add/delete/duplicate/move all use full renderEditor()+renderPreview().
+- Read ui-appliers.ts — confirmed renderPreview() = previewRenderer.render() (full rebuild).
+- Read events.ts (topbar + modal bindings) — topbar handlers call renderPreview() for theme + progress style change; no pushHistory on settings changes.
+- Read modal-controller.ts — per-card theme uses previewRenderer.updateCardTheme() (O(1)).
+- Read state-subscriber.ts — confirms settings change syncs CSS state, not full preview rebuild (except event handlers explicitly call renderPreview).
+- Read history-controller.ts + HistoryManager.ts — undo/redo restore() calls renderEditor+renderPreview; snapshot = {cards, theme, format} only.
+- Read StateManager.ts — restore() only restores cards+theme+format (snapshot type lacks progress/list/char-limit/etc.).
+- Read core/types.ts — Snapshot = {cards: Card[]; theme: string; format: string} (incomplete).
+- Read ExportManager.ts + export-controller.ts — html-to-image lazy-loaded via dynamic import(); NOT in Web Worker.
+- Read StorageManager.ts + storage-controller.ts — only localStorage; QuotaExceededError → toast only, NO IndexedDB fallback.
+- Read EditorRenderer.ts + PreviewRenderer.ts — no virtual scrolling primitives (IntersectionObserver / windowing / item-recycling) used.
+- Read next.config.ts — no withBundleAnalyzer; no other dynamic import config.
+- Read package.json — no @next/bundle-analyzer, no @stryker-mutator, no Playwright, no Stryker.
+- Read layout.tsx — 4 @fontsource/* fonts all imported eagerly at top level.
+- Read tokens.css — has colors, radii, shadows, transitions, font-family; MISSING spacing, typography weights, font-size scale, line-height, z-index tokens.
+- Read card-constructor.css + _build.sh — themes.css (1344 lines) is part of card-constructor.css which is statically imported by page.tsx; not lazy-loaded.
+- Verified tests/ folder — only state-manager.test.ts, history-manager.test.ts, utils.test.ts, storage-manager.test.ts + smoke-test.js (browser). NO performance benchmark for 10/50/100 cards.
+- Grep'd for IndexedDB/idb/virtual-scroll/bundle-analyzer/stryker — none present in source.
+
+Stage Summary:
+- 5 DONE, 3 PARTIAL, 14 TODO, 0 BLOCKED
+- Key findings:
+  1. PreviewRenderer HAS the O(1) methods (insertCard/removeCard/updateProgressBars/updateCardTheme) but card-ops.ts IGNORES them — every add/delete/duplicate/move does a full renderEditor()+renderPreview() rebuild. The O(1) methods are dead code for the main CRUD flow (only updateCardField/updateCardStyle/updateCardTheme are actually called, from events.ts/modal-controller/callbacks.ts).
+  2. Undo/redo is fundamentally incomplete: Snapshot type only captures {cards, theme, format}. Settings like progress bar style/visibility, list style, char-limit, gradient angle, showCardNumbers are NEVER restored on undo/redo. Even worse, the topbar event handlers for those settings don't even call pushHistory(), so changing them isn't recorded at all.
+  3. No virtual scrolling — EditorRenderer + PreviewRenderer render all cards via simple forEach+appendChild.
+  4. No Web Worker for export — html-to-image is lazy-loaded via dynamic import (good) but runs on main thread.
+  5. No IndexedDB fallback — quota exceeded just shows toast "Недостаточно место. Удалите старые карточки."
+  6. No @next/bundle-analyzer, no Stryker, no Playwright (matches Priority 2/18 status — also TODO).
+  7. 48 themes (~1344 lines of CSS) are in the initial bundle, not lazy-loaded.
+  8. All 4 @fontsource/* fonts are eagerly imported in layout.tsx.
+  9. tokens.css is incomplete — missing spacing, font-size scale, line-height, typography weights, z-index tokens (only has colors + radii + shadows + transitions + font-family).
+
+---
+Task ID: audit-dx-ux
+Agent: general-purpose
+Task: Read-only audit of DX/UX items from MasterTask.md (P6 Dark Mode, P7 Live Preview, P11 Storybook, P12 ADR, P13 JSDoc, P14 Husky, P15 Conventional Commits, P22 Onboarding, P23 Keyboard Shortcuts Panel, P4 Monitoring)
+
+Work Log:
+- Files inspected:
+  - /home/z/my-project/package.json (scripts + deps + devDeps — full scan)
+  - /home/z/my-project/src/app/globals.css (full 122 lines — found .dark block at L81-113 with 31 shadcn tokens)
+  - /home/z/my-project/src/app/styles/tokens.css (64 lines — only :root, NO .dark variants)
+  - /home/z/my-project/src/app/styles/{modal,layout,sidebar,preview,editor,popup,export,themes}.css (grep for `dark`, `modal-open`)
+  - /home/z/my-project/src/app/page.tsx (545 lines, full structure of #colorModal + #previewWorkspace)
+  - /home/z/my-project/src/orchestrator/{CardCraftApp, modal-controller, keyboard-controller, card-ops, storage-controller, history-controller, ui-appliers, export-controller, theme-controller}.ts (sampled for JSDoc + preview wiring)
+  - /home/z/my-project/src/state/StateManager.ts (120 lines — every public method has `/** */`)
+  - /home/z/my-project/src/components/ErrorBoundary.tsx (167 lines — has componentDidCatch but only console.error + localStorage)
+  - /home/z/my-project/next.config.ts (50 lines — no Sentry, no source map upload config)
+  - /home/z/my-project/docs/ (only architecture.md; no adr/ folder)
+- Folder/file existence checks:
+  - /home/z/my-project/.storybook → does NOT exist
+  - /home/z/my-project/docs/adr → does NOT exist
+  - /home/z/my-project/.husky → does NOT exist
+  - /home/z/my-project/.commitlintrc* / commitlint.config.* → do NOT exist
+  - node_modules/@storybook, /husky, /lint-staged, /@commitlint, /@sentry, /semantic-release, /@changesets → NONE installed
+- Grep verification:
+  - `\.dark` in src/app/styles/*.css → 0 matches (no per-style-file dark overrides)
+  - `theme-toggle|next-themes|setTheme|darkMode|classList.toggle('dark')` in src/ → 0 matches (NO toggle exists)
+  - `document.documentElement.classList` in src/ → 0 matches
+  - `.stories.` in src/ → 0 matches (no story files anywhere)
+  - `Sentry|captureException|@sentry|datadog|logrocket|bugsnag|telemetry` in src/ → 1 match: ErrorBoundary.tsx:42 comment "// production should send to telemetry" (aspirational, not wired)
+  - `onboarding|tutorial|intro|tour|walkthrough|first-run|welcome` in src/ → 0 meaningful matches (only "introduced" substring in ui-state.ts comment)
+  - `shortcut|keybind|hotkey|keyboard-help|helpPanel` in src/ → 0 matches (only "shortcuts" mentioned in keyboard-controller.ts header comment)
+- Git log (last 20 commits): mostly UUID commit messages (e.g. "ad2b0cc 9a8ca956-70ea-4be5-9613-c49fc37c0777"); 1 "Fix:" + 1 "Update RULES.md..." — NOT conventional commit format
+
+Stage Summary:
+- 0 DONE, 2 PARTIAL, 8 TODO, 0 BLOCKED (out of 10 audited priorities)
+- Key findings:
+  1. P6 Dark Mode: TODO — `.dark` block in globals.css (31 tokens) is DEAD CODE from Next.js scaffold. tokens.css (the app's real design tokens --ui-*, --text-*) has NO dark variants. No toggle, no next-themes. Decision needed: either remove the dead .dark block OR implement proper dark mode (add .dark variants to tokens.css + add a theme toggle).
+  2. P7 Live Preview: PARTIAL — color modal is a 340px right-side slide-in panel (`.modal-overlay` `justify-content: flex-end` + `transform: translateX(100%)`). Cards in #previewWorkspace remain visible behind the dimmed overlay (rgba(9,9,11,0.4) + blur). events.ts L222-242 dispatches SET_CARD_COLOR_FIELD on color `input` event → previewRenderer.updateCardStyle applies change LIVE. NO dedicated split-screen layout, NO preview pane inside the modal. Live updates work but UX is "modal-over-preview" not "controls|preview side-by-side".
+  3. P11 Storybook: TODO — not installed, no .storybook/, no *.stories.* files. Zero component isolation docs.
+  4. P12 ADR: TODO — docs/ contains ONLY architecture.md. No docs/adr/ folder, no ADR records. Architecture decisions are scattered across worklog.md (2428 lines of task logs) with no indexed/citable ADRs.
+  5. P13 JSDoc: PARTIAL (~70%) — all 11 sampled files (5 controllers + StateManager + CardCraftApp.ts + others) have file-level JSDoc with "Public API:" listing. StateManager.ts has full per-method `/** */` JSDoc (every selector + mutator). Controllers (card-ops, storage, modal, history, ui-appliers, export, theme, keyboard) use file-level JSDoc + inline comments instead of per-method JSDoc — methods are documented in the header "Public API:" block but not on each function declaration.
+  6. P14 Husky: TODO — not installed, no .husky/, no prepare script, no lint-staged. No git hooks at all.
+  7. P15 Conventional Commits: TODO — no commitlint config, no semantic-release/changesets/standard-version. Git log uses UUID commit messages (not `feat:`, `fix:`, etc.). Only 2 of last 20 commits have human-readable messages.
+  8. P22 Onboarding: TODO — no onboarding/tutorial/tour/intro component anywhere in src/. No first-run flow.
+  9. P23 Keyboard Shortcuts Panel: TODO — keyboard-controller.ts only handles Escape (priority close) + Ctrl+S/Z/Y. NO `?` key handler. NO shortcuts help panel. Shortcuts are documented only in element `title` attrs (e.g. "Отменить (Ctrl+Z)") and JSDoc comments.
+  10. P4 Monitoring: TODO (BLOCKED on choice) — NO Sentry installed, NO telemetry integration. ErrorBoundary.componentDidCatch logs to console.error + persists to localStorage('cardcraft:last-error'). CardCraftApp.ts boot-level handlers (window.error + unhandledrejection) only console.error. Comment at ErrorBoundary.tsx:42 explicitly says "production should send to telemetry" — aspirational, not implemented. No source map upload config in next.config.ts. MasterTask.md L472 recommends "Sentry preferred if it fits the project".
