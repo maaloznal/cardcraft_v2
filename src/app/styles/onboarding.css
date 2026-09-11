@@ -1,0 +1,130 @@
+/* onboarding.css — first-time user onboarding overlay (P22) */
+
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(9, 9, 11, 0.5);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-slow) var(--ease);
+}
+
+.onboarding-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.onboarding-panel {
+  background: var(--ui-surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-xl);
+  max-width: 520px;
+  width: calc(100vw - 32px);
+  max-height: 85vh;
+  overflow-y: auto;
+  transform: scale(0.95);
+  transition: transform var(--dur-slow) var(--ease);
+}
+
+.onboarding-overlay.active .onboarding-panel {
+  transform: scale(1);
+}
+
+.onboarding-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.onboarding-header h3 {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  color: var(--ui-text);
+}
+
+.onboarding-body {
+  padding: var(--space-5) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.onboarding-step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.onboarding-step-num {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--ui-accent);
+  color: var(--ui-accent-fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+.onboarding-step div {
+  flex: 1;
+}
+
+.onboarding-step strong {
+  display: block;
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--ui-text);
+  margin-bottom: var(--space-1);
+}
+
+.onboarding-step p {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--ui-text-secondary);
+  line-height: var(--lh-normal);
+}
+
+.onboarding-footer {
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--ui-border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.onboarding-footer .btn-primary {
+  padding: var(--space-2) var(--space-5);
+  background: var(--ui-accent);
+  color: var(--ui-accent-fg);
+  border: none;
+  border-radius: var(--r-md);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease);
+}
+
+.onboarding-footer .btn-primary:hover {
+  background: var(--ui-accent-hover);
+}
+
+@media (max-width: 480px) {
+  .onboarding-panel {
+    max-width: calc(100vw - 16px);
+  }
+  .onboarding-header h3 {
+    font-size: var(--fs-lg);
+  }
+}

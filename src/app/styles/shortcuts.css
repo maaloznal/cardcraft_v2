@@ -1,0 +1,105 @@
+/* shortcuts.css — keyboard shortcuts help panel (P23) */
+
+.shortcuts-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(9, 9, 11, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-slow) var(--ease);
+}
+
+.shortcuts-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.shortcuts-panel {
+  background: var(--ui-surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-xl);
+  max-width: 480px;
+  width: calc(100vw - 32px);
+  max-height: 80vh;
+  overflow-y: auto;
+  transform: scale(0.95);
+  transition: transform var(--dur-slow) var(--ease);
+}
+
+.shortcuts-overlay.active .shortcuts-panel {
+  transform: scale(1);
+}
+
+.shortcuts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.shortcuts-header h3 {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  color: var(--ui-text);
+}
+
+.shortcuts-body {
+  padding: var(--space-4) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  font-size: var(--fs-base);
+  color: var(--ui-text);
+}
+
+.shortcut-row span {
+  margin-left: auto;
+  color: var(--ui-text-secondary);
+  font-size: var(--fs-sm);
+}
+
+kbd {
+  display: inline-block;
+  padding: 2px 8px;
+  font-family: ui-monospace, monospace;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ui-text);
+  background: var(--ui-surface-hover);
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--r-sm);
+  box-shadow: 0 1px 0 var(--ui-border-strong);
+  line-height: 1.4;
+  min-width: 24px;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .shortcuts-panel {
+    max-width: calc(100vw - 16px);
+  }
+  .shortcut-row {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .shortcut-row span {
+    margin-left: 0;
+    width: 100%;
+    font-size: var(--fs-xs);
+  }
+}

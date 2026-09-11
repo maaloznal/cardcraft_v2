@@ -26,6 +26,27 @@ export function createKeyboardController(ctx: OrchestratorContext): KeyboardCont
   const { refs, themeDropdownController, modalCardThemeDropdownController } = ctx;
 
   function handleKeyDown(e: KeyboardEvent): void {
+    // P23: ? (Shift+/) opens keyboard shortcuts panel
+    if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+      const overlay = document.getElementById('shortcutsOverlay');
+      if (overlay && !overlay.classList.contains('active')) {
+        e.preventDefault();
+        overlay.classList.add('active');
+        requestAnimationFrame(() => {
+          document.getElementById('closeShortcutsBtn')?.focus();
+        });
+      }
+      return;
+    }
+    // P23: Escape closes shortcuts panel
+    if (e.key === 'Escape') {
+      const shortcutsOverlay = document.getElementById('shortcutsOverlay');
+      if (shortcutsOverlay?.classList.contains('active')) {
+        e.preventDefault();
+        shortcutsOverlay.classList.remove('active');
+        return;
+      }
+    }
     if (e.key === 'Escape') {
       // P3-3: if a batch export is running, Escape cancels it first
       if (ctx.stateManager.getUI().isExporting) {

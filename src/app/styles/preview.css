@@ -108,7 +108,8 @@
   line-height: 1.6;
   text-align: center;
   padding: 48px 16px;
-  opacity: 0.5;
+  /* P5.7: removed opacity: 0.5 — it reduced contrast below WCAG 2.1 AA (4.5:1).
+     The --text-secondary color already provides sufficient de-emphasis. */
   font-style: italic;
   border: 1px dashed var(--card-border);
   border-radius: 12px;

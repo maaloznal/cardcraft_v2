@@ -1,0 +1,725 @@
+     1→/**
+     2→ * Unit tests for src/state/StateManager.ts
+     3→ *
+     4→ * Covers reducer behavior for every action type, immutability of state,
+     5→ * subscribe/unsubscribe semantics, and the boundary conditions where
+     6→ * the reducer's own guards engage (out-of-range index, single-card delete).
+     7→ *
+     8→ * P1-2: all dispatches use the type-safe discriminated Action union directly
+     9→ *       (no `as Action` casts, no `payload?: unknown` helper).
+    10→ * P1-1: includes tests for the new granular card-mutation actions
+    11→ *       (SET_CARD_COLOR_FIELD, DELETE_CARD_COLOR_FIELD, SET_SECTION_STYLE_FIELD,
+    12→ *        SET_SECTION_FONT_SIZE, RESET_CARD_STYLES).
+    13→ * P1-3: includes tests for SET_UI (UI state now lives in StateManager).
+    14→ */
+    15→import { describe, it, expect, beforeEach, vi } from 'vitest';
+    16→import { StateManager } from '@/state/StateManager';
+    17→import type { Snapshot } from '@/core/types';
+    18→import { DEFAULT_THEME, DEFAULT_FORMAT, DEFAULT_GRADIENT_ANGLE } from '@/core/constants';
+    19→
+    20→describe('StateManager', () => {
+    21→  let sm: StateManager;
+    22→
+    23→  beforeEach(() => {
+    24→    sm = new StateManager();
+    25→  });
+    26→
+    27→  // ─── Initial state ──────────────────────────────────────────
+    28→  describe('initial state', () => {
+    29→    it('starts with exactly one empty card', () => {
+    30→      expect(sm.getCardCount()).toBe(1);
+    31→      expect(sm.getCards()[0]).toBeDefined();
+    32→      expect(sm.getCards()[0].id).toBeTruthy();
+    33→    });
+    34→    it('starts with default theme and format', () => {
+    35→      expect(sm.getTheme()).toBe(DEFAULT_THEME);
+    36→      expect(sm.getFormat()).toBe(DEFAULT_FORMAT);
+    37→    });
+    38→    it('starts with default settings', () => {
+    39→      const s = sm.getSettings();
+    40→      expect(s.gradientAngle).toBe(DEFAULT_GRADIENT_ANGLE);
+    41→      expect(s.showCardNumbers).toBe(true);
+    42→      expect(s.showProgressBar).toBe(true);
+    43→      expect(s.progressBarStyle).toBe('default');
+    44→      expect(s.listStyleType).toBe('numbers');
+    45→      expect(s.charLimitEnabled).toBe(false);
+    46→    });
+    47→    it('starts with default UI state', () => {
+    48→      const ui = sm.getUI();
+    49→      expect(ui.colorModalOpen).toBe(false);
+    50→      expect(ui.activeCardIndexForColors).toBeNull();
+    51→      expect(ui.lastActiveField).toBe('title');
+    52→      expect(ui.wordPopupOpen).toBe(false);
+    53→      expect(ui.activeCardIndexForWord).toBeNull();
+    54→      expect(ui.activeFieldForWord).toBeNull();
+    55→      expect(ui.sidebarOpen).toBe(false);
+    56→      expect(ui.sidebarWasCollapsedBeforeModal).toBe(true);
+    57→      expect(ui.confirmDialogOpen).toBe(false);
+    58→    });
+    59→    it('accepts a partial initial state override', () => {
+    60→      const custom = new StateManager({
+    61→        settings: { theme: 'ocean', format: 'telegram' } as never,
+    62→      });
+    63→      // Spread merge — nested objects are NOT deep-merged, so the override
+    64→      // fully replaces `settings`. Documenting the actual behavior.
+    65→      expect(custom.getTheme()).toBe('ocean');
+    66→      expect(custom.getFormat()).toBe('telegram');
+    67→    });
+    68→  });
+    69→
+    70→  // ─── ADD_CARD ───────────────────────────────────────────────
+    71→  describe('ADD_CARD', () => {
+    72→    it('increases the card count by 1', () => {
+    73→      const before = sm.getCardCount();
+    74→      sm.dispatch({ type: 'ADD_CARD' });
+    75→      expect(sm.getCardCount()).toBe(before + 1);
+    76→    });
+    77→    it('the new card has a valid (non-empty) id', () => {
+    78→      sm.dispatch({ type: 'ADD_CARD' });
+    79→      const newCard = sm.getCards()[sm.getCardCount() - 1];
+    80→      expect(typeof newCard.id).toBe('string');
+    81→      expect(newCard.id.length).toBeGreaterThan(0);
+    82→    });
+    83→    it('the new card is empty (no title/text/etc.)', () => {
+    84→      sm.dispatch({ type: 'ADD_CARD' });
+    85→      const newCard = sm.getCards()[sm.getCardCount() - 1];
+    86→      expect(newCard.title).toBe('');
+    87→      expect(newCard.text).toBe('');
+    88→      expect(newCard.colors).toEqual({});
+    89→      expect(newCard.wordStyles).toEqual({});
+    90→      expect(newCard.sectionStyles).toEqual({});
+    91→    });
+    92→  });
+    93→
+    94→  // ─── DELETE_CARD ────────────────────────────────────────────
+    95→  describe('DELETE_CARD', () => {
+    96→    it('removes the card at the given index', () => {
+    97→      sm.dispatch({ type: 'ADD_CARD' }); // 2 cards
+    98→      sm.dispatch({ type: 'ADD_CARD' }); // 3 cards
+    99→      const firstId = sm.getCards()[0].id;
+   100→      sm.dispatch({ type: 'DELETE_CARD', payload: { idx: 0 } });
+   101→      expect(sm.getCardCount()).toBe(2);
+   102→      expect(sm.getCards()[0].id).not.toBe(firstId);
+   103→    });
+   104→    it('refuses to delete the last remaining card (returns same state)', () => {
+   105→      expect(sm.getCardCount()).toBe(1);
+   106→      const before = sm.get();
+   107→      sm.dispatch({ type: 'DELETE_CARD', payload: { idx: 0 } });
+   108→      expect(sm.getCardCount()).toBe(1);
+   109→      expect(sm.get()).toBe(before); // same reference — no state change
+   110→    });
+   111→    it('does nothing for negative index (returns same state)', () => {
+   112→      sm.dispatch({ type: 'ADD_CARD' });
+   113→      const before = sm.get();
+   114→      sm.dispatch({ type: 'DELETE_CARD', payload: { idx: -1 } });
+   115→      expect(sm.get()).toBe(before);
+   116→    });
+   117→    it('does nothing for out-of-range index (returns same state)', () => {
+   118→      sm.dispatch({ type: 'ADD_CARD' });
+   119→      const before = sm.get();
+   120→      sm.dispatch({ type: 'DELETE_CARD', payload: { idx: 999 } });
+   121→      expect(sm.get()).toBe(before);
+   122→    });
+   123→    it('with NaN index and >1 cards: documents actual behavior (removes first card via splice(NaN,1) → splice(0,1))', () => {
+   124→      // NOTE: The reducer guard `idx < 0 || idx >= length` does NOT catch NaN
+   125→      // (NaN comparisons always return false). The guard at the orchestrator
+   126→      // level (CardCraftApp.deleteCard) is what prevents NaN from reaching
+   127→      // the reducer. Documenting the reducer's actual (unguarded) behavior
+   128→      // so a future tightening of the reducer is intentional, not silent.
+   129→      sm.dispatch({ type: 'ADD_CARD' }); // 2 cards
+   130→      sm.dispatch({ type: 'ADD_CARD' }); // 3 cards
+   131→      const firstId = sm.getCards()[0].id;
+   132→      sm.dispatch({ type: 'DELETE_CARD', payload: { idx: NaN } });
+   133→      // splice(NaN, 1) is treated as splice(0, 1) → first card removed.
+   134→      expect(sm.getCardCount()).toBe(2);
+   135→      expect(sm.getCards()[0].id).not.toBe(firstId);
+   136→    });
+   137→    it('with NaN index and only 1 card: guard `length <= 1` triggers, no change', () => {
+   138→      const before = sm.get();
+   139→      sm.dispatch({ type: 'DELETE_CARD', payload: { idx: NaN } });
+   140→      expect(sm.get()).toBe(before);
+   141→      expect(sm.getCardCount()).toBe(1);
+   142→    });
+   143→  });
+   144→
+   145→  // ─── DUPLICATE_CARD ─────────────────────────────────────────
+   146→  describe('DUPLICATE_CARD', () => {
+   147→    it('increases card count', () => {
+   148→      sm.dispatch({ type: 'ADD_CARD' });
+   149→      const before = sm.getCardCount();
+   150→      sm.dispatch({ type: 'DUPLICATE_CARD', payload: { idx: 0 } });
+   151→      expect(sm.getCardCount()).toBe(before + 1);
+   152→    });
+   153→    it('the duplicated card has a NEW id (different from the source)', () => {
+   154→      sm.dispatch({ type: 'ADD_CARD' });
+   155→      const sourceId = sm.getCards()[0].id;
+   156→      sm.dispatch({ type: 'DUPLICATE_CARD', payload: { idx: 0 } });
+   157→      const copy = sm.getCards()[1];
+   158→      expect(copy.id).not.toBe(sourceId);
+   159→    });
+   160→    it('the duplicated card is inserted immediately after the source', () => {
+   161→      sm.dispatch({ type: 'ADD_CARD' });
+   162→      sm.dispatch({ type: 'UPDATE_CARD_FIELD', payload: { idx: 0, field: 'title', value: 'original' } });
+   163→      sm.dispatch({ type: 'DUPLICATE_CARD', payload: { idx: 0 } });
+   164→      // Index 0 is original, index 1 is the copy (with same content but new id)
+   165→      expect(sm.getCards()[0].title).toBe('original');
+   166→      expect(sm.getCards()[1].title).toBe('original');
+   167→    });
+   168→    it('does nothing for out-of-range index', () => {
+   169→      const before = sm.get();
+   170→      sm.dispatch({ type: 'DUPLICATE_CARD', payload: { idx: 999 } });
+   171→      expect(sm.get()).toBe(before);
+   172→    });
+   173→  });
+   174→
+   175→  // ─── MOVE_CARD ──────────────────────────────────────────────
+   176→  describe('MOVE_CARD', () => {
+   177→    beforeEach(() => {
+   178→      sm.dispatch({ type: 'ADD_CARD' });
+   179→      sm.dispatch({ type: 'ADD_CARD' });
+   180→      sm.dispatch({ type: 'UPDATE_CARD_FIELD', payload: { idx: 0, field: 'title', value: 'A' } });
+   181→      sm.dispatch({ type: 'UPDATE_CARD_FIELD', payload: { idx: 1, field: 'title', value: 'B' } });
+   182→      sm.dispatch({ type: 'UPDATE_CARD_FIELD', payload: { idx: 2, field: 'title', value: 'C' } });
+   183→    });
+   184→    it('moves a card down (dir = +1)', () => {
+   185→      sm.dispatch({ type: 'MOVE_CARD', payload: { idx: 0, dir: 1 } });
+   186→      expect(sm.getCards()[0].title).toBe('B');
+   187→      expect(sm.getCards()[1].title).toBe('A');
+   188→    });
+   189→    it('moves a card up (dir = -1)', () => {
+   190→      sm.dispatch({ type: 'MOVE_CARD', payload: { idx: 2, dir: -1 } });
+   191→      expect(sm.getCards()[1].title).toBe('C');
+   192→      expect(sm.getCards()[2].title).toBe('B');
+   193→    });
+   194→    it('refuses to move the first card up (no-op)', () => {
+   195→      const before = sm.get();
+   196→      sm.dispatch({ type: 'MOVE_CARD', payload: { idx: 0, dir: -1 } });
+   197→      expect(sm.get()).toBe(before);
+   198→    });
+   199→    it('refuses to move the last card down (no-op)', () => {
+   200→      const before = sm.get();
+   201→      sm.dispatch({ type: 'MOVE_CARD', payload: { idx: 2, dir: 1 } });
+   202→      expect(sm.get()).toBe(before);
+   203→    });
+   204→  });
+   205→
+   206→  // ─── Settings actions ───────────────────────────────────────
+   207→  describe('SET_GLOBAL_THEME', () => {
+   208→    it('changes the theme', () => {
+   209→      sm.dispatch({ type: 'SET_GLOBAL_THEME', payload: { theme: 'ocean' } });
+   210→      expect(sm.getTheme()).toBe('ocean');
+   211→    });
+   212→  });
+   213→  describe('SET_FORMAT', () => {
+   214→    it('changes the format', () => {
+   215→      sm.dispatch({ type: 'SET_FORMAT', payload: { format: 'telegram' } });
+   216→      expect(sm.getFormat()).toBe('telegram');
+   217→    });
+   218→  });
+   219→  describe('SET_GRADIENT_ANGLE', () => {
+   220→    it('changes the gradient angle', () => {
+   221→      sm.dispatch({ type: 'SET_GRADIENT_ANGLE', payload: { angle: 45 } });
+   222→      expect(sm.getGradientAngle()).toBe(45);
+   223→    });
+   224→  });
+   225→  describe('SET_SHOW_CARD_NUMBERS', () => {
+   226→    it('toggles the flag', () => {
+   227→      sm.dispatch({ type: 'SET_SHOW_CARD_NUMBERS', payload: { show: false } });
+   228→      expect(sm.getSettings().showCardNumbers).toBe(false);
+   229→    });
+   230→  });
+   231→  describe('SET_SHOW_PROGRESS_BAR', () => {
+   232→    it('toggles the flag', () => {
+   233→      sm.dispatch({ type: 'SET_SHOW_PROGRESS_BAR', payload: { show: false } });
+   234→      expect(sm.getSettings().showProgressBar).toBe(false);
+   235→    });
+   236→  });
+   237→  describe('SET_PROGRESS_BAR_STYLE', () => {
+   238→    it('changes the style', () => {
+   239→      sm.dispatch({ type: 'SET_PROGRESS_BAR_STYLE', payload: { style: 'circles' } });
+   240→      const pc = sm.getProgressConfig();
+   241→      expect(pc.style).toBe('circles');
+   242→    });
+   243→  });
+   244→  describe('SET_LIST_STYLE', () => {
+   245→    it('changes the list style', () => {
+   246→      sm.dispatch({ type: 'SET_LIST_STYLE', payload: { style: 'dash' } });
+   247→      expect(sm.getListStyle()).toBe('dash');
+   248→    });
+   249→  });
+   250→  describe('SET_CHAR_LIMIT', () => {
+   251→    it('toggles the flag', () => {
+   252→      sm.dispatch({ type: 'SET_CHAR_LIMIT', payload: { enabled: true } });
+   253→      expect(sm.getSettings().charLimitEnabled).toBe(true);
+   254→    });
+   255→  });
+   256→
+   257→  // ─── SET_PROGRESS_CONFIG (composite: show + style) ──────────
+   258→  describe('progress config (show + style combined)', () => {
+   259→    it('can be read as a single object', () => {
+   260→      sm.dispatch({ type: 'SET_SHOW_PROGRESS_BAR', payload: { show: false } });
+   261→      sm.dispatch({ type: 'SET_PROGRESS_BAR_STYLE', payload: { style: 'circles' } });
+   262→      const pc = sm.getProgressConfig();
+   263→      expect(pc).toEqual({ show: false, style: 'circles' });
+   264→    });
+   265→  });
+   266→
+   267→  // ─── Card-level mutations ───────────────────────────────────
+   268→  describe('UPDATE_CARD_FIELD', () => {
+   269→    it('updates the specified field on the specified card', () => {
+   270→      sm.dispatch({ type: 'UPDATE_CARD_FIELD', payload: { idx: 0, field: 'title', value: 'New Title' } });
+   271→      expect(sm.getCards()[0].title).toBe('New Title');
+   272→    });
+   273→    it('does nothing for out-of-range index', () => {
+   274→      const before = sm.get();
+   275→      sm.dispatch({ type: 'UPDATE_CARD_FIELD', payload: { idx: 999, field: 'title', value: 'X' } });
+   276→      expect(sm.get()).toBe(before);
+   277→    });
+   278→  });
+   279→  describe('SET_CARD_THEME', () => {
+   280→    it('sets the card-level theme override', () => {
+   281→      sm.dispatch({ type: 'SET_CARD_THEME', payload: { idx: 0, theme: 'forest' } });
+   282→      expect(sm.getCards()[0].theme).toBe('forest');
+   283→    });
+   284→    it('can clear the override by passing undefined', () => {
+   285→      sm.dispatch({ type: 'SET_CARD_THEME', payload: { idx: 0, theme: 'forest' } });
+   286→      sm.dispatch({ type: 'SET_CARD_THEME', payload: { idx: 0, theme: undefined } });
+   287→      expect(sm.getCards()[0].theme).toBeUndefined();
+   288→    });
+   289→  });
+   290→  describe('SET_CARD_COLORS', () => {
+   291→    it('replaces the colors object on the card', () => {
+   292→      sm.dispatch({ type: 'SET_CARD_COLORS', payload: { idx: 0, colors: { title: '#fff' } } });
+   293→      expect(sm.getCards()[0].colors).toEqual({ title: '#fff' });
+   294→    });
+   295→  });
+   296→  describe('SET_CARD_SECTION_STYLES', () => {
+   297→    it('replaces the sectionStyles object on the card', () => {
+   298→      sm.dispatch({
+   299→        type: 'SET_CARD_SECTION_STYLES',
+   300→        payload: { idx: 0, sectionStyles: { title: { fontWeight: 'bold' } } },
+   301→      });
+   302→      expect(sm.getCards()[0].sectionStyles.title).toEqual({ fontWeight: 'bold' });
+   303→    });
+   304→  });
+   305→  describe('SET_CARD_WORD_STYLES', () => {
+   306→    it('replaces the wordStyles object on the card', () => {
+   307→      sm.dispatch({
+   308→        type: 'SET_CARD_WORD_STYLES',
+   309→        payload: { idx: 0, wordStyles: { 'title::hi': { fontWeight: 'bold' } } },
+   310→      });
+   311→      expect(sm.getCards()[0].wordStyles['title::hi']).toEqual({ fontWeight: 'bold' });
+   312→    });
+   313→  });
+   314→  describe('DELETE_CARD_WORD_STYLE', () => {
+   315→    it('removes the specified word-style key', () => {
+   316→      sm.dispatch({
+   317→        type: 'SET_CARD_WORD_STYLES',
+   318→        payload: {
+   319→          idx: 0,
+   320→          wordStyles: { 'title::a': { fontWeight: 'bold' }, 'title::b': { fontStyle: 'italic' } },
+   321→        },
+   322→      });
+   323→      sm.dispatch({ type: 'DELETE_CARD_WORD_STYLE', payload: { idx: 0, key: 'title::a' } });
+   324→      expect(sm.getCards()[0].wordStyles).toEqual({ 'title::b': { fontStyle: 'italic' } });
+   325→    });
+   326→    it('is a no-op when the key does not exist', () => {
+   327→      sm.dispatch({
+   328→        type: 'SET_CARD_WORD_STYLES',
+   329→        payload: { idx: 0, wordStyles: { 'title::a': { fontWeight: 'bold' } } },
+   330→      });
+   331→      const before = sm.get();
+   332→      sm.dispatch({ type: 'DELETE_CARD_WORD_STYLE', payload: { idx: 0, key: 'title::nonexistent' } });
+   333→      expect(sm.get()).toBe(before);
+   334→    });
+   335→  });
+   336→  describe('CLEAR_ALL', () => {
+   337→    it('resets cards to a single empty card', () => {
+   338→      sm.dispatch({ type: 'ADD_CARD' });
+   339→      sm.dispatch({ type: 'ADD_CARD' });
+   340→      sm.dispatch({ type: 'CLEAR_ALL' });
+   341→      expect(sm.getCardCount()).toBe(1);
+   342→      expect(sm.getCards()[0].title).toBe('');
+   343→    });
+   344→  });
+   345→
+   346→  // ─── Granular card mutations (P1-1) ─────────────────────────
+   347→  describe('SET_CARD_COLOR_FIELD', () => {
+   348→    it('sets a single color field on the card without touching other colors', () => {
+   349→      sm.dispatch({ type: 'SET_CARD_COLOR_FIELD', payload: { idx: 0, field: 'title', value: '#ff0000' } });
+   350→      expect(sm.getCards()[0].colors.title).toBe('#ff0000');
+   351→      expect(sm.getCards()[0].colors.subtitle).toBeUndefined();
+   352→    });
+   353→    it('preserves existing colors when setting a new field', () => {
+   354→      sm.dispatch({ type: 'SET_CARD_COLOR_FIELD', payload: { idx: 0, field: 'title', value: '#ff0000' } });
+   355→      sm.dispatch({ type: 'SET_CARD_COLOR_FIELD', payload: { idx: 0, field: 'subtitle', value: '#00ff00' } });
+   356→      expect(sm.getCards()[0].colors).toEqual({ title: '#ff0000', subtitle: '#00ff00' });
+   357→    });
+   358→    it('overwrites the same field on repeat', () => {
+   359→      sm.dispatch({ type: 'SET_CARD_COLOR_FIELD', payload: { idx: 0, field: 'title', value: '#aaa' } });
+   360→      sm.dispatch({ type: 'SET_CARD_COLOR_FIELD', payload: { idx: 0, field: 'title', value: '#bbb' } });
+   361→      expect(sm.getCards()[0].colors.title).toBe('#bbb');
+   362→    });
+   363→    it('does nothing for out-of-range index', () => {
+   364→      const before = sm.get();
+   365→      sm.dispatch({ type: 'SET_CARD_COLOR_FIELD', payload: { idx: 999, field: 'title', value: '#fff' } });
+   366→      expect(sm.get()).toBe(before);
+   367→    });
+   368→    it('returns a new card reference (immutable update)', () => {
+   369→      const cardBefore = sm.getCards()[0];
+   370→      sm.dispatch({ type: 'SET_CARD_COLOR_FIELD', payload: { idx: 0, field: 'title', value: '#fff' } });
+   371→      expect(sm.getCards()[0]).not.toBe(cardBefore);
+   372→    });
+   373→  });
+   374→
+   375→  describe('DELETE_CARD_COLOR_FIELD', () => {
+   376→    it('removes a single color field, preserving others', () => {
+   377→      sm.dispatch({ type: 'SET_CARD_COLOR_FIELD', payload: { idx: 0, field: 'title', value: '#ff0000' } });
+   378→      sm.dispatch({ type: 'SET_CARD_COLOR_FIELD', payload: { idx: 0, field: 'subtitle', value: '#00ff00' } });
+   379→      sm.dispatch({ type: 'DELETE_CARD_COLOR_FIELD', payload: { idx: 0, field: 'title' } });
+   380→      expect(sm.getCards()[0].colors).toEqual({ subtitle: '#00ff00' });
+   381→    });
+   382→    it('is a no-op when the field does not exist', () => {
+   383→      sm.dispatch({ type: 'SET_CARD_COLOR_FIELD', payload: { idx: 0, field: 'title', value: '#ff0000' } });
+   384→      const before = sm.get();
+   385→      sm.dispatch({ type: 'DELETE_CARD_COLOR_FIELD', payload: { idx: 0, field: 'nonexistent' } });
+   386→      expect(sm.get()).toBe(before);
+   387→    });
+   388→    it('does nothing for out-of-range index', () => {
+   389→      const before = sm.get();
+   390→      sm.dispatch({ type: 'DELETE_CARD_COLOR_FIELD', payload: { idx: 999, field: 'title' } });
+   391→      expect(sm.get()).toBe(before);
+   392→    });
+   393→  });
+   394→
+   395→  describe('SET_SECTION_STYLE_FIELD', () => {
+   396→    it('sets fontWeight on a section style', () => {
+   397→      sm.dispatch({
+   398→        type: 'SET_SECTION_STYLE_FIELD',
+   399→        payload: { idx: 0, field: 'title', property: 'fontWeight', value: 'bold' },
+   400→      });
+   401→      expect(sm.getCards()[0].sectionStyles.title?.fontWeight).toBe('bold');
+   402→    });
+   403→    it('sets fontStyle without affecting fontWeight', () => {
+   404→      sm.dispatch({
+   405→        type: 'SET_SECTION_STYLE_FIELD',
+   406→        payload: { idx: 0, field: 'title', property: 'fontWeight', value: 'bold' },
+   407→      });
+   408→      sm.dispatch({
+   409→        type: 'SET_SECTION_STYLE_FIELD',
+   410→        payload: { idx: 0, field: 'title', property: 'fontStyle', value: 'italic' },
+   411→      });
+   412→      expect(sm.getCards()[0].sectionStyles.title).toEqual({ fontWeight: 'bold', fontStyle: 'italic' });
+   413→    });
+   414→    it('passing undefined removes the property', () => {
+   415→      sm.dispatch({
+   416→        type: 'SET_SECTION_STYLE_FIELD',
+   417→        payload: { idx: 0, field: 'title', property: 'fontWeight', value: 'bold' },
+   418→      });
+   419→      sm.dispatch({
+   420→        type: 'SET_SECTION_STYLE_FIELD',
+   421→        payload: { idx: 0, field: 'title', property: 'fontWeight', value: undefined },
+   422→      });
+   423→      expect(sm.getCards()[0].sectionStyles.title?.fontWeight).toBeUndefined();
+   424→    });
+   425→    it('sets textDecoration with combined values', () => {
+   426→      sm.dispatch({
+   427→        type: 'SET_SECTION_STYLE_FIELD',
+   428→        payload: { idx: 0, field: 'title', property: 'textDecoration', value: 'underline line-through' },
+   429→      });
+   430→      expect(sm.getCards()[0].sectionStyles.title?.textDecoration).toBe('underline line-through');
+   431→    });
+   432→    it('does nothing for out-of-range index', () => {
+   433→      const before = sm.get();
+   434→      sm.dispatch({
+   435→        type: 'SET_SECTION_STYLE_FIELD',
+   436→        payload: { idx: 999, field: 'title', property: 'fontWeight', value: 'bold' },
+   437→      });
+   438→      expect(sm.get()).toBe(before);
+   439→    });
+   440→  });
+   441→
+   442→  describe('SET_SECTION_FONT_SIZE', () => {
+   443→    it('sets fontSize on a section style, preserving other properties', () => {
+   444→      sm.dispatch({
+   445→        type: 'SET_SECTION_STYLE_FIELD',
+   446→        payload: { idx: 0, field: 'title', property: 'fontWeight', value: 'bold' },
+   447→      });
+   448→      sm.dispatch({ type: 'SET_SECTION_FONT_SIZE', payload: { idx: 0, field: 'title', size: 32 } });
+   449→      expect(sm.getCards()[0].sectionStyles.title).toEqual({ fontWeight: 'bold', fontSize: 32 });
+   450→    });
+   451→    it('creates the section style entry if it does not exist', () => {
+   452→      sm.dispatch({ type: 'SET_SECTION_FONT_SIZE', payload: { idx: 0, field: 'subtitle', size: 18 } });
+   453→      expect(sm.getCards()[0].sectionStyles.subtitle).toEqual({ fontSize: 18 });
+   454→    });
+   455→    it('overwrites the previous fontSize', () => {
+   456→      sm.dispatch({ type: 'SET_SECTION_FONT_SIZE', payload: { idx: 0, field: 'title', size: 24 } });
+   457→      sm.dispatch({ type: 'SET_SECTION_FONT_SIZE', payload: { idx: 0, field: 'title', size: 36 } });
+   458→      expect(sm.getCards()[0].sectionStyles.title?.fontSize).toBe(36);
+   459→    });
+   460→    it('does nothing for out-of-range index', () => {
+   461→      const before = sm.get();
+   462→      sm.dispatch({ type: 'SET_SECTION_FONT_SIZE', payload: { idx: 999, field: 'title', size: 24 } });
+   463→      expect(sm.get()).toBe(before);
+   464→    });
+   465→  });
+   466→
+   467→  describe('RESET_CARD_STYLES', () => {
+   468→    it('clears both colors and sectionStyles atomically', () => {
+   469→      sm.dispatch({ type: 'SET_CARD_COLOR_FIELD', payload: { idx: 0, field: 'title', value: '#ff0000' } });
+   470→      sm.dispatch({
+   471→        type: 'SET_SECTION_STYLE_FIELD',
+   472→        payload: { idx: 0, field: 'title', property: 'fontWeight', value: 'bold' },
+   473→      });
+   474→      sm.dispatch({ type: 'SET_SECTION_FONT_SIZE', payload: { idx: 0, field: 'title', size: 32 } });
+   475→      expect(sm.getCards()[0].colors.title).toBe('#ff0000');
+   476→      expect(sm.getCards()[0].sectionStyles.title).toBeDefined();
+   477→      sm.dispatch({ type: 'RESET_CARD_STYLES', payload: { idx: 0 } });
+   478→      expect(sm.getCards()[0].colors).toEqual({});
+   479→      expect(sm.getCards()[0].sectionStyles).toEqual({});
+   480→    });
+   481→    it('preserves wordStyles and text fields', () => {
+   482→      sm.dispatch({ type: 'UPDATE_CARD_FIELD', payload: { idx: 0, field: 'title', value: 'keep me' } });
+   483→      sm.dispatch({
+   484→        type: 'SET_CARD_WORD_STYLES',
+   485→        payload: { idx: 0, wordStyles: { 'title::keep': { fontWeight: 'bold' } } },
+   486→      });
+   487→      sm.dispatch({ type: 'RESET_CARD_STYLES', payload: { idx: 0 } });
+   488→      expect(sm.getCards()[0].title).toBe('keep me');
+   489→      expect(sm.getCards()[0].wordStyles).toEqual({ 'title::keep': { fontWeight: 'bold' } });
+   490→    });
+   491→    it('does nothing for out-of-range index', () => {
+   492→      const before = sm.get();
+   493→      sm.dispatch({ type: 'RESET_CARD_STYLES', payload: { idx: 999 } });
+   494→      expect(sm.get()).toBe(before);
+   495→    });
+   496→  });
+   497→
+   498→  // ─── RESTORE_SNAPSHOT ───────────────────────────────────────
+   499→  describe('RESTORE_SNAPSHOT', () => {
+   500→    it('restores cards, theme, and format from a snapshot', () => {
+   501→      // Set up a different state first
+   502→      sm.dispatch({ type: 'SET_GLOBAL_THEME', payload: { theme: 'ocean' } });
+   503→      sm.dispatch({ type: 'SET_FORMAT', payload: { format: 'telegram' } });
+   504→      sm.dispatch({ type: 'ADD_CARD' });
+   505→      sm.dispatch({ type: 'UPDATE_CARD_FIELD', payload: { idx: 0, field: 'title', value: 'modified' } });
+   506→
+   507→      const snap: Snapshot = {
+   508→        cards: [
+   509→          {
+   510→            id: 'restored-1',
+   511→            title: 'Restored',
+   512→            subtitle: '',
+   513→            text: '',
+   514→            listItems: '',
+   515→            footer: '',
+   516→            cta: '',
+   517→            colors: {},
+   518→            wordStyles: {},
+   519→            sectionStyles: {},
+   520→          },
+   521→        ],
+   522→        theme: 'forest',
+   523→        format: 'whatsapp',
+   524→      };
+   525→      sm.dispatch({ type: 'RESTORE_SNAPSHOT', payload: { snapshot: snap } });
+   526→      expect(sm.getCardCount()).toBe(1);
+   527→      expect(sm.getCards()[0].id).toBe('restored-1');
+   528→      expect(sm.getCards()[0].title).toBe('Restored');
+   529→      expect(sm.getTheme()).toBe('forest');
+   530→      expect(sm.getFormat()).toBe('whatsapp');
+   531→    });
+   532→    it('does NOT touch other settings (gradientAngle preserved)', () => {
+   533→      sm.dispatch({ type: 'SET_GRADIENT_ANGLE', payload: { angle: 45 } });
+   534→      sm.dispatch({
+   535→        type: 'RESTORE_SNAPSHOT',
+   536→        payload: { snapshot: { cards: sm.getCards(), theme: 'forest', format: 'telegram' } },
+   537→      });
+   538→      expect(sm.getGradientAngle()).toBe(45);
+   539→    });
+   540→    it('snapshot() round-trips through RESTORE_SNAPSHOT', () => {
+   541→      sm.dispatch({ type: 'ADD_CARD' });
+   542→      sm.dispatch({ type: 'SET_GLOBAL_THEME', payload: { theme: 'ocean' } });
+   543→      const snap = sm.snapshot();
+   544→      // Mutate state further
+   545→      sm.dispatch({ type: 'CLEAR_ALL' });
+   546→      sm.dispatch({ type: 'SET_GLOBAL_THEME', payload: { theme: 'default' } });
+   547→      // Restore
+   548→      sm.dispatch({ type: 'RESTORE_SNAPSHOT', payload: { snapshot: snap } });
+   549→      expect(sm.getCardCount()).toBe(2);
+   550→      expect(sm.getTheme()).toBe('ocean');
+   551→    });
+   552→  });
+   553→
+   554→  // ─── SET_UI (P1-3) ──────────────────────────────────────────
+   555→  describe('SET_UI', () => {
+   556→    it('updates a single UI field, preserving others', () => {
+   557→      sm.dispatch({ type: 'SET_UI', payload: { colorModalOpen: true } });
+   558→      expect(sm.getUI().colorModalOpen).toBe(true);
+   559→      expect(sm.getUI().wordPopupOpen).toBe(false); // unchanged
+   560→    });
+   561→    it('updates multiple UI fields at once', () => {
+   562→      sm.dispatch({
+   563→        type: 'SET_UI',
+   564→        payload: { activeCardIndexForColors: 2, lastActiveField: 'text', colorModalOpen: true },
+   565→      });
+   566→      const ui = sm.getUI();
+   567→      expect(ui.activeCardIndexForColors).toBe(2);
+   568→      expect(ui.lastActiveField).toBe('text');
+   569→      expect(ui.colorModalOpen).toBe(true);
+   570→    });
+   571→    it('can clear nullable fields back to null', () => {
+   572→      sm.dispatch({ type: 'SET_UI', payload: { activeCardIndexForColors: 1 } });
+   573→      expect(sm.getUI().activeCardIndexForColors).toBe(1);
+   574→      sm.dispatch({ type: 'SET_UI', payload: { activeCardIndexForColors: null } });
+   575→      expect(sm.getUI().activeCardIndexForColors).toBeNull();
+   576→    });
+   577→    it('setUI() convenience method works the same as dispatch', () => {
+   578→      sm.setUI({ sidebarOpen: true, confirmDialogOpen: true });
+   579→      expect(sm.getUI().sidebarOpen).toBe(true);
+   580→      expect(sm.getUI().confirmDialogOpen).toBe(true);
+   581→    });
+   582→    it('returns a new state reference (triggers subscribers)', () => {
+   583→      const cb = vi.fn();
+   584→      sm.subscribe(cb);
+   585→      sm.dispatch({ type: 'SET_UI', payload: { colorModalOpen: true } });
+   586→      expect(cb).toHaveBeenCalledTimes(1);
+   587→    });
+   588→    it('preserves cards and settings references (only ui changes)', () => {
+   589→      const beforeCards = sm.getCards();
+   590→      const beforeSettings = sm.getSettings();
+   591→      sm.dispatch({ type: 'SET_UI', payload: { colorModalOpen: true } });
+   592→      expect(sm.getCards()).toBe(beforeCards); // same ref
+   593→      expect(sm.getSettings()).toBe(beforeSettings); // same ref
+   594→    });
+   595→  });
+   596→
+   597→  // ─── Immutability ───────────────────────────────────────────
+   598→  describe('immutability', () => {
+   599→    it('dispatching ADD_CARD returns a NEW state object (not the same reference)', () => {
+   600→      const before = sm.get();
+   601→      sm.dispatch({ type: 'ADD_CARD' });
+   602→      const after = sm.get();
+   603→      expect(after).not.toBe(before);
+   604→    });
+   605→    it('dispatching SET_GLOBAL_THEME returns a NEW state object', () => {
+   606→      const before = sm.get();
+   607→      sm.dispatch({ type: 'SET_GLOBAL_THEME', payload: { theme: 'ocean' } });
+   608→      expect(sm.get()).not.toBe(before);
+   609→    });
+   610→    it('a no-op dispatch (e.g. invalid delete) returns the SAME reference (no notification fired)', () => {
+   611→      const before = sm.get();
+   612→      sm.dispatch({ type: 'DELETE_CARD', payload: { idx: 999 } });
+   613→      expect(sm.get()).toBe(before);
+   614→    });
+   615→    it('the cards array reference changes when ADD_CARD fires (not mutated in place)', () => {
+   616→      const beforeCards = sm.getCards();
+   617→      sm.dispatch({ type: 'ADD_CARD' });
+   618→      expect(sm.getCards()).not.toBe(beforeCards);
+   619→    });
+   620→    it('an individual card object reference changes when its field is updated', () => {
+   621→      const cardBefore = sm.getCards()[0];
+   622→      sm.dispatch({ type: 'UPDATE_CARD_FIELD', payload: { idx: 0, field: 'title', value: 'X' } });
+   623→      expect(sm.getCards()[0]).not.toBe(cardBefore);
+   624→    });
+   625→    it('SET_CARD_COLOR_FIELD produces a new card reference (not in-place mutation)', () => {
+   626→      const cardBefore = sm.getCards()[0];
+   627→      sm.dispatch({ type: 'SET_CARD_COLOR_FIELD', payload: { idx: 0, field: 'title', value: '#fff' } });
+   628→      expect(sm.getCards()[0]).not.toBe(cardBefore);
+   629→    });
+   630→    it('SET_SECTION_STYLE_FIELD produces a new card reference (not in-place mutation)', () => {
+   631→      const cardBefore = sm.getCards()[0];
+   632→      sm.dispatch({
+   633→        type: 'SET_SECTION_STYLE_FIELD',
+   634→        payload: { idx: 0, field: 'title', property: 'fontWeight', value: 'bold' },
+   635→      });
+   636→      expect(sm.getCards()[0]).not.toBe(cardBefore);
+   637→    });
+   638→    it('RESET_CARD_STYLES produces a new card reference (not in-place mutation)', () => {
+   639→      sm.dispatch({ type: 'SET_CARD_COLOR_FIELD', payload: { idx: 0, field: 'title', value: '#fff' } });
+   640→      const cardBefore = sm.getCards()[0];
+   641→      sm.dispatch({ type: 'RESET_CARD_STYLES', payload: { idx: 0 } });
+   642→      expect(sm.getCards()[0]).not.toBe(cardBefore);
+   643→    });
+   644→  });
+   645→
+   646→  // ─── Subscriptions ──────────────────────────────────────────
+   647→  describe('subscribe / unsubscribe', () => {
+   648→    it('subscribe(cb) is called when an action changes state', () => {
+   649→      const cb = vi.fn();
+   650→      sm.subscribe(cb);
+   651→      sm.dispatch({ type: 'ADD_CARD' });
+   652→      expect(cb).toHaveBeenCalledTimes(1);
+   653→      expect(cb).toHaveBeenCalledWith(sm.get());
+   654→    });
+   655→    it('subscribe(cb) is NOT called when an action is a no-op', () => {
+   656→      const cb = vi.fn();
+   657→      sm.subscribe(cb);
+   658→      sm.dispatch({ type: 'DELETE_CARD', payload: { idx: 999 } }); // no-op
+   659→      expect(cb).not.toHaveBeenCalled();
+   660→    });
+   661→    it('unsubscribe(cb) stops further notifications', () => {
+   662→      const cb = vi.fn();
+   663→      const unsub = sm.subscribe(cb);
+   664→      sm.dispatch({ type: 'ADD_CARD' });
+   665→      expect(cb).toHaveBeenCalledTimes(1);
+   666→      unsub();
+   667→      sm.dispatch({ type: 'ADD_CARD' });
+   668→      expect(cb).toHaveBeenCalledTimes(1); // not called again
+   669→    });
+   670→    it('multiple subscribers are all called', () => {
+   671→      const cb1 = vi.fn();
+   672→      const cb2 = vi.fn();
+   673→      sm.subscribe(cb1);
+   674→      sm.subscribe(cb2);
+   675→      sm.dispatch({ type: 'ADD_CARD' });
+   676→      expect(cb1).toHaveBeenCalledTimes(1);
+   677→      expect(cb2).toHaveBeenCalledTimes(1);
+   678→    });
+   679→    it('subscribe returns a function', () => {
+   680→      const unsub = sm.subscribe(() => {});
+   681→      expect(typeof unsub).toBe('function');
+   682→    });
+   683→    it('restore() notifies subscribers', () => {
+   684→      const cb = vi.fn();
+   685→      sm.subscribe(cb);
+   686→      sm.restore({ cards: sm.getCards(), theme: 'ocean', format: 'telegram' });
+   687→      expect(cb).toHaveBeenCalledTimes(1);
+   688→    });
+   689→    it('setCards() notifies subscribers', () => {
+   690→      const cb = vi.fn();
+   691→      sm.subscribe(cb);
+   692→      sm.setCards([...sm.getCards(), sm.getCards()[0]]);
+   693→      expect(cb).toHaveBeenCalledTimes(1);
+   694→    });
+   695→  });
+   696→
+   697→  // ─── snapshot() ─────────────────────────────────────────────
+   698→  describe('snapshot()', () => {
+   699→    it('returns a deep clone (mutating it does not affect state)', () => {
+   700→      sm.dispatch({ type: 'UPDATE_CARD_FIELD', payload: { idx: 0, field: 'title', value: 'orig' } });
+   701→      const snap = sm.snapshot();
+   702→      snap.cards[0].title = 'mutated';
+   703→      expect(sm.getCards()[0].title).toBe('orig');
+   704→    });
+   705→    it('contains cards, theme, and format', () => {
+   706→      sm.dispatch({ type: 'SET_GLOBAL_THEME', payload: { theme: 'ocean' } });
+   707→      sm.dispatch({ type: 'SET_FORMAT', payload: { format: 'telegram' } });
+   708→      const snap = sm.snapshot();
+   709→      expect(Array.isArray(snap.cards)).toBe(true);
+   710→      expect(snap.theme).toBe('ocean');
+   711→      expect(snap.format).toBe('telegram');
+   712→    });
+   713→  });
+   714→
+   715→  // ─── Unknown action ─────────────────────────────────────────
+   716→  describe('unknown action', () => {
+   717→    it('an action with an unrecognized type returns the same state (default case)', () => {
+   718→      const before = sm.get();
+   719→      // @ts-expect-error testing runtime with an invalid type
+   720→      sm.dispatch({ type: 'NONEXISTENT_ACTION', payload: null });
+   721→      expect(sm.get()).toBe(before);
+   722→    });
+   723→  });
+   724→});
+   725→

@@ -31,10 +31,10 @@
   --ui-surface-hover: #f4f4f5;
   --ui-border: #e4e4e7;
   --ui-border-strong: #d4d4d8;
-  /* UI текст */
+  /* UI текст — P5.7: contrast ratios tuned for WCAG 2.1 AA (4.5:1) */
   --ui-text: #18181b;
-  --ui-text-secondary: #71717a;
-  --ui-text-tertiary: #a1a1aa;
+  --ui-text-secondary: #52525b; /* was #71717a — too light (4.39:1 on #f4f4f5), now 6.54:1 */
+  --ui-text-tertiary: #71717a;  /* was #a1a1aa — for non-essential text only */
   /* UI акцент (near-black, премиальный) */
   --ui-accent: #18181b;
   --ui-accent-hover: #27272a;

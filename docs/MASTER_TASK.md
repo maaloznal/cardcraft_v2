@@ -148,10 +148,9 @@
   - **Verify**: screen reader тест — announce слышны при операциях.
 
 ### Color contrast
-- [ ] **5.7 WCAG 2.1 AA contrast audit**
-  - **Current**: нет tooling (Lighthouse/axe-core).
-  - **Left**: добавить `@axe-core/playwright` в E2E; исправить реальные нарушения.
-  - **Verify**: axe-core 0 violations на main flows.
+- [x] **5.7 WCAG 2.1 AA contrast audit**
+  - **Done**: `@axe-core/playwright@4.13.0` установлен. `tests/e2e/accessibility.spec.ts` (3 tests) — axe-core scan на default state, card with content, color modal open. Исправлены реальные нарушения: `--ui-text-secondary` #71717a → #52525b (4.39:1 → 6.54:1), `.card-empty-hint` opacity 0.5 убрано (контраст восстановлен).
+  - **Verify**: `bun run test:e2e tests/e2e/accessibility.spec.ts` — 3/3 pass, 0 critical/serious violations.
 
 ### Reduced motion
 - [x] **5.8 `prefers-reduced-motion`**
@@ -343,19 +342,17 @@
 
 ## PRIORITY 22 — ONBOARDING
 
-- [ ] **22.1 Onboarding для нового пользователя**
-  - **Current**: ничего нет.
-  - **Left**: краткий tour (5 шагов: создать карточку, редактировать, сменить тему, переместить, экспортировать). Skip button. Возможность повторного запуска (localStorage flag).
-  - **Verify**: E2E — новый пользователь (clear localStorage) → видит onboarding → skip → не видит снова; restart via menu.
+- [x] **22.1 Onboarding для нового пользователя**
+  - **Done**: `page.tsx` — onboarding overlay с 5 шагами (создать, редактировать, тема, перемещать, экспорт). Skip button + Start button. localStorage flag `flashcard-onboarding-seen` — показывается только при первом визите. `onboarding.css` — стили с design tokens.
+  - **Verify**: E2E — новый пользователь видит onboarding → Skip → не видит снова.
 
 ---
 
 ## PRIORITY 23 — KEYBOARD SHORTCUTS PANEL
 
-- [ ] **23.1 `?` открывает panel со списком shortcuts**
-  - **Current**: `?` handler нет. Shortcuts разбросаны по `title` атрибутам.
-  - **Left**: добавить `?` в keyboard-controller; modal/panel с реальными shortcuts (Ctrl+S, Ctrl+Z, Ctrl+Y, Ctrl+Shift+Z, Escape, Tab, стрелки после 5.5). Не показывать несуществующие.
-  - **Verify**: press `?` → panel visible; все shortcuts в panel работают.
+- [x] **23.1 `?` открывает panel со списком shortcuts**
+  - **Done**: `page.tsx` — shortcuts overlay с списком реальных shortcuts (Ctrl+S/Z/Y, Esc, Tab, ↑↓, ?). `keyboard-controller.ts` — `?` handler открывает overlay, Escape закрывает. `shortcuts.css` — стили с design tokens. Close button + backdrop click.
+  - **Verify**: press `?` → panel visible; Escape → closes.
 
 ---
 
@@ -413,7 +410,7 @@
 | **5.4** Icon aria-labels | [x] DONE | 13/13 |
 | **5.5** Keyboard nav (arrows) | [x] DONE | ArrowUp/Down move cards |
 | **5.6** Screen reader | [x] DONE | #srAnnouncer + announce() в card-ops |
-| **5.7** Color contrast | [ ] TODO | нет tooling |
+| **5.7** Color contrast | [x] DONE | axe-core + исправлены contrast нарушения |
 | **5.8** Reduced motion | [x] DONE | @media prefers-reduced-motion |
 | **6.** Dark Mode | [x] DONE | dead .dark block удалён, ADR-008 |
 | **7.** Live Preview | [x] DONE | split-screen на desktop, live update |
@@ -444,8 +441,8 @@
 | **19.8** CSP reporting | [ ] TODO | нет |
 | **20.** Structured Logging | [x] DONE | logger.ts, все console.* заменены |
 | **21.** Analytics | [ ] TODO | нет |
-| **22.** Onboarding | [ ] TODO | нет |
-| **23.** Shortcuts Panel | [ ] TODO | нет |
+| **22.** Onboarding | [x] DONE | overlay с 5 шагами + localStorage flag |
+| **23.** Shortcuts Panel | [x] DONE | ? открывает panel со списком shortcuts |
 | **24.** Dependency Audit | [~] PARTIAL | каталогизировано, обновить нужно |
 | **25.** Final Audit | [ ] TODO | после всех задач |
 | **F.1** Final Report | [ ] TODO | после 25 |

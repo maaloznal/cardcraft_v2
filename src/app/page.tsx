@@ -542,6 +542,76 @@ export default function Home() {
 
       {/* P5: Screen reader announcements for card operations */}
       <div id="srAnnouncer" className="sr-only" aria-live="polite" aria-atomic="true" />
+
+      {/* P23: Keyboard shortcuts help panel (toggled by ? key) */}
+      <div className="shortcuts-overlay" id="shortcutsOverlay" role="dialog" aria-modal="true" aria-labelledby="shortcutsTitle">
+        <div className="shortcuts-panel">
+          <div className="shortcuts-header">
+            <h3 id="shortcutsTitle">Горячие клавиши</h3>
+            <button className="modal-close" id="closeShortcutsBtn" aria-label="Закрыть" type="button">×</button>
+          </div>
+          <div className="shortcuts-body">
+            <div className="shortcut-row"><kbd>Ctrl</kbd>+<kbd>S</kbd><span>Сохранить</span></div>
+            <div className="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Z</kbd><span>Отменить</span></div>
+            <div className="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Y</kbd><span>Повторить</span></div>
+            <div className="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd><span>Повторить (альтернатива)</span></div>
+            <div className="shortcut-row"><kbd>Esc</kbd><span>Закрыть модалку / отменить экспорт</span></div>
+            <div className="shortcut-row"><kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd><span>Навигация по фокусу</span></div>
+            <div className="shortcut-row"><kbd>↑</kbd> / <kbd>↓</kbd><span>Переместить карточку (когда фокус на заголовке)</span></div>
+            <div className="shortcut-row"><kbd>?</kbd><span>Показать эту справку</span></div>
+          </div>
+        </div>
+      </div>
+
+      {/* P22: Onboarding overlay for first-time users */}
+      <div className="onboarding-overlay" id="onboardingOverlay" role="dialog" aria-modal="true" aria-labelledby="onboardingTitle">
+        <div className="onboarding-panel">
+          <div className="onboarding-header">
+            <h3 id="onboardingTitle">Добро пожаловать в Cardcraft</h3>
+            <button className="modal-close" id="closeOnboardingBtn" aria-label="Пропустить" type="button">×</button>
+          </div>
+          <div className="onboarding-body">
+            <div className="onboarding-step">
+              <span className="onboarding-step-num">1</span>
+              <div>
+                <strong>Создайте карточку</strong>
+                <p>Нажмите «Добавить новую карточку» в боковой панели.</p>
+              </div>
+            </div>
+            <div className="onboarding-step">
+              <span className="onboarding-step-num">2</span>
+              <div>
+                <strong>Редактируйте текст</strong>
+                <p>Пишите в поля слева — превью обновляется в реальном времени.</p>
+              </div>
+            </div>
+            <div className="onboarding-step">
+              <span className="onboarding-step-num">3</span>
+              <div>
+                <strong>Выберите тему</strong>
+                <p>48 готовых стилей в выпадающем списке наверху.</p>
+              </div>
+            </div>
+            <div className="onboarding-step">
+              <span className="onboarding-step-num">4</span>
+              <div>
+                <strong>Перемещайте карточки</strong>
+                <p>Стрелками ↑↓ когда фокус на заголовке карточки, или кнопками в редакторе.</p>
+              </div>
+            </div>
+            <div className="onboarding-step">
+              <span className="onboarding-step-num">5</span>
+              <div>
+                <strong>Экспортируйте</strong>
+                <p>Нажмите «Скачать» на карточке для PNG, или «Скачать все» для пакета.</p>
+              </div>
+            </div>
+          </div>
+          <div className="onboarding-footer">
+            <button className="btn-primary" id="onboardingStartBtn" type="button">Начать</button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
