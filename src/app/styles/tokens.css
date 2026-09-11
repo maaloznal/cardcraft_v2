@@ -61,3 +61,36 @@
   --dur: 150ms;
   --dur-slow: 300ms;
 }
+
+/* ================= P5: REDUCED MOTION ================= */
+/* Users who prefer reduced motion get instant transitions (no animation). */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur: 0ms;
+    --dur-slow: 0ms;
+    --ease: step-start;
+    --ease-spring: step-start;
+  }
+  .cc-root *,
+  .cc-root *::before,
+  .cc-root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ================= P5: SCREEN READER ONLY ================= */
+/* Visually hidden but accessible to screen readers. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

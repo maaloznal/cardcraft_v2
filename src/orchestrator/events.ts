@@ -158,27 +158,60 @@ export function bindSidebarEvents(ctx: OrchestratorContext): void {
   ctx.listeners.addEl(refs.saveAllBtn, 'click', () => void exporter.downloadAllPng());
 
   // Delete all — with confirm flow
+  // P5: focus trap + restore for accessibility
+  let confirmPreviouslyFocused: HTMLElement | null = null;
+  function openConfirm(): void {
+    confirmPreviouslyFocused = document.activeElement as HTMLElement | null;
+    refs.confirmOverlay?.classList.add('active');
+    stateManager.setUI({ confirmDialogOpen: true });
+    // Focus the cancel button (safer default than delete)
+    requestAnimationFrame(() => refs.confirmCancel?.focus());
+  }
+  function closeConfirm(): void {
+    refs.confirmOverlay?.classList.remove('active');
+    stateManager.setUI({ confirmDialogOpen: false });
+    confirmPreviouslyFocused?.focus();
+    confirmPreviouslyFocused = null;
+  }
   ctx.listeners.addEl(refs.deleteAllBtn, 'click', () => {
     if (stateManager.getCardCount() <= 1) {
       storage.showToast('Нельзя удалить единственную карточку');
       return;
     }
-    refs.confirmOverlay?.classList.add('active');
-    stateManager.setUI({ confirmDialogOpen: true });
+    openConfirm();
   });
-  ctx.listeners.addEl(refs.confirmCancel, 'click', () => {
-    refs.confirmOverlay?.classList.remove('active');
-    stateManager.setUI({ confirmDialogOpen: false });
-  });
+  ctx.listeners.addEl(refs.confirmCancel, 'click', closeConfirm);
   ctx.listeners.addEl(refs.confirmOverlay, 'click', (e) => {
-    if (e.target === refs.confirmOverlay) {
-      refs.confirmOverlay?.classList.remove('active');
-      stateManager.setUI({ confirmDialogOpen: false });
+    if (e.target === refs.confirmOverlay) closeConfirm();
+  });
+  // P5: focus trap inside confirm dialog (Tab cycles between Cancel + Delete)
+  ctx.listeners.addEl(refs.confirmOverlay, 'keydown', (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeConfirm();
+      return;
+    }
+    if (e.key !== 'Tab') return;
+    const focusables: HTMLElement[] = [];
+    if (refs.confirmCancel && !refs.confirmCancel.hasAttribute('disabled')) {
+      focusables.push(refs.confirmCancel);
+    }
+    if (refs.confirmOk && !refs.confirmOk.hasAttribute('disabled')) {
+      focusables.push(refs.confirmOk);
+    }
+    if (focusables.length === 0) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
     }
   });
   ctx.listeners.addEl(refs.confirmOk, 'click', () => {
-    refs.confirmOverlay?.classList.remove('active');
-    stateManager.setUI({ confirmDialogOpen: false });
+    closeConfirm();
     stateManager.dispatch({ type: 'CLEAR_ALL' });
     uiAppliers.renderEditor();
     uiAppliers.renderPreview();

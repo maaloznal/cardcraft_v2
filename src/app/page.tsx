@@ -465,7 +465,7 @@ export default function Home() {
       </div>
 
       {/* ================= WORD STYLE POPUP ================= */}
-      <div className="word-style-popup" id="wordStylePopup" role="dialog" aria-label="Настройка слова">
+      <div className="word-style-popup" id="wordStylePopup" role="dialog" aria-modal="true" aria-label="Настройка слова">
         <div className="word-popup-header" id="wordPopupHeader" />
         <button
           className="word-clear-btn"
@@ -528,7 +528,7 @@ export default function Home() {
       </div>
 
       {/* Confirmation dialog */}
-      <div className="confirm-overlay" id="confirmOverlay">
+      <div className="confirm-overlay" id="confirmOverlay" role="dialog" aria-modal="true" aria-labelledby="confirmText">
         <div className="confirm-dialog">
           <p className="confirm-text" id="confirmText">Вы действительно хотите удалить все карточки?</p>
           <div className="confirm-actions">
@@ -539,6 +539,9 @@ export default function Home() {
       </div>
 
       <div id="toast" className="toast" aria-live="polite" />
+
+      {/* P5: Screen reader announcements for card operations */}
+      <div id="srAnnouncer" className="sr-only" aria-live="polite" aria-atomic="true" />
     </div>
   );
 }

@@ -34,6 +34,18 @@ export interface CardOpsController {
 export function createCardOpsController(ctx: OrchestratorContext): CardOpsController {
   const { stateManager, editorRenderer, previewRenderer, uiAppliers } = ctx;
 
+  /** P5: announce to screen readers via #srAnnouncer aria-live region */
+  function announce(msg: string): void {
+    const el = document.getElementById('srAnnouncer');
+    if (el) {
+      el.textContent = '';
+      // Force re-announcement by clearing then setting on next tick
+      requestAnimationFrame(() => {
+        el.textContent = msg;
+      });
+    }
+  }
+
   /** Build PreviewSettings from current state (for updateProgressBars / insertCard) */
   function previewSettings(): PreviewSettings {
     const s = stateManager.getSettings();
@@ -66,6 +78,7 @@ export function createCardOpsController(ctx: OrchestratorContext): CardOpsContro
     ctx.history.pushHistory();
     ctx.storage.scheduleSave({ silent: true });
     ctx.storage.showToast('Карточка добавлена');
+    announce(`Карточка ${stateManager.getCardCount()} добавлена`);
   }
 
   function deleteCard(idx: number): void {
@@ -85,6 +98,7 @@ export function createCardOpsController(ctx: OrchestratorContext): CardOpsContro
     ctx.history.pushHistory();
     ctx.storage.scheduleSave({ silent: true });
     ctx.storage.showToast('Карточка удалена');
+    announce('Карточка удалена');
   }
 
   function duplicateCard(idx: number): void {
@@ -102,6 +116,7 @@ export function createCardOpsController(ctx: OrchestratorContext): CardOpsContro
     ctx.history.pushHistory();
     ctx.storage.scheduleSave({ silent: true });
     ctx.storage.showToast('Карточка дублирована');
+    announce('Карточка дублирована');
   }
 
   function moveCard(idx: number, dir: number): void {
@@ -125,6 +140,7 @@ export function createCardOpsController(ctx: OrchestratorContext): CardOpsContro
     updateProgressAndTags();
     ctx.history.pushHistory();
     ctx.storage.scheduleSave({ silent: true });
+    announce(dir > 0 ? 'Карточка перемещена вниз' : 'Карточка перемещена вверх');
   }
 
   return {
