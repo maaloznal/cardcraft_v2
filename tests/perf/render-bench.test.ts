@@ -139,7 +139,7 @@ describe('Performance: card operations', () => {
       expect(o1Time).toBeLessThan(rebuildTime * 3);
       expect(o1Time).toBeGreaterThanOrEqual(0);
 
-      // eslint-disable-next-line no-console
+       
       console.log(
         `  10 cards — add: O(1)=${o1Time.toFixed(2)}ms vs rebuild=${rebuildTime.toFixed(2)}ms ` +
           `(${(rebuildTime / o1Time).toFixed(1)}x faster)`,
@@ -166,7 +166,7 @@ describe('Performance: card operations', () => {
       }, 5);
 
       expect(o1Time).toBeLessThan(rebuildTime * 3);
-      // eslint-disable-next-line no-console
+       
       console.log(
         `  10 cards — delete: O(1)=${o1Time.toFixed(2)}ms vs rebuild=${rebuildTime.toFixed(2)}ms ` +
           `(${(rebuildTime / o1Time).toFixed(1)}x faster)`,
@@ -194,7 +194,7 @@ describe('Performance: card operations', () => {
       }, 5);
 
       expect(o1Time).toBeLessThan(rebuildTime * 3);
-      // eslint-disable-next-line no-console
+       
       console.log(
         `  10 cards — move: O(1)=${o1Time.toFixed(2)}ms vs rebuild=${rebuildTime.toFixed(2)}ms ` +
           `(${(rebuildTime / o1Time).toFixed(1)}x faster)`,
@@ -227,7 +227,7 @@ describe('Performance: card operations', () => {
       }, 3);
 
       expect(o1Time).toBeLessThan(rebuildTime * 3);
-      // eslint-disable-next-line no-console
+       
       console.log(
         `  50 cards — add: O(1)=${o1Time.toFixed(2)}ms vs rebuild=${rebuildTime.toFixed(2)}ms ` +
           `(${(rebuildTime / o1Time).toFixed(1)}x faster)`,
@@ -253,7 +253,7 @@ describe('Performance: card operations', () => {
       }, 3);
 
       expect(o1Time).toBeLessThan(rebuildTime * 3);
-      // eslint-disable-next-line no-console
+       
       console.log(
         `  50 cards — delete: O(1)=${o1Time.toFixed(2)}ms vs rebuild=${rebuildTime.toFixed(2)}ms ` +
           `(${(rebuildTime / o1Time).toFixed(1)}x faster)`,
@@ -286,7 +286,7 @@ describe('Performance: card operations', () => {
       }, 3);
 
       expect(o1Time).toBeLessThan(rebuildTime * 3);
-      // eslint-disable-next-line no-console
+       
       console.log(
         `  100 cards — add: O(1)=${o1Time.toFixed(2)}ms vs rebuild=${rebuildTime.toFixed(2)}ms ` +
           `(${(rebuildTime / o1Time).toFixed(1)}x faster)`,
@@ -312,7 +312,7 @@ describe('Performance: card operations', () => {
       }, 3);
 
       expect(o1Time).toBeLessThan(rebuildTime * 3);
-      // eslint-disable-next-line no-console
+       
       console.log(
         `  100 cards — delete: O(1)=${o1Time.toFixed(2)}ms vs rebuild=${rebuildTime.toFixed(2)}ms ` +
           `(${(rebuildTime / o1Time).toFixed(1)}x faster)`,
@@ -345,7 +345,7 @@ describe('Performance: card operations', () => {
       }, 3);
 
       expect(o1Time).toBeLessThan(rebuildTime * 3);
-      // eslint-disable-next-line no-console
+       
       console.log(
         `  100 cards — duplicate: O(1)=${o1Time.toFixed(2)}ms vs rebuild=${rebuildTime.toFixed(2)}ms ` +
           `(${(rebuildTime / o1Time).toFixed(1)}x faster)`,
@@ -378,7 +378,7 @@ describe('Performance: card operations', () => {
         teardown(setup.previewContainer, setup.editorContainer);
       }
 
-      // eslint-disable-next-line no-console
+       
       console.log(
         '  snapshot/restore:\n' +
           results

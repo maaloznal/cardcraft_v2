@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { initCardCraftApp, THEME_GROUPS } from '@/orchestrator/CardCraftApp';
 import './card-constructor.css';
 
@@ -59,7 +59,10 @@ function PanelIcon() {
 export default function Home() {
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  // Bug 1 fix: useLayoutEffect runs BEFORE browser paint (synchronously).
+  // useEffect runs AFTER paint — causing visible flash (empty cardsArea → cards).
+  // useLayoutEffect ensures cards are rendered before user sees anything.
+  useLayoutEffect(() => {
     if (!rootRef.current) return;
     return initCardConstructor(rootRef.current);
   }, []);
