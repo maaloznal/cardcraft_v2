@@ -18,7 +18,7 @@
  */
 export default {
   $schema: './node_modules/@stryker-mutator/core/schema/stryker-core.schema.json',
-  packageManager: 'npm', // Stryker doesn't support 'bun' — npm is installed alongside
+  packageManager: 'npm', // Stryker doesn't support 'bun'
   reporters: ['html', 'clear-text', 'progress'],
   testRunner: 'vitest',
   vitest: {
@@ -31,9 +31,9 @@ export default {
     'src/storage/StorageManager.ts',
     'src/core/utils.ts',
   ],
-  // Exclude type-only files and test files from mutation
-  ignorePatterns: ['tests/**', '*.config.*', 'docs/**'],
-  // Thresholds: warn if below, don't fail the build
+  // Exclude everything else from mutation + type checking
+  ignorePatterns: ['tests/**', '*.config.*', 'docs/**', 'skills/**', 'examples/**', '.next/**'],
+  disableTypeChecks: false,
   thresholds: {
     high: 80,
     low: 60,

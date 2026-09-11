@@ -148,7 +148,7 @@
   - **Verify**: screen reader тест — announce слышны при операциях.
 
 ### Color contrast
-- [x] **5.7 WCAG 2.1 AA contrast audit**
+- [~] **5.7 WCAG 2.1 AA contrast audit**
   - **Done**: `@axe-core/playwright@4.13.0` установлен. `tests/e2e/accessibility.spec.ts` (3 tests) — axe-core scan на default state, card with content, color modal open. Исправлены реальные нарушения: `--ui-text-secondary` #71717a → #52525b (4.39:1 → 6.54:1), `.card-empty-hint` opacity 0.5 убрано (контраст восстановлен).
   - **Verify**: `bun run test:e2e tests/e2e/accessibility.spec.ts` — 3/3 pass, 0 critical/serious violations.
 
@@ -205,7 +205,7 @@
 - [ ] **9.2 48 тем в lazy-loaded CSS**
   - **Current**: `themes.css` (1344 строки, 47 `[data-theme]` блоков) — статически импортирован, грузится в initial bundle.
   - **Left**: вынести themes.css в отдельный chunk, lazy-load (или только нужные темы).
-- [x] **9.3 Fonts conditional loading**
+- [~] **9.3 Fonts conditional loading**
   - **Done**: Удалён `@fontsource/plus-jakarta-sans` — не используется ни в одной теме (проверено через grep). Оставшиеся 3 шрифта (Golos, Lora, Manrope) все используются в темах.
   - **Verify**: `rg "Plus Jakarta" src/` → 0 совпадений.
 - [~] **9.4 Tree-shaking audit + удалить dead code**
@@ -289,7 +289,7 @@
 
 ## PRIORITY 18 — MUTATION TESTING
 
-- [~] **18.1 Stryker на критической бизнес-логике**
+- [!] **18.1 Stryker на критической бизнес-логике**
   - **Done**: `@stryker-mutator/core@10.0.0` + `@stryker-mutator/vitest-runner@10.0.0` установлены. `stryker.config.js` таргет: StateManager.ts, HistoryManager.ts, StorageManager.ts, utils.ts. `bun run test:mutation` script. Thresholds: high 80, low 60, break 0.
   - **Left**: запустить `bun run test:mutation` (занимает ~5-10 мин), исправить слабые тесты.
   - **Verify**: mutation score >80% на критических модулях.
@@ -306,7 +306,7 @@
   - **Verify**: `rg "src=\"https|href=\"https" src/app/layout.tsx src/app/page.tsx` → только favicon.
 - [x] **19.3 Security headers (HSTS, etc.)**
   - **Done**: X-Content-Type-Options ✓, Referrer-Policy ✓, X-Frame-Options:DENY ✓, X-XSS-Protection ✓, **Strict-Transport-Security: max-age=31536000; includeSubDomains** ✓ (добавлен в `src/middleware.ts` + `next.config.ts`).
-- [x] **19.4 XSS audit (HTML rendering, imported JSON, user content)**
+- [~] **19.4 XSS audit (HTML rendering, imported JSON, user content)**
   - **Done**: `escapeHtml`/`escapeAttr` на всех dynamic insertions ✓; `sanitizeCardId` ✓; localStorage validation ✓.
   - **E2E**: `tests/e2e/xss-security.spec.ts` (7 tests) — XSS payload во всех полях (title, subtitle, text, list, footer, cta) + localStorage injection. Все 7/7 pass.
   - **Verify**: `bun run test:e2e tests/e2e/xss-security.spec.ts` — 7/7 pass.
@@ -318,7 +318,7 @@
   - **Current**: `bun audit` после обновления next до 16.3.4 — **37 уязвимостей** (0 critical, 26 high, 10 moderate, 1 low). Critical RCE закрыты. Оставшиеся — transitive (browserslist, picomatch) через eslint-chain — не runtime.
   - **Left**: обновить sharp, eslint-chain; проверить каждый major bump на совместимость.
   - **Verify**: `bun audit` — 0 critical (✓ done); цель 0 high.
-- [x] **19.8 CSP reporting**
+- [~] **19.8 CSP reporting**
   - **Done**: `src/middleware.ts` — `report-uri /api/csp-report` + `report-to csp-endpoint` директивы. `Reporting-Endpoints` header. `src/app/api/csp-report/route.ts` — endpoint логирует violations через structured logger.
   - **Verify**: `curl -I localhost:3000` — `Reporting-Endpoints` header присутствует.
 
@@ -344,7 +344,7 @@
 
 ## PRIORITY 22 — ONBOARDING
 
-- [x] **22.1 Onboarding для нового пользователя**
+- [~] **22.1 Onboarding для нового пользователя**
   - **Done**: `page.tsx` — onboarding overlay с 5 шагами (создать, редактировать, тема, перемещать, экспорт). Skip button + Start button. localStorage flag `flashcard-onboarding-seen` — показывается только при первом визите. `onboarding.css` — стили с design tokens.
   - **Verify**: E2E — новый пользователь видит onboarding → Skip → не видит снова.
 
@@ -352,7 +352,7 @@
 
 ## PRIORITY 23 — KEYBOARD SHORTCUTS PANEL
 
-- [x] **23.1 `?` открывает panel со списком shortcuts**
+- [~] **23.1 `?` открывает panel со списком shortcuts**
   - **Done**: `page.tsx` — shortcuts overlay с списком реальных shortcuts (Ctrl+S/Z/Y, Esc, Tab, ↑↓, ?). `keyboard-controller.ts` — `?` handler открывает overlay, Escape закрывает. `shortcuts.css` — стили с design tokens. Close button + backdrop click.
   - **Verify**: press `?` → panel visible; Escape → closes.
 
@@ -412,7 +412,7 @@
 | **5.4** Icon aria-labels | [x] DONE | 13/13 |
 | **5.5** Keyboard nav (arrows) | [x] DONE | ArrowUp/Down move cards |
 | **5.6** Screen reader | [x] DONE | #srAnnouncer + announce() в card-ops |
-| **5.7** Color contrast | [x] DONE | axe-core + исправлены contrast нарушения |
+| **5.7** Color contrast | [~] PARTIAL | axe-core tests pass local, CI not verified |
 | **5.8** Reduced motion | [x] DONE | @media prefers-reduced-motion |
 | **6.** Dark Mode | [x] DONE | dead .dark block удалён, ADR-008 |
 | **7.** Live Preview | [x] DONE | split-screen на desktop, live update |
@@ -422,7 +422,7 @@
 | **8.5** Code splitting | [~] PARTIAL | только html-to-image |
 | **9.1** Bundle analyzer | [x] DONE | @next/bundle-analyzer + bun run analyze |
 | **9.2** Themes lazy CSS | [ ] TODO | все 47 тем в initial bundle |
-| **9.3** Fonts conditional | [x] DONE | Plus Jakarta удалён (unused), 3 шрифта остаются |
+| **9.3** Fonts conditional | [~] PARTIAL | dead code removed, conditional loading NOT implemented |
 | **9.4** Tree-shaking | [~] PARTIAL | analyzer установлен, Turbopack несовместим |
 | **10.** Design tokens | [x] DONE | все 9 категорий (spacing, fs, lh, z-index добавлены) |
 | **11.** Storybook | [ ] TODO | нет |
@@ -432,19 +432,19 @@
 | **15.** Conventional Commits | [~] PARTIAL | commitlint + hook ✓, auto-changelog TODO |
 | **16.** Visual Regression | [x] DONE | 5 Playwright screenshot tests |
 | **17.** Coverage 100% | [~] PARTIAL | coverage.include добавлен, thresholds 10%, критическая логика 95%+ |
-| **18.** Mutation Testing | [~] PARTIAL | Stryker установлен + config, run TODO |
+| **18.** Mutation Testing | [!] BLOCKED | Stryker 10 + Vite 8 rolldown incompatibility |
 | **19.1** CSP nonce | [x] DONE | nonce-based CSP в middleware (prod) |
 | **19.2** SRI | [x] DONE | нет внешних scripts/stylesheets |
 | **19.3** Security headers | [x] DONE | HSTS добавлен |
-| **19.4** XSS audit | [x] DONE | 7 E2E XSS tests, все pass |
+| **19.4** XSS audit | [~] PARTIAL | 7 tests pass local, CI not verified |
 | **19.5** Source maps | [x] DONE | не exposed |
 | **19.6** No secrets | [x] DONE | чисто |
 | **19.7** Vulnerable deps | [~] PARTIAL | 0 critical, react обновлён, transitive остаются |
-| **19.8** CSP reporting | [x] DONE | report-uri + endpoint /api/csp-report |
+| **19.8** CSP reporting | [~] PARTIAL | infrastructure exists, no test, not verified E2E |
 | **20.** Structured Logging | [x] DONE | logger.ts, все console.* заменены |
 | **21.** Analytics | [ ] TODO | нет |
-| **22.** Onboarding | [x] DONE | overlay с 5 шагами + localStorage flag |
-| **23.** Shortcuts Panel | [x] DONE | ? открывает panel со списком shortcuts |
+| **22.** Onboarding | [~] PARTIAL | basic works, restart missing, no test, CI not verified |
+| **23.** Shortcuts Panel | [~] PARTIAL | works local, no E2E test, CI not verified |
 | **24.** Dependency Audit | [~] PARTIAL | next+react обновлены, unused font удалён |
 | **25.** Final Audit | [ ] TODO | после всех задач |
 | **F.1** Final Report | [ ] TODO | после 25 |

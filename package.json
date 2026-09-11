@@ -14,6 +14,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:mutation": "stryker run",
+    "changeset": "changeset",
+    "version": "changeset version",
     "analyze": "ANALYZE=true next build",
     "prepare": "husky"
   },

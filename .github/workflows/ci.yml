@@ -42,10 +42,13 @@ jobs:
         run: bun run test:perf
 
   # ─── E2E tests (Playwright) ────────────────────────────────
+  # 44 E2E tests (28 functional + 5 visual + 3 axe + 7 XSS + 1 skipped)
+  # CI is slower than local (~2-3x) due to shared runners + browser install.
+  # Local: ~70s. CI: ~5-8 min. Timeout set to 20 min for safety margin.
   e2e:
     name: E2E tests (Playwright)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
