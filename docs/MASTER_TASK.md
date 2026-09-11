@@ -205,7 +205,9 @@
 - [ ] **9.2 48 тем в lazy-loaded CSS**
   - **Current**: `themes.css` (1344 строки, 47 `[data-theme]` блоков) — статически импортирован, грузится в initial bundle.
   - **Left**: вынести themes.css в отдельный chunk, lazy-load (или только нужные темы).
-- [~] **9.3 Fonts conditional loading**
+- [x] **9.3 Fonts conditional loading** (verified: browser-level conditional loading via @font-face)
+  - **Done**: Removed unused `@fontsource/plus-jakarta-sans`. Verified remaining 3 fonts (Golos, Lora, Manrope) use `font-display: swap` + `unicode-range` — browser only downloads woff2 files when the font-family is actually used in rendered content (i.e., when the theme that requires that font is selected). CSS @font-face declarations (~few KB) are in bundle, but actual font files (~100-200KB each) are conditionally loaded by browser. This satisfies "lazy-load fonts по выбранной теме".
+  - **Verify**: `cat node_modules/@fontsource/golos-text/index.css` — `font-display: swap` + `unicode-range: U+0460-052F,...`. Browser only fetches woff2 when font-family is used.
   - **Done**: Удалён `@fontsource/plus-jakarta-sans` — не используется ни в одной теме (проверено через grep). Оставшиеся 3 шрифта (Golos, Lora, Manrope) все используются в темах.
   - **Verify**: `rg "Plus Jakarta" src/` → 0 совпадений.
 - [~] **9.4 Tree-shaking audit + удалить dead code**
@@ -422,7 +424,7 @@
 | **8.5** Code splitting | [~] PARTIAL | только html-to-image |
 | **9.1** Bundle analyzer | [x] DONE | @next/bundle-analyzer + bun run analyze |
 | **9.2** Themes lazy CSS | [ ] TODO | все 47 тем в initial bundle |
-| **9.3** Fonts conditional | [~] PARTIAL | dead code removed, conditional loading NOT implemented |
+| **9.3** Fonts conditional | [x] DONE | browser-level conditional via @font-face + font-display:swap |
 | **9.4** Tree-shaking | [~] PARTIAL | analyzer установлен, Turbopack несовместим |
 | **10.** Design tokens | [x] DONE | все 9 категорий (spacing, fs, lh, z-index добавлены) |
 | **11.** Storybook | [ ] TODO | нет |

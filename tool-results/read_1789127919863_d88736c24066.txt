@@ -1,0 +1,1112 @@
+     1→Run bun run test:e2e
+     2→$ playwright test
+     3→[WebServer] $ next dev -p 3000 2>&1 | tee dev.log
+     4→
+     5→Running 37 tests using 1 worker
+     6→··××T
+     7→Error:   1) [chromium] › tests/e2e/accessibility.spec.ts:56:7 › Accessibility audit (axe-core) › 5.7c color modal open — no critical/serious violations 
+     8→    Test timeout of 30000ms exceeded.
+     9→Error:   1) [chromium] › tests/e2e/accessibility.spec.ts:56:7 › Accessibility audit (axe-core) › 5.7c color modal open — no critical/serious violations 
+    10→    Error: locator.click: Test timeout of 30000ms exceeded.
+    11→    Call log:
+    12→      - waiting for locator('#editorCardsList .card-editor-block').first().locator('[data-action="palette"]')
+    13→        - locator resolved to <button data-index="0" data-action="palette" title="Цвета и стили карточки" class="btn-card-editor-palette">…</button>
+    14→      - attempting click action
+    15→        2 × waiting for element to be visible, enabled and stable
+    16→          - element is not stable
+    17→        - retrying click action
+    18→        - waiting 20ms
+    19→        - waiting for element to be visible, enabled and stable
+    20→        - element is not stable
+    21→      2 × retrying click action
+    22→          - waiting 100ms
+    23→          - waiting for element to be visible, enabled and stable
+    24→          - element is visible, enabled and stable
+    25→          - scrolling into view if needed
+    26→          - done scrolling
+    27→          - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+    28→      56 × retrying click action
+    29→           - waiting 500ms
+    30→           - waiting for element to be visible, enabled and stable
+    31→           - element is visible, enabled and stable
+    32→           - scrolling into view if needed
+    33→           - done scrolling
+    34→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+    35→      - retrying click action
+    36→        - waiting 500ms
+    37→
+    38→
+    39→      55 |
+    40→      56 |   test('5.7c color modal open — no critical/serious violations', async ({ page }) => {
+    41→    > 57 |     await page.locator('#editorCardsList .card-editor-block').first().locator('[data-action="palette"]').click();
+    42→         |                                                                                                          ^
+    43→      58 |     await page.waitForTimeout(500);
+    44→      59 |
+    45→      60 |     const results = await new AxeBuilder({ page })
+    46→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/accessibility.spec.ts:57:106
+    47→Error:   1) [chromium] › tests/e2e/accessibility.spec.ts:56:7 › Accessibility audit (axe-core) › 5.7c color modal open — no critical/serious violations 
+    48→
+    49→    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+    50→    Test timeout of 30000ms exceeded.
+    51→Error:   1) [chromium] › tests/e2e/accessibility.spec.ts:56:7 › Accessibility audit (axe-core) › 5.7c color modal open — no critical/serious violations 
+    52→
+    53→    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+    54→    Error: locator.click: Test timeout of 30000ms exceeded.
+    55→    Call log:
+    56→      - waiting for locator('#editorCardsList .card-editor-block').first().locator('[data-action="palette"]')
+    57→        - locator resolved to <button data-index="0" data-action="palette" title="Цвета и стили карточки" class="btn-card-editor-palette">…</button>
+    58→      - attempting click action
+    59→        2 × waiting for element to be visible, enabled and stable
+    60→          - element is not stable
+    61→        - retrying click action
+    62→        - waiting 20ms
+    63→        2 × waiting for element to be visible, enabled and stable
+    64→          - element is not stable
+    65→        - retrying click action
+    66→          - waiting 100ms
+    67→        57 × waiting for element to be visible, enabled and stable
+    68→           - element is visible, enabled and stable
+    69→           - scrolling into view if needed
+    70→           - done scrolling
+    71→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+    72→         - retrying click action
+    73→           - waiting 500ms
+    74→
+    75→
+    76→      55 |
+    77→      56 |   test('5.7c color modal open — no critical/serious violations', async ({ page }) => {
+    78→    > 57 |     await page.locator('#editorCardsList .card-editor-block').first().locator('[data-action="palette"]').click();
+    79→         |                                                                                                          ^
+    80→      58 |     await page.waitForTimeout(500);
+    81→      59 |
+    82→      60 |     const results = await new AxeBuilder({ page })
+    83→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/accessibility.spec.ts:57:106
+    84→Error:   1) [chromium] › tests/e2e/accessibility.spec.ts:56:7 › Accessibility audit (axe-core) › 5.7c color modal open — no critical/serious violations 
+    85→
+    86→    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+    87→    Test timeout of 30000ms exceeded.
+    88→Error:   1) [chromium] › tests/e2e/accessibility.spec.ts:56:7 › Accessibility audit (axe-core) › 5.7c color modal open — no critical/serious violations 
+    89→
+    90→    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+    91→    Error: locator.click: Test timeout of 30000ms exceeded.
+    92→    Call log:
+    93→      - waiting for locator('#editorCardsList .card-editor-block').first().locator('[data-action="palette"]')
+    94→        - locator resolved to <button data-index="0" data-action="palette" title="Цвета и стили карточки" class="btn-card-editor-palette">…</button>
+    95→      - attempting click action
+    96→        2 × waiting for element to be visible, enabled and stable
+    97→          - element is not stable
+    98→        - retrying click action
+    99→        - waiting 20ms
+   100→        2 × waiting for element to be visible, enabled and stable
+   101→          - element is not stable
+   102→        - retrying click action
+   103→          - waiting 100ms
+   104→        57 × waiting for element to be visible, enabled and stable
+   105→           - element is visible, enabled and stable
+   106→           - scrolling into view if needed
+   107→           - done scrolling
+   108→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   109→         - retrying click action
+   110→           - waiting 500ms
+   111→
+   112→
+   113→      55 |
+   114→      56 |   test('5.7c color modal open — no critical/serious violations', async ({ page }) => {
+   115→    > 57 |     await page.locator('#editorCardsList .card-editor-block').first().locator('[data-action="palette"]').click();
+   116→         |                                                                                                          ^
+   117→      58 |     await page.waitForTimeout(500);
+   118→      59 |
+   119→      60 |     const results = await new AxeBuilder({ page })
+   120→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/accessibility.spec.ts:57:106
+   121→··××T
+   122→Error:   2) [chromium] › tests/e2e/app.spec.ts:31:7 › App launch › 19. no critical console errors during basic interaction 
+   123→    Test timeout of 30000ms exceeded.
+   124→Error:   2) [chromium] › tests/e2e/app.spec.ts:31:7 › App launch › 19. no critical console errors during basic interaction 
+   125→    Error: locator.click: Test timeout of 30000ms exceeded.
+   126→    Call log:
+   127→      - waiting for locator('#addCardBtn')
+   128→        - locator resolved to <button class="btn-add" id="addCardBtn" aria-label="Добавить новую карточку">+ Добавить карточку</button>
+   129→      - attempting click action
+   130→        2 × waiting for element to be visible, enabled and stable
+   131→          - element is not stable
+   132→        - retrying click action
+   133→        - waiting 20ms
+   134→        2 × waiting for element to be visible, enabled and stable
+   135→          - element is not stable
+   136→        - retrying click action
+   137→          - waiting 100ms
+   138→        57 × waiting for element to be visible, enabled and stable
+   139→           - element is visible, enabled and stable
+   140→           - scrolling into view if needed
+   141→           - done scrolling
+   142→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   143→         - retrying click action
+   144→           - waiting 500ms
+   145→
+   146→
+   147→      38 |     await gotoApp(page);
+   148→      39 |     // Add a card
+   149→    > 40 |     await page.locator('#addCardBtn').click();
+   150→         |                                       ^
+   151→      41 |     // Type in title
+   152→      42 |     await page.locator('#editorCardsList .card-editor-block').first().locator('[data-field="title"]').fill('Test');
+   153→      43 |     // Open color modal
+   154→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/app.spec.ts:40:39
+   155→Error:   2) [chromium] › tests/e2e/app.spec.ts:31:7 › App launch › 19. no critical console errors during basic interaction 
+   156→
+   157→    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+   158→    Test timeout of 30000ms exceeded.
+   159→Error:   2) [chromium] › tests/e2e/app.spec.ts:31:7 › App launch › 19. no critical console errors during basic interaction 
+   160→
+   161→    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+   162→    Error: locator.click: Test timeout of 30000ms exceeded.
+   163→    Call log:
+   164→      - waiting for locator('#addCardBtn')
+   165→        - locator resolved to <button class="btn-add" id="addCardBtn" aria-label="Добавить новую карточку">+ Добавить карточку</button>
+   166→      - attempting click action
+   167→        2 × waiting for element to be visible, enabled and stable
+   168→          - element is not stable
+   169→        - retrying click action
+   170→        - waiting 20ms
+   171→        2 × waiting for element to be visible, enabled and stable
+   172→          - element is not stable
+   173→        - retrying click action
+   174→          - waiting 100ms
+   175→        57 × waiting for element to be visible, enabled and stable
+   176→           - element is visible, enabled and stable
+   177→           - scrolling into view if needed
+   178→           - done scrolling
+   179→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   180→         - retrying click action
+   181→           - waiting 500ms
+   182→
+   183→
+   184→      38 |     await gotoApp(page);
+   185→      39 |     // Add a card
+   186→    > 40 |     await page.locator('#addCardBtn').click();
+   187→         |                                       ^
+   188→      41 |     // Type in title
+   189→      42 |     await page.locator('#editorCardsList .card-editor-block').first().locator('[data-field="title"]').fill('Test');
+   190→      43 |     // Open color modal
+   191→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/app.spec.ts:40:39
+   192→Error:   2) [chromium] › tests/e2e/app.spec.ts:31:7 › App launch › 19. no critical console errors during basic interaction 
+   193→
+   194→    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+   195→    Test timeout of 30000ms exceeded.
+   196→Error:   2) [chromium] › tests/e2e/app.spec.ts:31:7 › App launch › 19. no critical console errors during basic interaction 
+   197→
+   198→    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+   199→    Error: locator.click: Test timeout of 30000ms exceeded.
+   200→    Call log:
+   201→      - waiting for locator('#addCardBtn')
+   202→        - locator resolved to <button class="btn-add" id="addCardBtn" aria-label="Добавить новую карточку">+ Добавить карточку</button>
+   203→      - attempting click action
+   204→        2 × waiting for element to be visible, enabled and stable
+   205→          - element is not stable
+   206→        - retrying click action
+   207→        - waiting 20ms
+   208→        2 × waiting for element to be visible, enabled and stable
+   209→          - element is not stable
+   210→        - retrying click action
+   211→          - waiting 100ms
+   212→        57 × waiting for element to be visible, enabled and stable
+   213→           - element is visible, enabled and stable
+   214→           - scrolling into view if needed
+   215→           - done scrolling
+   216→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   217→         - retrying click action
+   218→           - waiting 500ms
+   219→
+   220→
+   221→      38 |     await gotoApp(page);
+   222→      39 |     // Add a card
+   223→    > 40 |     await page.locator('#addCardBtn').click();
+   224→         |                                       ^
+   225→      41 |     // Type in title
+   226→      42 |     await page.locator('#editorCardsList .card-editor-block').first().locator('[data-field="title"]').fill('Test');
+   227→      43 |     // Open color modal
+   228→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/app.spec.ts:40:39
+   229→××T
+   230→Error:   3) [chromium] › tests/e2e/app.spec.ts:66:7 › App launch › 20. basic smoke test — happy path ──────
+   231→    Test timeout of 30000ms exceeded.
+   232→Error:   3) [chromium] › tests/e2e/app.spec.ts:66:7 › App launch › 20. basic smoke test — happy path ──────
+   233→    Error: locator.click: Test timeout of 30000ms exceeded.
+   234→    Call log:
+   235→      - waiting for locator('#addCardBtn')
+   236→        - locator resolved to <button class="btn-add" id="addCardBtn" aria-label="Добавить новую карточку">+ Добавить карточку</button>
+   237→      - attempting click action
+   238→        2 × waiting for element to be visible, enabled and stable
+   239→          - element is not stable
+   240→        - retrying click action
+   241→        - waiting 20ms
+   242→        - waiting for element to be visible, enabled and stable
+   243→        - element is not stable
+   244→      2 × retrying click action
+   245→          - waiting 100ms
+   246→          - waiting for element to be visible, enabled and stable
+   247→          - element is visible, enabled and stable
+   248→          - scrolling into view if needed
+   249→          - done scrolling
+   250→          - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   251→      56 × retrying click action
+   252→           - waiting 500ms
+   253→           - waiting for element to be visible, enabled and stable
+   254→           - element is visible, enabled and stable
+   255→           - scrolling into view if needed
+   256→           - done scrolling
+   257→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   258→      - retrying click action
+   259→        - waiting 500ms
+   260→
+   261→
+   262→      67 |     await gotoApp(page);
+   263→      68 |     // Add card
+   264→    > 69 |     await page.locator('#addCardBtn').click();
+   265→         |                                       ^
+   266→      70 |     expect(await getPreviewCardCount(page)).toBe(2);
+   267→      71 |     // Type
+   268→      72 |     await page.locator('#editorCardsList .card-editor-block').first().locator('[data-field="title"]').fill('Smoke Test');
+   269→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/app.spec.ts:69:39
+   270→Error:   3) [chromium] › tests/e2e/app.spec.ts:66:7 › App launch › 20. basic smoke test — happy path ──────
+   271→
+   272→    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+   273→    Test timeout of 30000ms exceeded.
+   274→Error:   3) [chromium] › tests/e2e/app.spec.ts:66:7 › App launch › 20. basic smoke test — happy path ──────
+   275→
+   276→    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+   277→    Error: locator.click: Test timeout of 30000ms exceeded.
+   278→    Call log:
+   279→      - waiting for locator('#addCardBtn')
+   280→        - locator resolved to <button class="btn-add" id="addCardBtn" aria-label="Добавить новую карточку">+ Добавить карточку</button>
+   281→      - attempting click action
+   282→        2 × waiting for element to be visible, enabled and stable
+   283→          - element is not stable
+   284→        - retrying click action
+   285→        - waiting 20ms
+   286→        2 × waiting for element to be visible, enabled and stable
+   287→          - element is not stable
+   288→        - retrying click action
+   289→          - waiting 100ms
+   290→        57 × waiting for element to be visible, enabled and stable
+   291→           - element is visible, enabled and stable
+   292→           - scrolling into view if needed
+   293→           - done scrolling
+   294→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   295→         - retrying click action
+   296→           - waiting 500ms
+   297→
+   298→
+   299→      67 |     await gotoApp(page);
+   300→      68 |     // Add card
+   301→    > 69 |     await page.locator('#addCardBtn').click();
+   302→         |                                       ^
+   303→      70 |     expect(await getPreviewCardCount(page)).toBe(2);
+   304→      71 |     // Type
+   305→      72 |     await page.locator('#editorCardsList .card-editor-block').first().locator('[data-field="title"]').fill('Smoke Test');
+   306→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/app.spec.ts:69:39
+   307→Error:   3) [chromium] › tests/e2e/app.spec.ts:66:7 › App launch › 20. basic smoke test — happy path ──────
+   308→
+   309→    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+   310→    Test timeout of 30000ms exceeded.
+   311→Error:   3) [chromium] › tests/e2e/app.spec.ts:66:7 › App launch › 20. basic smoke test — happy path ──────
+   312→
+   313→    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+   314→    Error: locator.click: Test timeout of 30000ms exceeded.
+   315→    Call log:
+   316→      - waiting for locator('#addCardBtn')
+   317→        - locator resolved to <button class="btn-add" id="addCardBtn" aria-label="Добавить новую карточку">+ Добавить карточку</button>
+   318→      - attempting click action
+   319→        2 × waiting for element to be visible, enabled and stable
+   320→          - element is not stable
+   321→        - retrying click action
+   322→        - waiting 20ms
+   323→        2 × waiting for element to be visible, enabled and stable
+   324→          - element is not stable
+   325→        - retrying click action
+   326→          - waiting 100ms
+   327→        57 × waiting for element to be visible, enabled and stable
+   328→           - element is visible, enabled and stable
+   329→           - scrolling into view if needed
+   330→           - done scrolling
+   331→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   332→         - retrying click action
+   333→           - waiting 500ms
+   334→
+   335→
+   336→      67 |     await gotoApp(page);
+   337→      68 |     // Add card
+   338→    > 69 |     await page.locator('#addCardBtn').click();
+   339→         |                                       ^
+   340→      70 |     expect(await getPreviewCardCount(page)).toBe(2);
+   341→      71 |     // Type
+   342→      72 |     await page.locator('#editorCardsList .card-editor-block').first().locator('[data-field="title"]').fill('Smoke Test');
+   343→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/app.spec.ts:69:39
+   344→××T
+   345→Error:   4) [chromium] › tests/e2e/cards.spec.ts:14:7 › Card operations › 3. create card — Add button increases count 
+   346→    Test timeout of 30000ms exceeded.
+   347→Error:   4) [chromium] › tests/e2e/cards.spec.ts:14:7 › Card operations › 3. create card — Add button increases count 
+   348→    Error: locator.click: Test timeout of 30000ms exceeded.
+   349→    Call log:
+   350→      - waiting for locator('#addCardBtn')
+   351→        - locator resolved to <button class="btn-add" id="addCardBtn" aria-label="Добавить новую карточку">+ Добавить карточку</button>
+   352→      - attempting click action
+   353→        2 × waiting for element to be visible, enabled and stable
+   354→          - element is not stable
+   355→        - retrying click action
+   356→        - waiting 20ms
+   357→        - waiting for element to be visible, enabled and stable
+   358→        - element is not stable
+   359→      2 × retrying click action
+   360→          - waiting 100ms
+   361→          - waiting for element to be visible, enabled and stable
+   362→          - element is visible, enabled and stable
+   363→          - scrolling into view if needed
+   364→          - done scrolling
+   365→          - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   366→      56 × retrying click action
+   367→           - waiting 500ms
+   368→           - waiting for element to be visible, enabled and stable
+   369→           - element is visible, enabled and stable
+   370→           - scrolling into view if needed
+   371→           - done scrolling
+   372→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   373→      - retrying click action
+   374→        - waiting 500ms
+   375→
+   376→
+   377→      14 |   test('3. create card — Add button increases count', async ({ page }) => {
+   378→      15 |     const before = await getPreviewCardCount(page);
+   379→    > 16 |     await page.locator('#addCardBtn').click();
+   380→         |                                       ^
+   381→      17 |     await expect.poll(() => getPreviewCardCount(page)).toBe(before + 1);
+   382→      18 |     expect(await getEditorCardCount(page)).toBe(before + 1);
+   383→      19 |   });
+   384→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/cards.spec.ts:16:39
+   385→Error:   4) [chromium] › tests/e2e/cards.spec.ts:14:7 › Card operations › 3. create card — Add button increases count 
+   386→
+   387→    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+   388→    Test timeout of 30000ms exceeded.
+   389→Error:   4) [chromium] › tests/e2e/cards.spec.ts:14:7 › Card operations › 3. create card — Add button increases count 
+   390→
+   391→    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+   392→    Error: locator.click: Test timeout of 30000ms exceeded.
+   393→    Call log:
+   394→      - waiting for locator('#addCardBtn')
+   395→        - locator resolved to <button class="btn-add" id="addCardBtn" aria-label="Добавить новую карточку">+ Добавить карточку</button>
+   396→      - attempting click action
+   397→        2 × waiting for element to be visible, enabled and stable
+   398→          - element is not stable
+   399→        - retrying click action
+   400→        - waiting 20ms
+   401→        2 × waiting for element to be visible, enabled and stable
+   402→          - element is not stable
+   403→        - retrying click action
+   404→          - waiting 100ms
+   405→        57 × waiting for element to be visible, enabled and stable
+   406→           - element is visible, enabled and stable
+   407→           - scrolling into view if needed
+   408→           - done scrolling
+   409→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   410→         - retrying click action
+   411→           - waiting 500ms
+   412→
+   413→
+   414→      14 |   test('3. create card — Add button increases count', async ({ page }) => {
+   415→      15 |     const before = await getPreviewCardCount(page);
+   416→    > 16 |     await page.locator('#addCardBtn').click();
+   417→         |                                       ^
+   418→      17 |     await expect.poll(() => getPreviewCardCount(page)).toBe(before + 1);
+   419→      18 |     expect(await getEditorCardCount(page)).toBe(before + 1);
+   420→      19 |   });
+   421→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/cards.spec.ts:16:39
+   422→Error:   4) [chromium] › tests/e2e/cards.spec.ts:14:7 › Card operations › 3. create card — Add button increases count 
+   423→
+   424→    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+   425→    Test timeout of 30000ms exceeded.
+   426→Error:   4) [chromium] › tests/e2e/cards.spec.ts:14:7 › Card operations › 3. create card — Add button increases count 
+   427→
+   428→    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+   429→    Error: locator.click: Test timeout of 30000ms exceeded.
+   430→    Call log:
+   431→      - waiting for locator('#addCardBtn')
+   432→        - locator resolved to <button class="btn-add" id="addCardBtn" aria-label="Добавить новую карточку">+ Добавить карточку</button>
+   433→      - attempting click action
+   434→        2 × waiting for element to be visible, enabled and stable
+   435→          - element is not stable
+   436→        - retrying click action
+   437→        - waiting 20ms
+   438→        - waiting for element to be visible, enabled and stable
+   439→        - element is not stable
+   440→      2 × retrying click action
+   441→          - waiting 100ms
+   442→          - waiting for element to be visible, enabled and stable
+   443→          - element is visible, enabled and stable
+   444→          - scrolling into view if needed
+   445→          - done scrolling
+   446→          - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   447→      56 × retrying click action
+   448→           - waiting 500ms
+   449→           - waiting for element to be visible, enabled and stable
+   450→           - element is visible, enabled and stable
+   451→           - scrolling into view if needed
+   452→           - done scrolling
+   453→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   454→      - retrying click action
+   455→        - waiting 500ms
+   456→
+   457→
+   458→      14 |   test('3. create card — Add button increases count', async ({ page }) => {
+   459→      15 |     const before = await getPreviewCardCount(page);
+   460→    > 16 |     await page.locator('#addCardBtn').click();
+   461→         |                                       ^
+   462→      17 |     await expect.poll(() => getPreviewCardCount(page)).toBe(before + 1);
+   463→      18 |     expect(await getEditorCardCount(page)).toBe(before + 1);
+   464→      19 |   });
+   465→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/cards.spec.ts:16:39
+   466→·××T
+   467→Error:   5) [chromium] › tests/e2e/cards.spec.ts:29:7 › Card operations › 5. delete card — removes from editor + preview 
+   468→    Test timeout of 30000ms exceeded.
+   469→Error:   5) [chromium] › tests/e2e/cards.spec.ts:29:7 › Card operations › 5. delete card — removes from editor + preview 
+   470→    Error: locator.click: Test timeout of 30000ms exceeded.
+   471→    Call log:
+   472→      - waiting for locator('#addCardBtn')
+   473→        - locator resolved to <button class="btn-add" id="addCardBtn" aria-label="Добавить новую карточку">+ Добавить карточку</button>
+   474→      - attempting click action
+   475→        2 × waiting for element to be visible, enabled and stable
+   476→          - element is not stable
+   477→        - retrying click action
+   478→        - waiting 20ms
+   479→        2 × waiting for element to be visible, enabled and stable
+   480→          - element is not stable
+   481→        - retrying click action
+   482→          - waiting 100ms
+   483→        57 × waiting for element to be visible, enabled and stable
+   484→           - element is visible, enabled and stable
+   485→           - scrolling into view if needed
+   486→           - done scrolling
+   487→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   488→         - retrying click action
+   489→           - waiting 500ms
+   490→
+   491→
+   492→      30 |     const before = await getPreviewCardCount(page);
+   493→      31 |     // Add a card first (so we have at least 2, can delete 1)
+   494→    > 32 |     await page.locator('#addCardBtn').click();
+   495→         |                                       ^
+   496→      33 |     await page.waitForTimeout(400);
+   497→      34 |     expect(await getPreviewCardCount(page)).toBe(before + 1);
+   498→      35 |     // Ensure first card block is expanded (collapse toggle if collapsed)
+   499→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/cards.spec.ts:32:39
+   500→Error:   5) [chromium] › tests/e2e/cards.spec.ts:29:7 › Card operations › 5. delete card — removes from editor + preview 
+   501→
+   502→    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+   503→    Test timeout of 30000ms exceeded.
+   504→Error:   5) [chromium] › tests/e2e/cards.spec.ts:29:7 › Card operations › 5. delete card — removes from editor + preview 
+   505→
+   506→    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+   507→    Error: locator.click: Test timeout of 30000ms exceeded.
+   508→    Call log:
+   509→      - waiting for locator('#addCardBtn')
+   510→        - locator resolved to <button class="btn-add" id="addCardBtn" aria-label="Добавить новую карточку">+ Добавить карточку</button>
+   511→      - attempting click action
+   512→        2 × waiting for element to be visible, enabled and stable
+   513→          - element is not stable
+   514→        - retrying click action
+   515→        - waiting 20ms
+   516→        - waiting for element to be visible, enabled and stable
+   517→        - element is not stable
+   518→      2 × retrying click action
+   519→          - waiting 100ms
+   520→          - waiting for element to be visible, enabled and stable
+   521→          - element is visible, enabled and stable
+   522→          - scrolling into view if needed
+   523→          - done scrolling
+   524→          - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   525→      56 × retrying click action
+   526→           - waiting 500ms
+   527→           - waiting for element to be visible, enabled and stable
+   528→           - element is visible, enabled and stable
+   529→           - scrolling into view if needed
+   530→           - done scrolling
+   531→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   532→      - retrying click action
+   533→        - waiting 500ms
+   534→
+   535→
+   536→      30 |     const before = await getPreviewCardCount(page);
+   537→      31 |     // Add a card first (so we have at least 2, can delete 1)
+   538→    > 32 |     await page.locator('#addCardBtn').click();
+   539→         |                                       ^
+   540→      33 |     await page.waitForTimeout(400);
+   541→      34 |     expect(await getPreviewCardCount(page)).toBe(before + 1);
+   542→      35 |     // Ensure first card block is expanded (collapse toggle if collapsed)
+   543→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/cards.spec.ts:32:39
+   544→Error:   5) [chromium] › tests/e2e/cards.spec.ts:29:7 › Card operations › 5. delete card — removes from editor + preview 
+   545→
+   546→    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+   547→    Test timeout of 30000ms exceeded.
+   548→Error:   5) [chromium] › tests/e2e/cards.spec.ts:29:7 › Card operations › 5. delete card — removes from editor + preview 
+   549→
+   550→    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+   551→    Error: locator.click: Test timeout of 30000ms exceeded.
+   552→    Call log:
+   553→      - waiting for locator('#addCardBtn')
+   554→        - locator resolved to <button class="btn-add" id="addCardBtn" aria-label="Добавить новую карточку">+ Добавить карточку</button>
+   555→      - attempting click action
+   556→        2 × waiting for element to be visible, enabled and stable
+   557→          - element is not stable
+   558→        - retrying click action
+   559→        - waiting 20ms
+   560→        - waiting for element to be visible, enabled and stable
+   561→        - element is not stable
+   562→      2 × retrying click action
+   563→          - waiting 100ms
+   564→          - waiting for element to be visible, enabled and stable
+   565→          - element is visible, enabled and stable
+   566→          - scrolling into view if needed
+   567→          - done scrolling
+   568→          - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   569→      56 × retrying click action
+   570→           - waiting 500ms
+   571→           - waiting for element to be visible, enabled and stable
+   572→           - element is visible, enabled and stable
+   573→           - scrolling into view if needed
+   574→           - done scrolling
+   575→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   576→      - retrying click action
+   577→        - waiting 500ms
+   578→
+   579→
+   580→      30 |     const before = await getPreviewCardCount(page);
+   581→      31 |     // Add a card first (so we have at least 2, can delete 1)
+   582→    > 32 |     await page.locator('#addCardBtn').click();
+   583→         |                                       ^
+   584→      33 |     await page.waitForTimeout(400);
+   585→      34 |     expect(await getPreviewCardCount(page)).toBe(before + 1);
+   586→      35 |     // Ensure first card block is expanded (collapse toggle if collapsed)
+   587→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/cards.spec.ts:32:39
+   588→·××T
+   589→Error:   6) [chromium] › tests/e2e/cards.spec.ts:70:7 › Card operations › 7. move card — down then up reorders 
+   590→    Test timeout of 30000ms exceeded.
+   591→Error:   6) [chromium] › tests/e2e/cards.spec.ts:70:7 › Card operations › 7. move card — down then up reorders 
+   592→    Error: locator.click: Test timeout of 30000ms exceeded.
+   593→    Call log:
+   594→      - waiting for locator('#addCardBtn')
+   595→        - locator resolved to <button class="btn-add" id="addCardBtn" aria-label="Добавить новую карточку">+ Добавить карточку</button>
+   596→      - attempting click action
+   597→        2 × waiting for element to be visible, enabled and stable
+   598→          - element is not stable
+   599→        - retrying click action
+   600→        - waiting 20ms
+   601→        2 × waiting for element to be visible, enabled and stable
+   602→          - element is not stable
+   603→        - retrying click action
+   604→          - waiting 100ms
+   605→        57 × waiting for element to be visible, enabled and stable
+   606→           - element is visible, enabled and stable
+   607→           - scrolling into view if needed
+   608→           - done scrolling
+   609→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   610→         - retrying click action
+   611→           - waiting 500ms
+   612→
+   613→
+   614→      71 |     // Add 2 cards with distinct titles
+   615→      72 |     await page.locator('#editorCardsList .card-editor-block').first().locator('[data-field="title"]').fill('First');
+   616→    > 73 |     await page.locator('#addCardBtn').click();
+   617→         |                                       ^
+   618→      74 |     await page.locator('#editorCardsList .card-editor-block').nth(1).locator('[data-field="title"]').fill('Second');
+   619→      75 |     await expect(page.locator('#cardsArea .card-title').nth(0)).toContainText('First');
+   620→      76 |     await expect(page.locator('#cardsArea .card-title').nth(1)).toContainText('Second');
+   621→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/cards.spec.ts:73:39
+   622→Error:   6) [chromium] › tests/e2e/cards.spec.ts:70:7 › Card operations › 7. move card — down then up reorders 
+   623→
+   624→    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+   625→    Test timeout of 30000ms exceeded.
+   626→Error:   6) [chromium] › tests/e2e/cards.spec.ts:70:7 › Card operations › 7. move card — down then up reorders 
+   627→
+   628→    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+   629→    Error: locator.click: Test timeout of 30000ms exceeded.
+   630→    Call log:
+   631→      - waiting for locator('#addCardBtn')
+   632→        - locator resolved to <button class="btn-add" id="addCardBtn" aria-label="Добавить новую карточку">+ Добавить карточку</button>
+   633→      - attempting click action
+   634→        2 × waiting for element to be visible, enabled and stable
+   635→          - element is not stable
+   636→        - retrying click action
+   637→        - waiting 20ms
+   638→        - waiting for element to be visible, enabled and stable
+   639→        - element is not stable
+   640→      2 × retrying click action
+   641→          - waiting 100ms
+   642→          - waiting for element to be visible, enabled and stable
+   643→          - element is visible, enabled and stable
+   644→          - scrolling into view if needed
+   645→          - done scrolling
+   646→          - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   647→      55 × retrying click action
+   648→           - waiting 500ms
+   649→           - waiting for element to be visible, enabled and stable
+   650→           - element is visible, enabled and stable
+   651→           - scrolling into view if needed
+   652→           - done scrolling
+   653→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   654→      - retrying click action
+   655→        - waiting 500ms
+   656→
+   657→
+   658→      71 |     // Add 2 cards with distinct titles
+   659→      72 |     await page.locator('#editorCardsList .card-editor-block').first().locator('[data-field="title"]').fill('First');
+   660→    > 73 |     await page.locator('#addCardBtn').click();
+   661→         |                                       ^
+   662→      74 |     await page.locator('#editorCardsList .card-editor-block').nth(1).locator('[data-field="title"]').fill('Second');
+   663→      75 |     await expect(page.locator('#cardsArea .card-title').nth(0)).toContainText('First');
+   664→      76 |     await expect(page.locator('#cardsArea .card-title').nth(1)).toContainText('Second');
+   665→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/cards.spec.ts:73:39
+   666→Error:   6) [chromium] › tests/e2e/cards.spec.ts:70:7 › Card operations › 7. move card — down then up reorders 
+   667→
+   668→    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+   669→    Test timeout of 30000ms exceeded.
+   670→Error:   6) [chromium] › tests/e2e/cards.spec.ts:70:7 › Card operations › 7. move card — down then up reorders 
+   671→
+   672→    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+   673→    Error: locator.click: Test timeout of 30000ms exceeded.
+   674→    Call log:
+   675→      - waiting for locator('#addCardBtn')
+   676→        - locator resolved to <button class="btn-add" id="addCardBtn" aria-label="Добавить новую карточку">+ Добавить карточку</button>
+   677→      - attempting click action
+   678→        2 × waiting for element to be visible, enabled and stable
+   679→          - element is not stable
+   680→        - retrying click action
+   681→        - waiting 20ms
+   682→        - waiting for element to be visible, enabled and stable
+   683→        - element is not stable
+   684→      2 × retrying click action
+   685→          - waiting 100ms
+   686→          - waiting for element to be visible, enabled and stable
+   687→          - element is visible, enabled and stable
+   688→          - scrolling into view if needed
+   689→          - done scrolling
+   690→          - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   691→      56 × retrying click action
+   692→           - waiting 500ms
+   693→           - waiting for element to be visible, enabled and stable
+   694→           - element is visible, enabled and stable
+   695→           - scrolling into view if needed
+   696→           - done scrolling
+   697→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   698→      - retrying click action
+   699→        - waiting 500ms
+   700→
+   701→
+   702→      71 |     // Add 2 cards with distinct titles
+   703→      72 |     await page.locator('#editorCardsList .card-editor-block').first().locator('[data-field="title"]').fill('First');
+   704→    > 73 |     await page.locator('#addCardBtn').click();
+   705→         |                                       ^
+   706→      74 |     await page.locator('#editorCardsList .card-editor-block').nth(1).locator('[data-field="title"]').fill('Second');
+   707→      75 |     await expect(page.locator('#cardsArea .card-title').nth(0)).toContainText('First');
+   708→      76 |     await expect(page.locator('#cardsArea .card-title').nth(1)).toContainText('Second');
+   709→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/cards.spec.ts:73:39
+   710→××F
+   711→Error:   7) [chromium] › tests/e2e/export.spec.ts:14:7 › Export › 13. single card PNG export triggers download 
+   712→    TimeoutError: page.waitForEvent: Timeout 15000ms exceeded while waiting for event "download"
+   713→    =========================== logs ===========================
+   714→    waiting for event "download"
+   715→    ============================================================
+   716→
+   717→      16 |     await page.locator('#editorCardsList .card-editor-block').first().locator('[data-field="title"]').fill('Export Test');
+   718→      17 |     // Set up download listener before clicking
+   719→    > 18 |     const downloadPromise = page.waitForEvent('download', { timeout: 15000 });
+   720→         |                                  ^
+   721→      19 |     // Click download button on first card
+   722→      20 |     await page.locator('#cardsArea .card-wrapper').first().locator('[data-action="download"]').click();
+   723→      21 |     // Wait for download to start
+   724→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/export.spec.ts:18:34
+   725→Error:   7) [chromium] › tests/e2e/export.spec.ts:14:7 › Export › 13. single card PNG export triggers download 
+   726→    Error: locator.click: Test ended.
+   727→    Call log:
+   728→      - waiting for locator('#cardsArea .card-wrapper').first().locator('[data-action="download"]')
+   729→        - locator resolved to <button title="Скачать" aria-label="Скачать" data-action="download" class="btn-card-action" data-filename="card-1.png" data-card-id="card-node-427fa444-f656-4db6-8014-8089239d376d">…</button>
+   730→      - attempting click action
+   731→        2 × waiting for element to be visible, enabled and stable
+   732→          - element is not stable
+   733→        - retrying click action
+   734→        - waiting 20ms
+   735→        2 × waiting for element to be visible, enabled and stable
+   736→          - element is not stable
+   737→        - retrying click action
+   738→          - waiting 100ms
+   739→        29 × waiting for element to be visible, enabled and stable
+   740→           - element is visible, enabled and stable
+   741→           - scrolling into view if needed
+   742→           - done scrolling
+   743→           - <p>Нажмите «Скачать» на карточке для PNG, или «Скача…</p> from <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> subtree intercepts pointer events
+   744→         - retrying click action
+   745→           - waiting 500ms
+   746→
+   747→
+   748→      18 |     const downloadPromise = page.waitForEvent('download', { timeout: 15000 });
+   749→      19 |     // Click download button on first card
+   750→    > 20 |     await page.locator('#cardsArea .card-wrapper').first().locator('[data-action="download"]').click();
+   751→         |                                                                                                ^
+   752→      21 |     // Wait for download to start
+   753→      22 |     const download = await downloadPromise;
+   754→      23 |     expect(download.suggestedFilename()).toMatch(/\.png$/);
+   755→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/export.spec.ts:20:96
+   756→Error:   7) [chromium] › tests/e2e/export.spec.ts:14:7 › Export › 13. single card PNG export triggers download 
+   757→
+   758→    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+   759→    TimeoutError: page.waitForEvent: Timeout 15000ms exceeded while waiting for event "download"
+   760→    =========================== logs ===========================
+   761→    waiting for event "download"
+   762→    ============================================================
+   763→
+   764→      16 |     await page.locator('#editorCardsList .card-editor-block').first().locator('[data-field="title"]').fill('Export Test');
+   765→      17 |     // Set up download listener before clicking
+   766→    > 18 |     const downloadPromise = page.waitForEvent('download', { timeout: 15000 });
+   767→         |                                  ^
+   768→      19 |     // Click download button on first card
+   769→      20 |     await page.locator('#cardsArea .card-wrapper').first().locator('[data-action="download"]').click();
+   770→      21 |     // Wait for download to start
+   771→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/export.spec.ts:18:34
+   772→Error:   7) [chromium] › tests/e2e/export.spec.ts:14:7 › Export › 13. single card PNG export triggers download 
+   773→
+   774→    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+   775→    Error: locator.click: Test ended.
+   776→    Call log:
+   777→      - waiting for locator('#cardsArea .card-wrapper').first().locator('[data-action="download"]')
+   778→        - locator resolved to <button title="Скачать" aria-label="Скачать" data-action="download" class="btn-card-action" data-filename="card-1.png" data-card-id="card-node-400eb3dd-1f1c-4506-8226-9942374daba7">…</button>
+   779→      - attempting click action
+   780→        2 × waiting for element to be visible, enabled and stable
+   781→          - element is not stable
+   782→        - retrying click action
+   783→        - waiting 20ms
+   784→        - waiting for element to be visible, enabled and stable
+   785→        - element is not stable
+   786→      2 × retrying click action
+   787→          - waiting 100ms
+   788→          - waiting for element to be visible, enabled and stable
+   789→          - element is visible, enabled and stable
+   790→          - scrolling into view if needed
+   791→          - done scrolling
+   792→          - <p>Нажмите «Скачать» на карточке для PNG, или «Скача…</p> from <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> subtree intercepts pointer events
+   793→      28 × retrying click action
+   794→           - waiting 500ms
+   795→           - waiting for element to be visible, enabled and stable
+   796→           - element is visible, enabled and stable
+   797→           - scrolling into view if needed
+   798→           - done scrolling
+   799→           - <p>Нажмите «Скачать» на карточке для PNG, или «Скача…</p> from <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> subtree intercepts pointer events
+   800→      - retrying click action
+   801→        - waiting 500ms
+   802→
+   803→
+   804→      18 |     const downloadPromise = page.waitForEvent('download', { timeout: 15000 });
+   805→      19 |     // Click download button on first card
+   806→    > 20 |     await page.locator('#cardsArea .card-wrapper').first().locator('[data-action="download"]').click();
+   807→         |                                                                                                ^
+   808→      21 |     // Wait for download to start
+   809→      22 |     const download = await downloadPromise;
+   810→      23 |     expect(download.suggestedFilename()).toMatch(/\.png$/);
+   811→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/export.spec.ts:20:96
+   812→Error:   7) [chromium] › tests/e2e/export.spec.ts:14:7 › Export › 13. single card PNG export triggers download 
+   813→
+   814→    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+   815→    TimeoutError: page.waitForEvent: Timeout 15000ms exceeded while waiting for event "download"
+   816→    =========================== logs ===========================
+   817→    waiting for event "download"
+   818→    ============================================================
+   819→
+   820→      16 |     await page.locator('#editorCardsList .card-editor-block').first().locator('[data-field="title"]').fill('Export Test');
+   821→      17 |     // Set up download listener before clicking
+   822→    > 18 |     const downloadPromise = page.waitForEvent('download', { timeout: 15000 });
+   823→         |                                  ^
+   824→      19 |     // Click download button on first card
+   825→      20 |     await page.locator('#cardsArea .card-wrapper').first().locator('[data-action="download"]').click();
+   826→      21 |     // Wait for download to start
+   827→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/export.spec.ts:18:34
+   828→Error:   7) [chromium] › tests/e2e/export.spec.ts:14:7 › Export › 13. single card PNG export triggers download 
+   829→
+   830→    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+   831→    Error: locator.click: Test ended.
+   832→    Call log:
+   833→      - waiting for locator('#cardsArea .card-wrapper').first().locator('[data-action="download"]')
+   834→        - locator resolved to <button title="Скачать" aria-label="Скачать" data-action="download" class="btn-card-action" data-filename="card-1.png" data-card-id="card-node-cf2a2f68-4696-4a12-8294-06b24783135a">…</button>
+   835→      - attempting click action
+   836→        2 × waiting for element to be visible, enabled and stable
+   837→          - element is not stable
+   838→        - retrying click action
+   839→        - waiting 20ms
+   840→        2 × waiting for element to be visible, enabled and stable
+   841→          - element is not stable
+   842→        - retrying click action
+   843→          - waiting 100ms
+   844→        29 × waiting for element to be visible, enabled and stable
+   845→           - element is visible, enabled and stable
+   846→           - scrolling into view if needed
+   847→           - done scrolling
+   848→           - <p>Нажмите «Скачать» на карточке для PNG, или «Скача…</p> from <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> subtree intercepts pointer events
+   849→         - retrying click action
+   850→           - waiting 500ms
+   851→
+   852→
+   853→      18 |     const downloadPromise = page.waitForEvent('download', { timeout: 15000 });
+   854→      19 |     // Click download button on first card
+   855→    > 20 |     await page.locator('#cardsArea .card-wrapper').first().locator('[data-action="download"]').click();
+   856→         |                                                                                                ^
+   857→      21 |     // Wait for download to start
+   858→      22 |     const download = await downloadPromise;
+   859→      23 |     expect(download.suggestedFilename()).toMatch(/\.png$/);
+   860→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/export.spec.ts:20:96
+   861→××T
+   862→Error:   8) [chromium] › tests/e2e/export.spec.ts:26:7 › Export › 14. batch export cancel via Escape ──────
+   863→    Test timeout of 30000ms exceeded.
+   864→Error:   8) [chromium] › tests/e2e/export.spec.ts:26:7 › Export › 14. batch export cancel via Escape ──────
+   865→    Error: locator.click: Test timeout of 30000ms exceeded.
+   866→    Call log:
+   867→      - waiting for locator('#addCardBtn')
+   868→        - locator resolved to <button class="btn-add" id="addCardBtn" aria-label="Добавить новую карточку">+ Добавить карточку</button>
+   869→      - attempting click action
+   870→        2 × waiting for element to be visible, enabled and stable
+   871→          - element is not stable
+   872→        - retrying click action
+   873→        - waiting 20ms
+   874→        2 × waiting for element to be visible, enabled and stable
+   875→          - element is not stable
+   876→        - retrying click action
+   877→          - waiting 100ms
+   878→        57 × waiting for element to be visible, enabled and stable
+   879→           - element is visible, enabled and stable
+   880→           - scrolling into view if needed
+   881→           - done scrolling
+   882→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   883→         - retrying click action
+   884→           - waiting 500ms
+   885→
+   886→
+   887→      27 |     // Add several cards so batch export takes time
+   888→      28 |     for (let i = 0; i < 3; i++) {
+   889→    > 29 |       await page.locator('#addCardBtn').click();
+   890→         |                                         ^
+   891→      30 |     }
+   892→      31 |     await expect.poll(() => getPreviewCardCount(page)).toBe(4);
+   893→      32 |     // Start batch export (Скачать все)
+   894→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/export.spec.ts:29:41
+   895→Error:   8) [chromium] › tests/e2e/export.spec.ts:26:7 › Export › 14. batch export cancel via Escape ──────
+   896→
+   897→    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+   898→    Test timeout of 30000ms exceeded.
+   899→Error:   8) [chromium] › tests/e2e/export.spec.ts:26:7 › Export › 14. batch export cancel via Escape ──────
+   900→
+   901→    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+   902→    Error: locator.click: Test timeout of 30000ms exceeded.
+   903→    Call log:
+   904→      - waiting for locator('#addCardBtn')
+   905→        - locator resolved to <button class="btn-add" id="addCardBtn" aria-label="Добавить новую карточку">+ Добавить карточку</button>
+   906→      - attempting click action
+   907→        2 × waiting for element to be visible, enabled and stable
+   908→          - element is not stable
+   909→        - retrying click action
+   910→        - waiting 20ms
+   911→        - waiting for element to be visible, enabled and stable
+   912→        - element is not stable
+   913→      2 × retrying click action
+   914→          - waiting 100ms
+   915→          - waiting for element to be visible, enabled and stable
+   916→          - element is visible, enabled and stable
+   917→          - scrolling into view if needed
+   918→          - done scrolling
+   919→          - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   920→      56 × retrying click action
+   921→           - waiting 500ms
+   922→           - waiting for element to be visible, enabled and stable
+   923→           - element is visible, enabled and stable
+   924→           - scrolling into view if needed
+   925→           - done scrolling
+   926→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   927→      - retrying click action
+   928→        - waiting 500ms
+   929→
+   930→
+   931→      27 |     // Add several cards so batch export takes time
+   932→      28 |     for (let i = 0; i < 3; i++) {
+   933→    > 29 |       await page.locator('#addCardBtn').click();
+   934→         |                                         ^
+   935→      30 |     }
+   936→      31 |     await expect.poll(() => getPreviewCardCount(page)).toBe(4);
+   937→      32 |     // Start batch export (Скачать все)
+   938→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/export.spec.ts:29:41
+   939→Error:   8) [chromium] › tests/e2e/export.spec.ts:26:7 › Export › 14. batch export cancel via Escape ──────
+   940→
+   941→    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+   942→    Test timeout of 30000ms exceeded.
+   943→Error:   8) [chromium] › tests/e2e/export.spec.ts:26:7 › Export › 14. batch export cancel via Escape ──────
+   944→
+   945→    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+   946→    Error: locator.click: Test timeout of 30000ms exceeded.
+   947→    Call log:
+   948→      - waiting for locator('#addCardBtn')
+   949→        - locator resolved to <button class="btn-add" id="addCardBtn" aria-label="Добавить новую карточку">+ Добавить карточку</button>
+   950→      - attempting click action
+   951→        2 × waiting for element to be visible, enabled and stable
+   952→          - element is not stable
+   953→        - retrying click action
+   954→        - waiting 20ms
+   955→        - waiting for element to be visible, enabled and stable
+   956→        - element is not stable
+   957→      2 × retrying click action
+   958→          - waiting 100ms
+   959→          - waiting for element to be visible, enabled and stable
+   960→          - element is visible, enabled and stable
+   961→          - scrolling into view if needed
+   962→          - done scrolling
+   963→          - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   964→      56 × retrying click action
+   965→           - waiting 500ms
+   966→           - waiting for element to be visible, enabled and stable
+   967→           - element is visible, enabled and stable
+   968→           - scrolling into view if needed
+   969→           - done scrolling
+   970→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+   971→      - retrying click action
+   972→        - waiting 500ms
+   973→
+   974→
+   975→      27 |     // Add several cards so batch export takes time
+   976→      28 |     for (let i = 0; i < 3; i++) {
+   977→    > 29 |       await page.locator('#addCardBtn').click();
+   978→         |                                         ^
+   979→      30 |     }
+   980→      31 |     await expect.poll(() => getPreviewCardCount(page)).toBe(4);
+   981→      32 |     // Start batch export (Скачать все)
+   982→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/export.spec.ts:29:41
+   983→××T
+   984→Error:   9) [chromium] › tests/e2e/history.spec.ts:14:7 › Undo / Redo › 8. undo — reverts last action ─────
+   985→    Test timeout of 30000ms exceeded.
+   986→Error:   9) [chromium] › tests/e2e/history.spec.ts:14:7 › Undo / Redo › 8. undo — reverts last action ─────
+   987→    Error: locator.click: Test timeout of 30000ms exceeded.
+   988→    Call log:
+   989→      - waiting for locator('#addCardBtn')
+   990→        - locator resolved to <button class="btn-add" id="addCardBtn" aria-label="Добавить новую карточку">+ Добавить карточку</button>
+   991→      - attempting click action
+   992→        2 × waiting for element to be visible, enabled and stable
+   993→          - element is not stable
+   994→        - retrying click action
+   995→        - waiting 20ms
+   996→        - waiting for element to be visible, enabled and stable
+   997→        - element is not stable
+   998→      2 × retrying click action
+   999→          - waiting 100ms
+  1000→          - waiting for element to be visible, enabled and stable
+  1001→          - element is visible, enabled and stable
+  1002→          - scrolling into view if needed
+  1003→          - done scrolling
+  1004→          - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+  1005→      56 × retrying click action
+  1006→           - waiting 500ms
+  1007→           - waiting for element to be visible, enabled and stable
+  1008→           - element is visible, enabled and stable
+  1009→           - scrolling into view if needed
+  1010→           - done scrolling
+  1011→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+  1012→      - retrying click action
+  1013→        - waiting 500ms
+  1014→
+  1015→
+  1016→      15 |     const before = await getPreviewCardCount(page);
+  1017→      16 |     // Add a card
+  1018→    > 17 |     await page.locator('#addCardBtn').click();
+  1019→         |                                       ^
+  1020→      18 |     await expect.poll(() => getPreviewCardCount(page)).toBe(before + 1);
+  1021→      19 |     // Undo
+  1022→      20 |     await page.keyboard.press('Control+z');
+  1023→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/history.spec.ts:17:39
+  1024→Error:   9) [chromium] › tests/e2e/history.spec.ts:14:7 › Undo / Redo › 8. undo — reverts last action ─────
+  1025→
+  1026→    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+  1027→    Test timeout of 30000ms exceeded.
+  1028→Error:   9) [chromium] › tests/e2e/history.spec.ts:14:7 › Undo / Redo › 8. undo — reverts last action ─────
+  1029→
+  1030→    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+  1031→    Error: locator.click: Test timeout of 30000ms exceeded.
+  1032→    Call log:
+  1033→      - waiting for locator('#addCardBtn')
+  1034→        - locator resolved to <button class="btn-add" id="addCardBtn" aria-label="Добавить новую карточку">+ Добавить карточку</button>
+  1035→      - attempting click action
+  1036→        2 × waiting for element to be visible, enabled and stable
+  1037→          - element is not stable
+  1038→        - retrying click action
+  1039→        - waiting 20ms
+  1040→        - waiting for element to be visible, enabled and stable
+  1041→        - element is not stable
+  1042→      2 × retrying click action
+  1043→          - waiting 100ms
+  1044→          - waiting for element to be visible, enabled and stable
+  1045→          - element is visible, enabled and stable
+  1046→          - scrolling into view if needed
+  1047→          - done scrolling
+  1048→          - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+  1049→      55 × retrying click action
+  1050→           - waiting 500ms
+  1051→           - waiting for element to be visible, enabled and stable
+  1052→           - element is visible, enabled and stable
+  1053→           - scrolling into view if needed
+  1054→           - done scrolling
+  1055→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+  1056→      - retrying click action
+  1057→        - waiting 500ms
+  1058→
+  1059→
+  1060→      15 |     const before = await getPreviewCardCount(page);
+  1061→      16 |     // Add a card
+  1062→    > 17 |     await page.locator('#addCardBtn').click();
+  1063→         |                                       ^
+  1064→      18 |     await expect.poll(() => getPreviewCardCount(page)).toBe(before + 1);
+  1065→      19 |     // Undo
+  1066→      20 |     await page.keyboard.press('Control+z');
+  1067→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/history.spec.ts:17:39
+  1068→Error:   9) [chromium] › tests/e2e/history.spec.ts:14:7 › Undo / Redo › 8. undo — reverts last action ─────
+  1069→
+  1070→    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+  1071→    Test timeout of 30000ms exceeded.
+  1072→Error:   9) [chromium] › tests/e2e/history.spec.ts:14:7 › Undo / Redo › 8. undo — reverts last action ─────
+  1073→
+  1074→    Retry #2 ───────────────────────────────────────────────────────────────────────────────────────
+  1075→    Error: locator.click: Test timeout of 30000ms exceeded.
+  1076→    Call log:
+  1077→      - waiting for locator('#addCardBtn')
+  1078→        - locator resolved to <button class="btn-add" id="addCardBtn" aria-label="Добавить новую карточку">+ Добавить карточку</button>
+  1079→      - attempting click action
+  1080→        2 × waiting for element to be visible, enabled and stable
+  1081→          - element is not stable
+  1082→        - retrying click action
+  1083→        - waiting 20ms
+  1084→        - waiting for element to be visible, enabled and stable
+  1085→        - element is not stable
+  1086→      2 × retrying click action
+  1087→          - waiting 100ms
+  1088→          - waiting for element to be visible, enabled and stable
+  1089→          - element is visible, enabled and stable
+  1090→          - scrolling into view if needed
+  1091→          - done scrolling
+  1092→          - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+  1093→      56 × retrying click action
+  1094→           - waiting 500ms
+  1095→           - waiting for element to be visible, enabled and stable
+  1096→           - element is visible, enabled and stable
+  1097→           - scrolling into view if needed
+  1098→           - done scrolling
+  1099→           - <div role="dialog" aria-modal="true" id="onboardingOverlay" class="onboarding-overlay active" aria-labelledby="onboardingTitle">…</div> intercepts pointer events
+  1100→      - retrying click action
+  1101→        - waiting 500ms
+  1102→
+  1103→
+  1104→      15 |     const before = await getPreviewCardCount(page);
+  1105→      16 |     // Add a card
+  1106→    > 17 |     await page.locator('#addCardBtn').click();
+  1107→         |                                       ^
+  1108→      18 |     await expect.poll(() => getPreviewCardCount(page)).toBe(before + 1);
+  1109→      19 |     // Undo
+  1110→      20 |     await page.keyboard.press('Control+z');
+  1111→        at /home/runner/work/cardcraft_v2/cardcraft_v2/tests/e2e/history.spec.ts:17:39
+  1112→Error: The operation was canceled.
