@@ -9,6 +9,11 @@ concurrency:
   group: changesets-${{ github.ref }}
   cancel-in-progress: true
 
+# P15.2: Permissions needed for changesets/action to create release PRs
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   release:
     name: Version + Changelog
@@ -18,7 +23,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # Need full history for changesets
           fetch-depth: 0
 
       - name: Setup Bun
@@ -33,7 +37,6 @@ jobs:
         id: changesets
         uses: changesets/action@v1
         with:
-          publish: bun run version
           version: bun run version
           commit: "chore: update versions + changelog"
           title: "chore: update versions + changelog"
