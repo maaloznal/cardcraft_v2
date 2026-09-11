@@ -1,0 +1,1245 @@
+     1→/**
+     2→ * CardCraftApp — orchestrator that wires up all modular classes
+     3→ * to replace the 2731-line "God Function" in src/lib/card-constructor.ts.
+     4→ *
+     5→ * Public API:
+     6→ *   initCardCraftApp(root)  — boot the app, returns cleanup function
+     7→ *   THEME_GROUPS            — re-export for page.tsx static rendering
+     8→ *
+     9→ * Architecture:
+    10→ *   User event → renderer callback → orchestrator dispatches action / mutates card
+    11→ *   → StateManager notifies subscribers → UI controls synced
+    12→ *   → PreviewRenderer / EditorRenderer / WordEditorManager update DOM
+    13→ *   → StorageManager.save (debounced) + HistoryManager.schedulePush (debounced)
+    14→ */
+    15→'use client';
+    16→
+    17→import { StateManager } from '@/state/StateManager';
+    18→import type { AppState } from '@/state/StateManager';
+    19→import { HistoryManager } from '@/history/HistoryManager';
+    20→import * as Storage from '@/storage/StorageManager';
+    21→import { PreviewRenderer, type PreviewSettings } from '@/preview/PreviewRenderer';
+    22→import { EditorRenderer } from '@/editor/EditorRenderer';
+    23→import { WordEditorManager } from '@/word-editor/WordEditorManager';
+    24→import * as Theme from '@/themes/ThemeManager';
+    25→import * as Export from '@/export/ExportManager';
+    26→import { pruneOrphanWordStyles } from '@/styles/StyleHelpers';
+    27→import { SidebarAccordion, ModalAccordion } from '@/ui/Accordion';
+    28→import { Modal } from '@/ui/Modal';
+    29→import { Dropdown } from '@/ui/Dropdown';
+    30→import type { Card, Snapshot } from '@/core/types';
+    31→import { CONFIG, FORMAT_CHAR_LIMITS, MODAL_FIELDS, EDITOR_FIELDS, FIELD_LABELS } from '@/core/constants';
+    32→import { splitOnce } from '@/core/utils';
+    33→import { ToastQueue } from './toast';
+    34→import { VerticalResize, HorizontalResize } from './resizers';
+    35→import { withExportMode } from './export-mode';
+    36→
+    37→// Re-export theme data for page.tsx static rendering
+    38→export { THEME_GROUPS } from '@/themes/themeData';
+    39→
+    40→// ─── Main entry point ──────────────────────────────────────────
+    41→
+    42→export function initCardCraftApp(root: HTMLElement): () => void {
+    43→  /* ---------- 1. Error traps ---------- */
+    44→  const errorHandler = (e: ErrorEvent): void => {
+    45→    console.error('[Cardcraft] Runtime error:', e.message, e.filename + ':' + e.lineno);
+    46→  };
+    47→  const unhandledRejection = (e: PromiseRejectionEvent): void => {
+    48→    console.error('[Cardcraft] Unhandled promise rejection:', e.reason);
+    49→  };
+    50→  window.addEventListener('error', errorHandler);
+    51→  window.addEventListener('unhandledrejection', unhandledRejection);
+    52→
+    53→  /* ---------- 2. Helpers ---------- */
+    54→  function guard<T>(label: string, fn: () => T): T | undefined {
+    55→    try {
+    56→      return fn();
+    57→    } catch (err) {
+    58→      console.error('[Cardcraft] Error in ' + label + ':', err);
+    59→      return undefined;
+    60→    }
+    61→  }
+    62→
+    63→  const perfEnabled = typeof performance !== 'undefined' && !!performance.now;
+    64→  function perfMark(label: string): () => void {
+    65→    if (!perfEnabled) return () => {};
+    66→    const start = performance.now();
+    67→    return () => {
+    68→      const dur = performance.now() - start;
+    69→      if (dur > 16) {
+    70→        console.warn('[Cardcraft:perf] Slow ' + label + ': ' + dur.toFixed(1) + 'ms');
+    71→      }
+    72→    };
+    73→  }
+    74→
+    75→  /* ---------- 3. DOM element cache ---------- */
+    76→  const $ = <T extends Element = HTMLElement>(sel: string): T | null =>
+    77→    root.querySelector<T>(sel);
+    78→
+    79→  const editorSidebar = $<HTMLElement>('#editorSidebar');
+    80→  const toggleSidebarBtn = $<HTMLButtonElement>('#toggleSidebarBtn');
+    81→  const sidebarBackdrop = $<HTMLElement>('#sidebarBackdrop');
+    82→  const editorCardsList = $<HTMLElement>('#editorCardsList');
+    83→  const cardsArea = $<HTMLElement>('#cardsArea');
+    84→  const themeSelect = $<HTMLSelectElement>('#themeSelect');
+    85→  const formatSelect = $<HTMLSelectElement>('#formatSelect');
+    86→  const themeDropdown = $<HTMLElement>('#themeDropdown');
+    87→  const themeDropdownTrigger = $<HTMLButtonElement>('#themeDropdownTrigger');
+    88→  const themeDropdownLabel = $<HTMLElement>('#themeDropdownLabel');
+    89→  const gradientAngleSlider = $<HTMLInputElement>('#gradientAngleSlider');
+    90→  const gradientAngleValue = $<HTMLElement>('#gradientAngleValue');
+    91→  const numberingToggle = $<HTMLInputElement>('#numberingToggle');
+    92→  const progressBarToggle = $<HTMLInputElement>('#progressBarToggle');
+    93→  const progressBarStyleSelect = $<HTMLSelectElement>('#progressBarStyleSelect');
+    94→  const listStyleSelect = $<HTMLSelectElement>('#listStyleSelect');
+    95→  const charLimitToggle = $<HTMLInputElement>('#charLimitToggle');
+    96→  const charCounter = $<HTMLElement>('#charCounter');
+    97→  const charCounterText = $<HTMLElement>('#charCounterText');
+    98→  const listNumSizeSlider = $<HTMLInputElement>('#listNumSizeSlider');
+    99→  const listNumSizeValue = $<HTMLElement>('#listNumSizeValue');
+   100→  const resizeDividerH = $<HTMLElement>('#resizeDividerH');
+   101→  const resizeDividerV = $<HTMLElement>('#resizeDividerV');
+   102→  const previewWorkspace = $<HTMLElement>('#previewWorkspace');
+   103→  const toastEl = $<HTMLElement>('#toast');
+   104→
+   105→  const colorModal = $<HTMLElement>('#colorModal');
+   106→  const resetCardColorsBtn = $<HTMLButtonElement>('#resetCardColorsBtn');
+   107→  const modalCardTitle = $<HTMLElement>('#modalCardTitle');
+   108→  const modalCardThemeDropdown = $<HTMLElement>('#modalCardThemeDropdown');
+   109→  const modalCardThemeLabel = $<HTMLElement>('#modalCardThemeLabel');
+   110→
+   111→  const wordStylePopup = $<HTMLElement>('#wordStylePopup');
+   112→  const wordPopupHeader = $<HTMLElement>('#wordPopupHeader');
+   113→  const sizeSlider = $<HTMLInputElement>('#sizeSlider');
+   114→  const sizeValue = $<HTMLElement>('#sizeValue');
+   115→  const wordStyleList = $<HTMLElement>('#wordStyleList');
+   116→
+   117→  const addCardBtn = $<HTMLButtonElement>('#addCardBtn');
+   118→  const saveAllBtn = $<HTMLButtonElement>('#saveAll');
+   119→  const deleteAllBtn = $<HTMLButtonElement>('#deleteAllBtn');
+   120→  const confirmOverlay = $<HTMLElement>('#confirmOverlay');
+   121→  const confirmOk = $<HTMLButtonElement>('#confirmOk');
+   122→  const confirmCancel = $<HTMLButtonElement>('#confirmCancel');
+   123→  const undoBtn = $<HTMLButtonElement>('#undoBtn');
+   124→  const redoBtn = $<HTMLButtonElement>('#redoBtn');
+   125→  const cardCountBadge = $<HTMLElement>('#cardCountBadge');
+   126→
+   127→  /* ---------- 4. State variables (orchestrator-local) ---------- */
+   128→  let activeCardIndexForColors: number | null = null;
+   129→  let lastActiveField = 'title';
+   130→  let sidebarWasCollapsedBeforeModal = true;
+   131→  let activeCardIndexForWord: number | null = null;
+   132→  let activeFieldForWord: string | null = null;
+   133→
+   134→  // Tracked listeners for cleanup
+   135→  let saveTimer: ReturnType<typeof setTimeout> | null = null;
+   136→  const docListeners: Array<{ type: string; fn: EventListener }> = [];
+   137→  const elementListeners: Array<{
+   138→    el: EventTarget;
+   139→    type: string;
+   140→    fn: EventListener;
+   141→    opts?: boolean | AddEventListenerOptions;
+   142→  }> = [];
+   143→
+   144→  /* ---------- 5. Module instantiation ---------- */
+   145→  const stateManager = new StateManager();
+   146→  const historyManager = new HistoryManager<Snapshot>();
+   147→  const previewRenderer = new PreviewRenderer(cardsArea!);
+   148→  const editorRenderer = new EditorRenderer(editorCardsList!);
+   149→  const wordEditorManager = new WordEditorManager(
+   150→    wordStylePopup!,
+   151→    wordPopupHeader!,
+   152→    sizeSlider!,
+   153→    sizeValue!,
+   154→    wordStyleList!,
+   155→  );
+   156→  const toastQueue = new ToastQueue(toastEl!);
+   157→
+   158→  // Accordion controllers (defaults: initial='none' — matches old behavior)
+   159→  const sidebarAccordion = new SidebarAccordion(root, { initial: 'none' });
+   160→  const modalAccordion = new ModalAccordion(colorModal!, { initial: 'none' });
+   161→
+   162→  // Modal controller — ESC handled centrally, so disable auto-ESC
+   163→  const colorModalController = new Modal(colorModal!, {
+   164→    closeOnEscape: false,
+   165→    closeOnBackdrop: true,
+   166→    closeSelector: '#closeModalBtn, #applyColorsBtn',
+   167→    initialFocusSelector: '#closeModalBtn',
+   168→  });
+   169→
+   170→  // Theme dropdown controllers
+   171→  const themeDropdownController = new Dropdown(themeDropdown!, {
+   172→    triggerSelector: '.theme-dropdown-trigger',
+   173→    menuSelector: '.theme-dropdown-panel',
+   174→    itemSelector: '.theme-item',
+   175→    closeOnEscape: false,
+   176→    closeOnClickOutside: true,
+   177→  });
+   178→  const modalCardThemeDropdownController = new Dropdown(modalCardThemeDropdown!, {
+   179→    triggerSelector: '.theme-dropdown-trigger',
+   180→    menuSelector: '.theme-dropdown-panel',
+   181→    itemSelector: '.modal-card-theme-item',
+   182→    closeOnEscape: false,
+   183→    closeOnClickOutside: true,
+   184→  });
+   185→
+   186→  // Resize handlers
+   187→  const verticalResize = new VerticalResize(resizeDividerH!, editorSidebar!);
+   188→  const horizontalResize = new HorizontalResize(resizeDividerV!, editorSidebar!);
+   189→
+   190→  /* ---------- 6. Toast ---------- */
+   191→  function showToast(msg: string, duration = 2500): void {
+   192→    toastQueue.show(msg, duration);
+   193→  }
+   194→
+   195→  /* ---------- 7. Save / Load ---------- */
+   196→  function scheduleSave(opts: { silent?: boolean } = {}): void {
+   197→    if (saveTimer) clearTimeout(saveTimer);
+   198→    saveTimer = setTimeout(() => saveCardsToLocalStorage(opts), CONFIG.SAVE_DEBOUNCE_MS);
+   199→  }
+   200→
+   201→  function saveCardsToLocalStorage({ silent = false } = {}): void {
+   202→    try {
+   203→      const state = stateManager.get();
+   204→      Storage.save({
+   205→        cards: state.cards.list,
+   206→        theme: state.settings.theme,
+   207→        format: state.settings.format,
+   208→        showCardNumbers: state.settings.showCardNumbers,
+   209→        showProgressBar: state.settings.showProgressBar,
+   210→        progressBarStyle: state.settings.progressBarStyle,
+   211→        listStyleType: state.settings.listStyleType,
+   212→        gradientAngle: state.settings.gradientAngle,
+   213→        charLimitEnabled: state.settings.charLimitEnabled,
+   214→      });
+   215→      if (!silent) showToast('Карточки успешно сохранены!');
+   216→    } catch (e) {
+   217→      const err = e as Error;
+   218→      if (err.message === 'QuotaExceededError') {
+   219→        if (!silent) showToast('Недостаточно места. Удалите старые карточки.');
+   220→      } else if (!silent) {
+   221→        showToast('Ошибка при сохранении карточек');
+   222→      }
+   223→    }
+   224→  }
+   225→
+   226→  function loadCardsFromLocalStorage(): void {
+   227→    const saved = Storage.load();
+   228→    if (saved.cards && saved.cards.length) {
+   229→      stateManager.setCards(saved.cards);
+   230→    }
+   231→    if (saved.theme) stateManager.dispatch({ type: 'SET_GLOBAL_THEME', payload: saved.theme });
+   232→    if (saved.format) stateManager.dispatch({ type: 'SET_FORMAT', payload: saved.format });
+   233→    if (saved.showCardNumbers !== undefined)
+   234→      stateManager.dispatch({ type: 'SET_SHOW_CARD_NUMBERS', payload: saved.showCardNumbers });
+   235→    if (saved.showProgressBar !== undefined)
+   236→      stateManager.dispatch({ type: 'SET_SHOW_PROGRESS_BAR', payload: saved.showProgressBar });
+   237→    if (saved.progressBarStyle)
+   238→      stateManager.dispatch({ type: 'SET_PROGRESS_BAR_STYLE', payload: saved.progressBarStyle });
+   239→    if (saved.listStyleType)
+   240→      stateManager.dispatch({ type: 'SET_LIST_STYLE', payload: saved.listStyleType });
+   241→    if (saved.gradientAngle !== undefined)
+   242→      stateManager.dispatch({ type: 'SET_GRADIENT_ANGLE', payload: saved.gradientAngle });
+   243→    if (saved.charLimitEnabled !== undefined)
+   244→      stateManager.dispatch({ type: 'SET_CHAR_LIMIT', payload: saved.charLimitEnabled });
+   245→  }
+   246→
+   247→  /* ---------- 8. UI appliers ---------- */
+   248→  function applyThemeToWorkspace(): void {
+   249→    if (!previewWorkspace) return;
+   250→    Theme.applyThemeToElement(previewWorkspace, stateManager.getTheme());
+   251→    applyGradientAngle();
+   252→    syncThemeDropdown();
+   253→  }
+   254→
+   255→  function applyGradientAngle(): void {
+   256→    if (!previewWorkspace) return;
+   257→    previewWorkspace.style.setProperty('--gradient-angle', `${stateManager.getGradientAngle()}deg`);
+   258→  }
+   259→
+   260→  function applyNumberingVisibility(): void {
+   261→    root.classList.toggle('no-card-numbers', !stateManager.getSettings().showCardNumbers);
+   262→  }
+   263→
+   264→  function applyProgressBarVisibility(): void {
+   265→    root.classList.toggle('no-progress-bar', !stateManager.getSettings().showProgressBar);
+   266→  }
+   267→
+   268→  function applyProgressBarStyle(): void {
+   269→    root.setAttribute('data-progress-style', stateManager.getSettings().progressBarStyle);
+   270→  }
+   271→
+   272→  function applyListStyle(): void {
+   273→    root.setAttribute('data-list-style', stateManager.getListStyle());
+   274→  }
+   275→
+   276→  function applyCharLimit(): void {
+   277→    if (!editorCardsList) return;
+   278→    const settings = stateManager.getSettings();
+   279→    const limit = settings.charLimitEnabled ? FORMAT_CHAR_LIMITS[settings.format] || 0 : 0;
+   280→    editorCardsList
+   281→      .querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input[data-field], textarea[data-field]')
+   282→      .forEach((el) => {
+   283→        if (limit > 0) {
+   284→          el.setAttribute('maxlength', String(limit));
+   285→        } else {
+   286→          const field = el.dataset.field;
+   287→          const f = EDITOR_FIELDS.find((ef) => ef.key === field);
+   288→          if (f) el.setAttribute('maxlength', String(f.maxlength));
+   289→        }
+   290→      });
+   291→    if (charCounter) {
+   292→      charCounter.style.display = settings.charLimitEnabled && limit > 0 ? '' : 'none';
+   293→    }
+   294→  }
+   295→
+   296→  function updateCharCounter(idx: number): void {
+   297→    const settings = stateManager.getSettings();
+   298→    if (!settings.charLimitEnabled || !charCounterText || !charCounter) return;
+   299→    const limit = FORMAT_CHAR_LIMITS[settings.format] || 0;
+   300→    if (limit <= 0) {
+   301→      charCounter.style.display = 'none';
+   302→      return;
+   303→    }
+   304→    const card = stateManager.getCard(idx);
+   305→    if (!card) return;
+   306→    const totalChars =
+   307→      (card.title?.length || 0) +
+   308→      (card.subtitle?.length || 0) +
+   309→      (card.text?.length || 0) +
+   310→      (card.listItems?.length || 0) +
+   311→      (card.footer?.length || 0) +
+   312→      (card.cta?.length || 0);
+   313→    charCounterText.textContent = `${totalChars} / ${limit}`;
+   314→    charCounter.classList.toggle('near-limit', totalChars >= limit * 0.9);
+   315→  }
+   316→
+   317→  function syncThemeDropdown(): void {
+   318→    if (!themeDropdownLabel || !themeDropdown) return;
+   319→    const theme = stateManager.getTheme();
+   320→    themeDropdownLabel.textContent = Theme.getThemeLabel(theme);
+   321→    themeDropdown.querySelectorAll<HTMLElement>('.theme-item').forEach((item) => {
+   322→      item.classList.toggle('selected', item.dataset.value === theme);
+   323→    });
+   324→  }
+   325→
+   326→  function selectRowField(field: string): void {
+   327→    lastActiveField = field;
+   328→    const label = $<HTMLElement>('#presetTargetLabel');
+   329→    if (label) label.textContent = FIELD_LABELS[field] || 'Заголовок';
+   330→    root.querySelectorAll<HTMLElement>('.color-picker-row').forEach((row) => {
+   331→      row.classList.toggle('selected', row.dataset.rowField === field);
+   332→    });
+   333→    syncPresetIndicator(field);
+   334→  }
+   335→
+   336→  function syncPresetIndicator(field: string): void {
+   337→    const activeColor =
+   338→      activeCardIndexForColors !== null
+   339→        ? stateManager.getCard(activeCardIndexForColors)?.colors?.[field]
+   340→        : undefined;
+   341→    root.querySelectorAll<HTMLElement>('.color-swatch').forEach((sw) => {
+   342→      sw.classList.toggle('active', !!(activeColor && sw.dataset.preset === activeColor));
+   343→    });
+   344→  }
+   345→
+   346→  function updateCardCountBadge(): void {
+   347→    if (!cardCountBadge) return;
+   348→    const n = stateManager.getCardCount();
+   349→    const word = n === 1 ? 'карточка' : n >= 2 && n <= 4 ? 'карточки' : 'карточек';
+   350→    cardCountBadge.textContent = `${n} ${word}`;
+   351→    cardCountBadge.style.display = n > 0 ? '' : 'none';
+   352→  }
+   353→
+   354→  /* ---------- 9. Rendering wrappers ---------- */
+   355→  function renderPreview(): void {
+   356→    const end = perfMark('renderPreview');
+   357→    try {
+   358→      const settings = stateManager.getSettings();
+   359→      const previewSettings: PreviewSettings = {
+   360→        theme: settings.theme,
+   361→        format: settings.format,
+   362→        progressBarStyle: settings.progressBarStyle,
+   363→        showCardNumbers: settings.showCardNumbers,
+   364→        showProgressBar: settings.showProgressBar,
+   365→      };
+   366→      previewRenderer.render(stateManager.getCards(), previewSettings);
+   367→      updateCardCountBadge();
+   368→    } catch (err) {
+   369→      console.error('[Cardcraft] Error in renderPreview:', err);
+   370→    } finally {
+   371→      end();
+   372→    }
+   373→  }
+   374→
+   375→  function renderEditor(): void {
+   376→    try {
+   377→      editorRenderer.render(stateManager.getCards());
+   378→    } catch (err) {
+   379→      console.error('[Cardcraft] Error in renderEditor:', err);
+   380→    }
+   381→  }
+   382→
+   383→  /* ---------- 10. State subscriber (sync UI controls, NO re-render) ---------- */
+   384→  const unsubscribeState = stateManager.subscribe((state: AppState) => {
+   385→    // Sync selects/toggles/sliders (idempotent — only update if differs)
+   386→    if (themeSelect && themeSelect.value !== state.settings.theme) {
+   387→      themeSelect.value = state.settings.theme;
+   388→    }
+   389→    if (formatSelect && formatSelect.value !== state.settings.format) {
+   390→      formatSelect.value = state.settings.format;
+   391→    }
+   392→    if (gradientAngleSlider && gradientAngleSlider.value !== String(state.settings.gradientAngle)) {
+   393→      gradientAngleSlider.value = String(state.settings.gradientAngle);
+   394→    }
+   395→    if (gradientAngleValue) gradientAngleValue.textContent = `${state.settings.gradientAngle}°`;
+   396→    if (numberingToggle && numberingToggle.checked !== state.settings.showCardNumbers) {
+   397→      numberingToggle.checked = state.settings.showCardNumbers;
+   398→    }
+   399→    if (progressBarToggle && progressBarToggle.checked !== state.settings.showProgressBar) {
+   400→      progressBarToggle.checked = state.settings.showProgressBar;
+   401→    }
+   402→    if (progressBarStyleSelect && progressBarStyleSelect.value !== state.settings.progressBarStyle) {
+   403→      progressBarStyleSelect.value = state.settings.progressBarStyle;
+   404→    }
+   405→    if (listStyleSelect && listStyleSelect.value !== state.settings.listStyleType) {
+   406→      listStyleSelect.value = state.settings.listStyleType;
+   407→    }
+   408→    if (charLimitToggle && charLimitToggle.checked !== state.settings.charLimitEnabled) {
+   409→      charLimitToggle.checked = state.settings.charLimitEnabled;
+   410→    }
+   411→    // Apply CSS state
+   412→    applyThemeToWorkspace();
+   413→    applyNumberingVisibility();
+   414→    applyProgressBarVisibility();
+   415→    applyProgressBarStyle();
+   416→    applyListStyle();
+   417→    applyCharLimit();
+   418→    updateUndoRedoButtons();
+   419→  });
+   420→
+   421→  /* ---------- 11. Preview renderer callbacks ---------- */
+   422→  previewRenderer.onAction((action, data) => {
+   423→    if (action === 'download') {
+   424→      const node = document.getElementById(String(data.cardId));
+   425→      if (node) void generateAndDownloadPng(node, String(data.filename || 'card.png'));
+   426→    } else if (action === 'copy') {
+   427→      const node = document.getElementById(String(data.cardId));
+   428→      if (node) void copyCardToClipboard(node);
+   429→    } else if (action === 'delete-preview') {
+   430→      deleteCard(Number(data.index));
+   431→    } else if (action === 'dblclick') {
+   432→      const text = String(data.text || '');
+   433→      const field = String(data.field || '');
+   434→      const cardIndex = Number(data.cardIndex);
+   435→      if (text.length > 0) {
+   436→        openWordStylePopup(Number(data.x), Number(data.y), text, field, cardIndex);
+   437→      }
+   438→    }
+   439→  });
+   440→
+   441→  /* ---------- 12. Editor renderer callbacks ---------- */
+   442→  editorRenderer.onAction((action, data) => {
+   443→    if (action === 'input' || action === 'paste') {
+   444→      const idx = Number(data.index);
+   445→      const field = String(data.field);
+   446→      const value = String(data.value);
+   447→      const card = stateManager.getCard(idx);
+   448→      if (!card) return;
+   449→      // Mutate card field directly (preserves O(1) update — no dispatch for typing)
+   450→      (card as unknown as Record<string, unknown>)[field] = value;
+   451→      const changed = pruneOrphanWordStyles(card);
+   452→      previewRenderer.updateCardField(card, field, idx);
+   453→      updateCharCounter(idx);
+   454→      if (changed && activeCardIndexForWord === idx && activeFieldForWord === field) {
+   455→        wordEditorManager.renderWordStyleList(card);
+   456→      }
+   457→      scheduleSave({ silent: true });
+   458→      scheduleHistoryPush();
+   459→    } else if (action === 'palette') {
+   460→      openColorModal(Number(data.index));
+   461→    } else if (action === 'delete') {
+   462→      deleteCard(Number(data.index));
+   463→    } else if (action === 'duplicate') {
+   464→      duplicateCard(Number(data.index));
+   465→    } else if (action === 'move') {
+   466→      moveCard(Number(data.index), Number(data.dir));
+   467→    } else if (action === 'focus') {
+   468→      updateCharCounter(Number(data.index));
+   469→    }
+   470→  });
+   471→
+   472→  /* ---------- 13. Word editor callbacks ---------- */
+   473→  wordEditorManager.onStyleChange((cardIndex, field, word, styles) => {
+   474→    const card = stateManager.getCard(cardIndex);
+   475→    if (!card) return;
+   476→    const key = `${field}::${word}`;
+   477→    const newWordStyles = { ...(card.wordStyles || {}), [key]: styles };
+   478→    stateManager.dispatch({
+   479→      type: 'SET_CARD_WORD_STYLES',
+   480→      payload: { idx: cardIndex, wordStyles: newWordStyles },
+   481→    });
+   482→    const updated = stateManager.getCard(cardIndex);
+   483→    if (updated) {
+   484→      previewRenderer.updateCardStyle(updated, field, cardIndex);
+   485→      wordEditorManager.renderWordStyleList(updated);
+   486→    }
+   487→    scheduleSave({ silent: true });
+   488→    scheduleHistoryPush();
+   489→  });
+   490→
+   491→  wordEditorManager.onRemoveWord((cardIndex, key) => {
+   492→    stateManager.dispatch({ type: 'DELETE_CARD_WORD_STYLE', payload: { idx: cardIndex, key } });
+   493→    const updated = stateManager.getCard(cardIndex);
+   494→    if (!updated) return;
+   495→    const [field] = splitOnce(key, '::');
+   496→    if (field) previewRenderer.updateCardStyle(updated, field, cardIndex);
+   497→    else renderPreview();
+   498→    wordEditorManager.renderWordStyleList(updated);
+   499→    pushHistory();
+   500→    scheduleSave({ silent: true });
+   501→  });
+   502→
+   503→  wordEditorManager.onClear((cardIndex, field, word) => {
+   504→    const key = `${field}::${word}`;
+   505→    stateManager.dispatch({ type: 'DELETE_CARD_WORD_STYLE', payload: { idx: cardIndex, key } });
+   506→    const updated = stateManager.getCard(cardIndex);
+   507→    if (updated) {
+   508→      previewRenderer.updateCardStyle(updated, field, cardIndex);
+   509→      wordEditorManager.renderWordStyleList(updated);
+   510→    }
+   511→    pushHistory();
+   512→    scheduleSave({ silent: true });
+   513→    showToast('Стиль слова сброшен');
+   514→  });
+   515→
+   516→  /* ---------- 14. Modal dropdown callbacks ---------- */
+   517→  themeDropdownController.onOpen(() => themeDropdown?.classList.add('open'));
+   518→  themeDropdownController.onClose(() => {
+   519→    themeDropdown?.classList.remove('open');
+   520→    themeDropdownTrigger?.setAttribute('aria-expanded', 'false');
+   521→  });
+   522→  themeDropdownController.onSelect((value) => {
+   523→    if (themeSelect) {
+   524→      themeSelect.value = value;
+   525→      themeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+   526→    }
+   527→  });
+   528→
+   529→  modalCardThemeDropdownController.onOpen(() => modalCardThemeDropdown?.classList.add('open'));
+   530→  modalCardThemeDropdownController.onClose(() => modalCardThemeDropdown?.classList.remove('open'));
+   531→  modalCardThemeDropdownController.onSelect((value, item) => {
+   532→    if (activeCardIndexForColors === null) return;
+   533→    const label = item.dataset.label || 'По умолчанию';
+   534→    stateManager.dispatch({
+   535→      type: 'SET_CARD_THEME',
+   536→      payload: { idx: activeCardIndexForColors, theme: value === 'default' ? undefined : value },
+   537→    });
+   538→    if (modalCardThemeLabel) modalCardThemeLabel.textContent = label;
+   539→    // Manually toggle .selected (Dropdown.setValue uses data-value, our items use data-modal-card-theme)
+   540→    modalCardThemeDropdown?.querySelectorAll('.modal-card-theme-item').forEach((it) => {
+   541→      it.classList.toggle('selected', it === item);
+   542→    });
+   543→    const updated = stateManager.getCard(activeCardIndexForColors);
+   544→    if (updated) previewRenderer.updateCardTheme(updated, stateManager.getTheme());
+   545→    pushHistory();
+   546→    scheduleSave({ silent: true });
+   547→  });
+   548→
+   549→  /* ---------- 15. Modal open/close with sidebar + focus preservation ---------- */
+   550→  colorModalController.onOpen(() => {
+   551→    previewWorkspace?.classList.add('modal-open');
+   552→  });
+   553→  colorModalController.onClose(() => {
+   554→    previewWorkspace?.classList.remove('modal-open');
+   555→    activeCardIndexForColors = null;
+   556→    // Restore sidebar state captured before modal opened
+   557→    if (editorSidebar) {
+   558→      if (sidebarWasCollapsedBeforeModal) {
+   559→        editorSidebar.classList.add('collapsed');
+   560→        root.classList.remove('sidebar-open');
+   561→      } else {
+   562→        editorSidebar.classList.remove('collapsed');
+   563→        root.classList.add('sidebar-open');
+   564→      }
+   565→    }
+   566→  });
+   567→
+   568→  function openColorModal(index: number): void {
+   569→    activeCardIndexForColors = index;
+   570→    if (modalCardTitle) modalCardTitle.textContent = `Стили · Карточка ${index + 1}`;
+   571→
+   572→    // Capture sidebar state before opening (don't change it)
+   573→    sidebarWasCollapsedBeforeModal = editorSidebar?.classList.contains('collapsed') ?? true;
+   574→
+   575→    const card = stateManager.getCard(index);
+   576→    if (!card) return;
+   577→    const currentColors = card.colors || {};
+   578→    const currentSectionStyles = card.sectionStyles || {};
+   579→
+   580→    MODAL_FIELDS.forEach((f) => {
+   581→      const input = $<HTMLInputElement>(`#col-${f.key}`);
+   582→      const hexText = $<HTMLElement>(`#hex-${f.key}`);
+   583→      if (currentColors[f.key]) {
+   584→        if (input) input.value = currentColors[f.key];
+   585→        if (hexText) {
+   586→          hexText.textContent = currentColors[f.key];
+   587→          hexText.classList.remove('is-auto');
+   588→        }
+   589→      } else {
+   590→        if (input) input.value = '#000000';
+   591→        if (hexText) {
+   592→          hexText.textContent = 'АВТО';
+   593→          hexText.classList.add('is-auto');
+   594→        }
+   595→      }
+   596→      if (!f.hasStyleControls) return;
+   597→      const formatBtns = root.querySelectorAll<HTMLElement>(
+   598→        `.format-btn-section[data-field="${f.key}"]`,
+   599→      );
+   600→      const sl = $<HTMLInputElement>(`.size-slider-section[data-field="${f.key}"]`);
+   601→      const sv = $<HTMLElement>(`.size-value-section[data-field="${f.key}"]`);
+   602→      const styles = currentSectionStyles[f.key];
+   603→      formatBtns.forEach((btn) => {
+   604→        const fmt = btn.dataset.format;
+   605→        btn.classList.remove('active');
+   606→        if (!styles) return;
+   607→        if (fmt === 'bold' && styles.fontWeight === 'bold') btn.classList.add('active');
+   608→        else if (fmt === 'italic' && styles.fontStyle === 'italic') btn.classList.add('active');
+   609→        else if (fmt === 'underline' && styles.textDecoration?.includes('underline'))
+   610→          btn.classList.add('active');
+   611→        else if (fmt === 'strikethrough' && styles.textDecoration?.includes('line-through'))
+   612→          btn.classList.add('active');
+   613→      });
+   614→      if (sl && sv) {
+   615→        const sz = styles?.fontSize ?? f.defaultSize;
+   616→        sl.value = String(sz);
+   617→        sv.textContent = `${sz}px`;
+   618→      }
+   619→    });
+   620→
+   621→    selectRowField('title');
+   622→
+   623→    // Sync per-card theme dropdown
+   624→    const cardThemeVal = card.theme && card.theme !== 'default' ? card.theme : 'default';
+   625→    if (modalCardThemeLabel) {
+   626→      modalCardThemeLabel.textContent =
+   627→        cardThemeVal === 'default' ? 'По умолчанию' : Theme.getThemeLabel(cardThemeVal);
+   628→    }
+   629→    modalCardThemeDropdown?.querySelectorAll<HTMLElement>('.modal-card-theme-item').forEach((item) => {
+   630→      item.classList.toggle('selected', item.dataset.modalCardTheme === cardThemeVal);
+   631→    });
+   632→
+   633→    // Sync listNumSize slider
+   634→    const savedNumSize = card.colors?.listNumSize;
+   635→    if (listNumSizeSlider) listNumSizeSlider.value = String(savedNumSize || 22);
+   636→    if (listNumSizeValue) listNumSizeValue.textContent = `${savedNumSize || 22}px`;
+   637→
+   638→    colorModalController.open();
+   639→  }
+   640→
+   641→  function closeColorModal(): void {
+   642→    colorModalController.close();
+   643→  }
+   644→
+   645→  /* ---------- 16. Word popup ---------- */
+   646→  function openWordStylePopup(
+   647→    x: number,
+   648→    y: number,
+   649→    selectedText: string,
+   650→    field: string,
+   651→    cardIndex: number,
+   652→  ): void {
+   653→    activeFieldForWord = field;
+   654→    activeCardIndexForWord = cardIndex;
+   655→    const card = stateManager.getCard(cardIndex);
+   656→    if (!card) return;
+   657→    const key = `${field}::${selectedText}`;
+   658→    const existing = card.wordStyles?.[key];
+   659→    wordEditorManager.open(x, y, selectedText, field, cardIndex, existing);
+   660→  }
+   661→
+   662→  function closeWordStylePopup(): void {
+   663→    wordEditorManager.close();
+   664→    activeFieldForWord = null;
+   665→    activeCardIndexForWord = null;
+   666→  }
+   667→
+   668→  /* ---------- 17. Card operations ---------- */
+   669→  function addCard(): void {
+   670→    stateManager.dispatch({ type: 'ADD_CARD' });
+   671→    renderEditor();
+   672→    renderPreview();
+   673→    editorRenderer.collapseLastCard();
+   674→    pushHistory();
+   675→    scheduleSave({ silent: true });
+   676→    showToast('Карточка добавлена');
+   677→  }
+   678→
+   679→  function deleteCard(idx: number): void {
+   680→    const cardCount = stateManager.getCardCount();
+   681→    if (cardCount <= 1) return;
+   682→    // Protect against NaN and invalid indices
+   683→    if (Number.isNaN(idx) || !Number.isFinite(idx)) return;
+   684→    if (idx < 0 || idx >= cardCount) return;
+   685→    stateManager.dispatch({ type: 'DELETE_CARD', payload: idx });
+   686→    renderEditor();
+   687→    renderPreview();
+   688→    pushHistory();
+   689→    scheduleSave({ silent: true });
+   690→    showToast('Карточка удалена');
+   691→  }
+   692→
+   693→  function duplicateCard(idx: number): void {
+   694→    stateManager.dispatch({ type: 'DUPLICATE_CARD', payload: idx });
+   695→    renderEditor();
+   696→    renderPreview();
+   697→    pushHistory();
+   698→    scheduleSave({ silent: true });
+   699→    showToast('Карточка дублирована');
+   700→  }
+   701→
+   702→  function moveCard(idx: number, dir: number): void {
+   703→    stateManager.dispatch({ type: 'MOVE_CARD', payload: { idx, dir } });
+   704→    renderEditor();
+   705→    renderPreview();
+   706→    pushHistory();
+   707→    scheduleSave({ silent: true });
+   708→  }
+   709→
+   710→  /* ---------- 18. History ---------- */
+   711→  function pushHistory(): void {
+   712→    historyManager.push(stateManager.snapshot());
+   713→    updateUndoRedoButtons();
+   714→  }
+   715→
+   716→  function scheduleHistoryPush(): void {
+   717→    historyManager.schedulePush(stateManager.snapshot());
+   718→  }
+   719→
+   720→  function restore(s: Snapshot): void {
+   721→    stateManager.restore(s);
+   722→    renderEditor();
+   723→    renderPreview();
+   724→    scheduleSave({ silent: true });
+   725→    updateUndoRedoButtons();
+   726→    // Close modal and word popup, reset stale active indices
+   727→    closeColorModal();
+   728→    closeWordStylePopup();
+   729→    activeCardIndexForColors = null;
+   730→    activeCardIndexForWord = null;
+   731→    lastActiveField = 'title';
+   732→  }
+   733→
+   734→  function undo(): void {
+   735→    const snap = historyManager.undo();
+   736→    if (!snap) return;
+   737→    restore(snap);
+   738→    showToast('Действие отменено');
+   739→  }
+   740→
+   741→  function redo(): void {
+   742→    const snap = historyManager.redo();
+   743→    if (!snap) return;
+   744→    restore(snap);
+   745→    showToast('Действие повторено');
+   746→  }
+   747→
+   748→  function updateUndoRedoButtons(): void {
+   749→    if (undoBtn) undoBtn.disabled = !historyManager.canUndo;
+   750→    if (redoBtn) redoBtn.disabled = !historyManager.canRedo;
+   751→  }
+   752→
+   753→  /* ---------- 19. Sidebar ---------- */
+   754→  function setSidebarOpen(open: boolean): void {
+   755→    if (!editorSidebar) return;
+   756→    if (open) {
+   757→      editorSidebar.classList.remove('collapsed');
+   758→      root.classList.add('sidebar-open');
+   759→    } else {
+   760→      editorSidebar.classList.add('collapsed');
+   761→      root.classList.remove('sidebar-open');
+   762→    }
+   763→  }
+   764→
+   765→  /* ---------- 20. Export ---------- */
+   766→  async function generateAndDownloadPng(node: HTMLElement, filename: string): Promise<void> {
+   767→    try {
+   768→      await withExportMode(root, node, (n) => Export.downloadPng(n, filename, root));
+   769→      showToast('Карточка успешно скачана!');
+   770→    } catch {
+   771→      showToast('Ошибка при скачивании');
+   772→    }
+   773→  }
+   774→
+   775→  async function copyCardToClipboard(node: HTMLElement): Promise<void> {
+   776→    try {
+   777→      if (!window.isSecureContext) {
+   778→        showToast('Копирование требует HTTPS. Скачиваю PNG вместо копирования…');
+   779→        await generateAndDownloadPng(node, 'card-copy.png');
+   780→        return;
+   781→      }
+   782→      const result = await withExportMode(root, node, (n) => Export.copyToClipboard(n, root));
+   783→      if (result.success) {
+   784→        showToast('Карточка скопирована в буфер!');
+   785→        return;
+   786→      }
+   787→      if (result.fallback) {
+   788→        showToast('Буфер обмена недоступен. Скачиваю PNG…');
+   789→        await generateAndDownloadPng(node, 'card-copy.png');
+   790→      }
+   791→    } catch {
+   792→      showToast('Копирование не удалось. Скачиваю PNG…');
+   793→      try {
+   794→        await generateAndDownloadPng(node, 'card-copy.png');
+   795→      } catch {
+   796→        /* already toasted */
+   797→      }
+   798→    }
+   799→  }
+   800→
+   801→  async function downloadAllPng(): Promise<void> {
+   802→    const cards = stateManager.getCards();
+   803→    const total = cards.length;
+   804→    showToast(`Генерация PNG: 0 из ${total}...`, 60000);
+   805→    for (let i = 0; i < total; i++) {
+   806→      const node = document.getElementById(`card-node-${cards[i].id}`);
+   807→      if (node) {
+   808→        try {
+   809→          await withExportMode(root, node, (n) => Export.downloadPng(n, `card-${i + 1}.png`, root));
+   810→        } catch {
+   811→          /* ignore — continue batch */
+   812→        }
+   813→        showToast(`Скачано ${i + 1} из ${total}...`, 60000);
+   814→        await new Promise((r) => setTimeout(r, 250));
+   815→      }
+   816→    }
+   817→    showToast(`Готово! Скачано ${total} из ${total} карточек.`);
+   818→  }
+   819→
+   820→  /* ---------- 21. Helper: add tracked element listener ---------- */
+   821→  function addEl<K extends keyof HTMLElementEventMap>(
+   822→    el: EventTarget | null | undefined,
+   823→    type: K,
+   824→    fn: (e: HTMLElementEventMap[K]) => void,
+   825→    opts?: boolean | AddEventListenerOptions,
+   826→  ): void {
+   827→    if (!el) return;
+   828→    const listener = fn as EventListener;
+   829→    el.addEventListener(type, listener, opts);
+   830→    elementListeners.push({ el, type: type as string, fn: listener, opts });
+   831→  }
+   832→
+   833→  function addDoc<K extends keyof DocumentEventMap>(
+   834→    type: K,
+   835→    fn: (e: DocumentEventMap[K]) => void,
+   836→  ): void {
+   837→    const listener = fn as EventListener;
+   838→    document.addEventListener(type, listener);
+   839→    docListeners.push({ type: type as string, fn: listener });
+   840→  }
+   841→
+   842→  /* ---------- 22. Static event bindings ---------- */
+   843→  function bindStatic(): void {
+   844→    // Theme select change (hidden native select — driven by custom dropdown)
+   845→    addEl(themeSelect, 'change', (e) => {
+   846→      const value = (e.target as HTMLSelectElement).value;
+   847→      stateManager.dispatch({ type: 'SET_GLOBAL_THEME', payload: value });
+   848→      renderPreview();
+   849→      scheduleSave({ silent: true });
+   850→    });
+   851→
+   852→    // Format select change
+   853→    addEl(formatSelect, 'change', (e) => {
+   854→      const value = (e.target as HTMLSelectElement).value;
+   855→      stateManager.dispatch({ type: 'SET_FORMAT', payload: value });
+   856→      applyCharLimit();
+   857→      renderPreview();
+   858→      scheduleSave({ silent: true });
+   859→    });
+   860→
+   861→    // Char limit toggle
+   862→    addEl(charLimitToggle, 'change', (e) => {
+   863→      stateManager.dispatch({ type: 'SET_CHAR_LIMIT', payload: (e.target as HTMLInputElement).checked });
+   864→      applyCharLimit();
+   865→      updateCharCounter(0);
+   866→      scheduleSave({ silent: true });
+   867→    });
+   868→
+   869→    // Gradient angle slider — NO save, NO history (preserve old behavior)
+   870→    addEl(gradientAngleSlider, 'input', (e) => {
+   871→      const angle = Number((e.target as HTMLInputElement).value);
+   872→      stateManager.dispatch({ type: 'SET_GRADIENT_ANGLE', payload: angle });
+   873→    });
+   874→
+   875→    // Numbering toggle
+   876→    addEl(numberingToggle, 'change', (e) => {
+   877→      stateManager.dispatch({ type: 'SET_SHOW_CARD_NUMBERS', payload: (e.target as HTMLInputElement).checked });
+   878→      scheduleSave({ silent: true });
+   879→    });
+   880→
+   881→    // Progress bar toggle
+   882→    addEl(progressBarToggle, 'change', (e) => {
+   883→      stateManager.dispatch({ type: 'SET_SHOW_PROGRESS_BAR', payload: (e.target as HTMLInputElement).checked });
+   884→      scheduleSave({ silent: true });
+   885→    });
+   886→
+   887→    // Progress bar style select
+   888→    addEl(progressBarStyleSelect, 'change', (e) => {
+   889→      stateManager.dispatch({ type: 'SET_PROGRESS_BAR_STYLE', payload: (e.target as HTMLSelectElement).value });
+   890→      renderPreview();
+   891→      scheduleSave({ silent: true });
+   892→    });
+   893→
+   894→    // List style select
+   895→    addEl(listStyleSelect, 'change', (e) => {
+   896→      stateManager.dispatch({ type: 'SET_LIST_STYLE', payload: (e.target as HTMLSelectElement).value });
+   897→      scheduleSave({ silent: true });
+   898→    });
+   899→
+   900→    // List num size slider — DO push history
+   901→    addEl(listNumSizeSlider, 'input', (e) => {
+   902→      const size = Number((e.target as HTMLInputElement).value);
+   903→      if (listNumSizeValue) listNumSizeValue.textContent = `${size}px`;
+   904→      if (activeCardIndexForColors !== null) {
+   905→        const card = stateManager.getCard(activeCardIndexForColors);
+   906→        if (!card) return;
+   907→        if (!card.colors) card.colors = {};
+   908→        card.colors.listNumSize = String(size);
+   909→        previewRenderer.updateCardField(card, 'listNumSize', activeCardIndexForColors);
+   910→        scheduleHistoryPush();
+   911→        scheduleSave({ silent: true });
+   912→      }
+   913→    });
+   914→
+   915→    // Sidebar buttons
+   916→    addEl(addCardBtn, 'click', () => addCard());
+   917→    addEl(saveAllBtn, 'click', () => void downloadAllPng());
+   918→
+   919→    // Delete all — with confirm flow
+   920→    addEl(deleteAllBtn, 'click', () => {
+   921→      if (stateManager.getCardCount() <= 1) {
+   922→        showToast('Нельзя удалить единственную карточку');
+   923→        return;
+   924→      }
+   925→      confirmOverlay?.classList.add('active');
+   926→    });
+   927→    addEl(confirmCancel, 'click', () => confirmOverlay?.classList.remove('active'));
+   928→    addEl(confirmOverlay, 'click', (e) => {
+   929→      if (e.target === confirmOverlay) confirmOverlay?.classList.remove('active');
+   930→    });
+   931→    addEl(confirmOk, 'click', () => {
+   932→      confirmOverlay?.classList.remove('active');
+   933→      stateManager.dispatch({ type: 'CLEAR_ALL' });
+   934→      renderEditor();
+   935→      renderPreview();
+   936→      pushHistory();
+   937→      scheduleSave({ silent: true });
+   938→      showToast('Все карточки удалены');
+   939→    });
+   940→
+   941→    // Undo / Redo
+   942→    addEl(undoBtn, 'click', () => undo());
+   943→    addEl(redoBtn, 'click', () => redo());
+   944→
+   945→    // Sidebar toggle
+   946→    addEl(toggleSidebarBtn, 'click', () => {
+   947→      const open = editorSidebar?.classList.contains('collapsed');
+   948→      setSidebarOpen(!!open);
+   949→    });
+   950→    addEl(sidebarBackdrop, 'click', () => setSidebarOpen(false));
+   951→
+   952→    // Color picker rows — select active field
+   953→    root.querySelectorAll<HTMLElement>('.color-picker-row').forEach((row) => {
+   954→      addEl(row, 'click', (e) => {
+   955→        if ((e.target as HTMLElement).closest('.btn-reset-single')) return;
+   956→        const f = row.dataset.rowField;
+   957→        if (f) selectRowField(f);
+   958→      });
+   959→    });
+   960→
+   961→    // Color inputs
+   962→    MODAL_FIELDS.forEach((f) => {
+   963→      const input = $<HTMLInputElement>(`#col-${f.key}`);
+   964→      const hexText = $<HTMLElement>(`#hex-${f.key}`);
+   965→      addEl(input, 'input', (e) => {
+   966→        if (activeCardIndexForColors === null) return;
+   967→        const card = stateManager.getCard(activeCardIndexForColors);
+   968→        if (!card) return;
+   969→        if (!card.colors) card.colors = {};
+   970→        const value = (e.target as HTMLInputElement).value;
+   971→        card.colors[f.key] = value;
+   972→        if (hexText) {
+   973→          hexText.textContent = value;
+   974→          hexText.classList.remove('is-auto');
+   975→        }
+   976→        selectRowField(f.key);
+   977→        previewRenderer.updateCardStyle(card, f.key, activeCardIndexForColors);
+   978→        scheduleHistoryPush();
+   979→        scheduleSave({ silent: true });
+   980→      });
+   981→    });
+   982→
+   983→    // Reset single color
+   984→    root.querySelectorAll<HTMLElement>('[data-reset]').forEach((btn) => {
+   985→      addEl(btn, 'click', (e) => {
+   986→        e.stopPropagation();
+   987→        const f = btn.dataset.reset || '';
+   988→        if (activeCardIndexForColors === null) return;
+   989→        const card = stateManager.getCard(activeCardIndexForColors);
+   990→        if (!card) return;
+   991→        delete card.colors?.[f];
+   992→        const hexText = $<HTMLElement>(`#hex-${f}`);
+   993→        const input = $<HTMLInputElement>(`#col-${f}`);
+   994→        if (input) input.value = '';
+   995→        if (hexText) {
+   996→          hexText.textContent = '';
+   997→          hexText.classList.add('is-auto');
+   998→        }
+   999→        selectRowField(f);
+  1000→        previewRenderer.updateCardStyle(card, f, activeCardIndexForColors);
+  1001→        scheduleHistoryPush();
+  1002→        scheduleSave({ silent: true });
+  1003→      });
+  1004→    });
+  1005→
+  1006→    // Color swatches + presets (non-popup)
+  1007→    root.querySelectorAll<HTMLElement>('.color-swatch, .color-preset[data-color]').forEach((sw) => {
+  1008→      if (sw.classList.contains('color-preset') && wordStylePopup?.contains(sw)) return;
+  1009→      addEl(sw, 'click', () => {
+  1010→        if (activeCardIndexForColors === null) return;
+  1011→        const hex = sw.dataset.preset || sw.dataset.color || '';
+  1012→        const f = lastActiveField || 'title';
+  1013→        const card = stateManager.getCard(activeCardIndexForColors);
+  1014→        if (!card) return;
+  1015→        if (!card.colors) card.colors = {};
+  1016→        card.colors[f] = hex;
+  1017→        const input = $<HTMLInputElement>(`#col-${f}`);
+  1018→        const hexText = $<HTMLElement>(`#hex-${f}`);
+  1019→        if (input) input.value = hex;
+  1020→        if (hexText) {
+  1021→          hexText.textContent = hex;
+  1022→          hexText.classList.remove('is-auto');
+  1023→        }
+  1024→        selectRowField(f);
+  1025→        previewRenderer.updateCardStyle(card, f, activeCardIndexForColors);
+  1026→        scheduleHistoryPush();
+  1027→        scheduleSave({ silent: true });
+  1028→      });
+  1029→    });
+  1030→
+  1031→    // Section format buttons — DO push history
+  1032→    root.querySelectorAll<HTMLElement>('.format-btn-section').forEach((btn) => {
+  1033→      addEl(btn, 'click', (e) => {
+  1034→        e.stopPropagation();
+  1035→        const field = btn.dataset.field || '';
+  1036→        const fmt = btn.dataset.format || '';
+  1037→        if (activeCardIndexForColors === null) return;
+  1038→        const card = stateManager.getCard(activeCardIndexForColors);
+  1039→        if (!card) return;
+  1040→        if (!card.sectionStyles) card.sectionStyles = {};
+  1041→        if (!card.sectionStyles[field]) card.sectionStyles[field] = {};
+  1042→        const styles = card.sectionStyles[field]!;
+  1043→        if (fmt === 'bold') {
+  1044→          if (styles.fontWeight === 'bold') {
+  1045→            delete styles.fontWeight;
+  1046→            btn.classList.remove('active');
+  1047→          } else {
+  1048→            styles.fontWeight = 'bold';
+  1049→            btn.classList.add('active');
+  1050→          }
+  1051→        } else if (fmt === 'italic') {
+  1052→          if (styles.fontStyle === 'italic') {
+  1053→            delete styles.fontStyle;
+  1054→            btn.classList.remove('active');
+  1055→          } else {
+  1056→            styles.fontStyle = 'italic';
+  1057→            btn.classList.add('active');
+  1058→          }
+  1059→        } else if (fmt === 'underline') {
+  1060→          const d = styles.textDecoration || '';
+  1061→          if (d.includes('underline')) {
+  1062→            styles.textDecoration = d.replace('underline', '').trim();
+  1063→            btn.classList.remove('active');
+  1064→          } else {
+  1065→            styles.textDecoration = (d + ' underline').trim();
+  1066→            btn.classList.add('active');
+  1067→          }
+  1068→        } else if (fmt === 'strikethrough') {
+  1069→          const d = styles.textDecoration || '';
+  1070→          if (d.includes('line-through')) {
+  1071→            styles.textDecoration = d.replace('line-through', '').trim();
+  1072→            btn.classList.remove('active');
+  1073→          } else {
+  1074→            styles.textDecoration = (d + ' line-through').trim();
+  1075→            btn.classList.add('active');
+  1076→          }
+  1077→        }
+  1078→        previewRenderer.updateCardStyle(card, field, activeCardIndexForColors);
+  1079→        scheduleSave({ silent: true });
+  1080→        scheduleHistoryPush();
+  1081→      });
+  1082→    });
+  1083→
+  1084→    // Section size sliders — DO push history
+  1085→    root.querySelectorAll<HTMLInputElement>('.size-slider-section').forEach((sl) => {
+  1086→      addEl(sl, 'input', (e) => {
+  1087→        e.stopPropagation();
+  1088→        const field = sl.dataset.field || '';
+  1089→        const size = Number(sl.value);
+  1090→        if (activeCardIndexForColors === null) return;
+  1091→        const card = stateManager.getCard(activeCardIndexForColors);
+  1092→        if (!card) return;
+  1093→        if (!card.sectionStyles) card.sectionStyles = {};
+  1094→        if (!card.sectionStyles[field]) card.sectionStyles[field] = {};
+  1095→        card.sectionStyles[field]!.fontSize = size;
+  1096→        const sv = $<HTMLElement>(`.size-value-section[data-field="${field}"]`);
+  1097→        if (sv) sv.textContent = `${size}px`;
+  1098→        previewRenderer.updateCardStyle(card, field, activeCardIndexForColors);
+  1099→        scheduleHistoryPush();
+  1100→        scheduleSave({ silent: true });
+  1101→      });
+  1102→    });
+  1103→
+  1104→    // Reset all card colors + section styles
+  1105→    addEl(resetCardColorsBtn, 'click', () => {
+  1106→      if (activeCardIndexForColors === null) return;
+  1107→      const card = stateManager.getCard(activeCardIndexForColors);
+  1108→      if (!card) return;
+  1109→      card.colors = {};
+  1110→      card.sectionStyles = {};
+  1111→      stateManager.dispatch({
+  1112→        type: 'SET_CARD_COLORS',
+  1113→        payload: { idx: activeCardIndexForColors, colors: {} },
+  1114→      });
+  1115→      stateManager.dispatch({
+  1116→        type: 'SET_CARD_SECTION_STYLES',
+  1117→        payload: { idx: activeCardIndexForColors, sectionStyles: {} },
+  1118→      });
+  1119→      MODAL_FIELDS.forEach((f) => {
+  1120→        const hexText = $<HTMLElement>(`#hex-${f.key}`);
+  1121→        const input = $<HTMLInputElement>(`#col-${f.key}`);
+  1122→        if (hexText) {
+  1123→          hexText.textContent = 'АВТО';
+  1124→          hexText.classList.add('is-auto');
+  1125→        }
+  1126→        if (input) input.value = '#000000';
+  1127→        root
+  1128→          .querySelectorAll<HTMLElement>(`.format-btn-section[data-field="${f.key}"]`)
+  1129→          .forEach((b) => b.classList.remove('active'));
+  1130→        const sl = $<HTMLInputElement>(`.size-slider-section[data-field="${f.key}"]`);
+  1131→        const sv = $<HTMLElement>(`.size-value-section[data-field="${f.key}"]`);
+  1132→        if (sl && sv) {
+  1133→          sl.value = String(f.defaultSize);
+  1134→          sv.textContent = `${f.defaultSize}px`;
+  1135→        }
+  1136→      });
+  1137→      const updated = stateManager.getCard(activeCardIndexForColors);
+  1138→      if (updated) {
+  1139→        MODAL_FIELDS.forEach((f) =>
+  1140→          previewRenderer.updateCardStyle(updated, f.key, activeCardIndexForColors!),
+  1141→        );
+  1142→      }
+  1143→      pushHistory();
+  1144→      scheduleSave({ silent: true });
+  1145→      showToast('Все кастомные цвета и стили карточки сброшены');
+  1146→    });
+  1147→
+  1148→    // Document-level click: close word popup (5-condition check)
+  1149→    // Note: theme dropdown click-outside handled by Dropdown class
+  1150→    addDoc('click', (e) => {
+  1151→      const t = e.target as HTMLElement;
+  1152→      if (!wordStylePopup?.classList.contains('active')) return;
+  1153→      if (wordStylePopup.contains(t)) return;
+  1154→      if (editorSidebar?.contains(t)) return;
+  1155→      if (colorModal?.contains(t)) return;
+  1156→      if (t.closest('.cc-styled-word')) return;
+  1157→      if (t.closest('input, textarea, select, button')) return;
+  1158→      closeWordStylePopup();
+  1159→    });
+  1160→
+  1161→    // Document-level keydown: Escape priority + Ctrl shortcuts
+  1162→    addDoc('keydown', (e) => {
+  1163→      if (e.key === 'Escape') {
+  1164→        // Priority: themeDropdown → modalCardThemeDropdown → wordStylePopup → colorModal
+  1165→        if (themeDropdown?.classList.contains('open')) {
+  1166→          themeDropdownController.close();
+  1167→        } else if (modalCardThemeDropdown?.classList.contains('open')) {
+  1168→          modalCardThemeDropdownController.close();
+  1169→        } else if (wordStylePopup?.classList.contains('active')) {
+  1170→          closeWordStylePopup();
+  1171→        } else if (colorModal?.classList.contains('active')) {
+  1172→          closeColorModal();
+  1173→        }
+  1174→      }
+  1175→      const mod = e.ctrlKey || e.metaKey;
+  1176→      if (mod && (e.key === 's' || e.key === 'S')) {
+  1177→        e.preventDefault();
+  1178→        saveCardsToLocalStorage({ silent: false });
+  1179→      } else if (mod && !e.shiftKey && (e.key === 'z' || e.key === 'Z')) {
+  1180→        e.preventDefault();
+  1181→        undo();
+  1182→      } else if (mod && (e.key === 'y' || e.key === 'Y')) {
+  1183→        e.preventDefault();
+  1184→        redo();
+  1185→      } else if (mod && e.shiftKey && (e.key === 'z' || e.key === 'Z')) {
+  1186→        e.preventDefault();
+  1187→        redo();
+  1188→      }
+  1189→    });
+  1190→
+  1191→    // Save on unload (synchronous, no debounce)
+  1192→    window.addEventListener('beforeunload', saveOnUnload);
+  1193→  }
+  1194→
+  1195→  function saveOnUnload(): void {
+  1196→    saveCardsToLocalStorage({ silent: true });
+  1197→  }
+  1198→
+  1199→  /* ---------- 23. Init sequence ---------- */
+  1200→  guard('loadCardsFromLocalStorage', loadCardsFromLocalStorage);
+  1201→  guard('bindStatic', bindStatic);
+  1202→  guard('renderEditor', renderEditor);
+  1203→  guard('renderPreview', renderPreview);
+  1204→  guard('applyCharLimit', applyCharLimit);
+  1205→  // Initial history snapshot
+  1206→  historyManager.init(stateManager.snapshot());
+  1207→  updateUndoRedoButtons();
+  1208→  // Sidebar: open on desktop, closed on mobile
+  1209→  if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+  1210→    setSidebarOpen(true);
+  1211→  } else {
+  1212→    setSidebarOpen(false);
+  1213→  }
+  1214→  console.log('[Cardcraft] Initialized successfully:', stateManager.getCardCount(), 'cards loaded');
+  1215→
+  1216→  /* ---------- 24. Cleanup ---------- */
+  1217→  return () => {
+  1218→    // Remove document listeners
+  1219→    docListeners.forEach(({ type, fn }) => document.removeEventListener(type, fn));
+  1220→    docListeners.length = 0;
+  1221→    // Remove element listeners
+  1222→    elementListeners.forEach(({ el, type, fn, opts }) => el.removeEventListener(type, fn, opts));
+  1223→    elementListeners.length = 0;
+  1224→    // Window listeners
+  1225→    window.removeEventListener('beforeunload', saveOnUnload);
+  1226→    window.removeEventListener('error', errorHandler);
+  1227→    window.removeEventListener('unhandledrejection', unhandledRejection);
+  1228→    // Destroy modules
+  1229→    sidebarAccordion.destroy();
+  1230→    modalAccordion.destroy();
+  1231→    colorModalController.destroy();
+  1232→    themeDropdownController.destroy();
+  1233→    modalCardThemeDropdownController.destroy();
+  1234→    wordEditorManager.destroy();
+  1235→    verticalResize.destroy();
+  1236→    horizontalResize.destroy();
+  1237→    toastQueue.destroy();
+  1238→    // Unsubscribe from state changes (prevents leak on React remount)
+  1239→    unsubscribeState();
+  1240→    // Clear timers
+  1241→    if (saveTimer) clearTimeout(saveTimer);
+  1242→    historyManager.clear();
+  1243→  };
+  1244→}
+  1245→

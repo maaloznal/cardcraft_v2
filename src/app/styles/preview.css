@@ -240,20 +240,26 @@
 }
 
 /* Базовые стили для дискретных индикаторов */
+/* Bug 3 fix: shape progress bars must fit within card width.
+   Use flex with min-width: 0 so items shrink when there are many cards.
+   overflow: hidden prevents items from spilling outside the card. */
 .progress-shapes {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   width: 100%;
   height: 16px;
-  overflow: visible;
+  overflow: hidden;
   background: transparent !important;
   margin-bottom: 0;
+  flex-wrap: nowrap;
 }
 .ps-item {
-  width: 12px;
+  flex: 1 1 0;
+  min-width: 4px;
+  max-width: 16px;
   height: 12px;
-  flex-shrink: 0;
+  flex-shrink: 1;
   position: relative;
 }
 .ps-item.filled {
