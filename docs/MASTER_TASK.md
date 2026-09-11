@@ -105,12 +105,11 @@
 - [x] **3.3 PR checks**
   - **Done**: workflow triggers on `pull_request: branches: [main]` → PR checks запускаются автоматически.
 - [~] **3.4 Preview deployment**
-  - **Current**: нет Vercel/Netlify конфига. MasterTask: "Не добавлять новую платформу без необходимости."
-  - **Left**: если выбран Vercel — добавить `vercel.json` + `VERCEL_TOKEN` secret + deploy preview job. Пока TODO.
-- [~] **3.5 Production deployment**
-  - **Current**: нет deployment конфига.
-  - **Left**: deploy на push to main после того как выбрана платформа. Пока TODO.
-  - **Verify**: CI green на PR; preview URL в comment (когда deployment добавлен).
+  - **Current**: GitHub Pages уже настроен (https://maaloznal.github.io/cardcraft_v2/, source: main). Каждый push to main автоматически деплоит. Но GitHub Pages не делает preview per PR (только production).
+  - **Left**: preview per PR требует Vercel/Netlify, но MasterTask: "Не добавлять новую платформу без необходимости" — GitHub Pages уже используется. Оставляем как есть.
+- [x] **3.5 Production deployment**
+  - **Done**: GitHub Pages уже работает — `pages-build-deployment` workflow активен, URL: https://maaloznal.github.io/cardcraft_v2/. Каждый push to main → automatic deploy.
+  - **Verify**: CI green на PR; production deploy на push to main через GitHub Pages.
 
 ---
 

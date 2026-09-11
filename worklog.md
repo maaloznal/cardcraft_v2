@@ -2646,3 +2646,30 @@ Stage Summary:
 - P2 DONE: 28/29 E2E tests pass (1 skipped — JSON import UI missing).
 - Critical bug fixed: renderer listener leak on StrictMode double-mount (would have caused double-dispatch on every click in production with StrictMode).
 - Next: PRIORITY 3 (CI/CD) + PRIORITY 5 (a11y) + PRIORITY 19 (security hardening).
+
+---
+Task ID: master-task-phase2a
+Agent: main-orchestrator
+Task: MasterTask.md PRIORITY 3 (CI/CD GitHub Actions)
+
+Work Log:
+- P3.1: Created .github/workflows/ci.yml — 3 jobs: check (lint+typecheck+unit+perf), e2e (Playwright), build (production). Triggers: push to main + pull_request. concurrency cancel in-progress.
+- package.json: added `typecheck` script (tsc --noEmit).
+- .gitignore: added test-results/, playwright-report/, verification*.png. Removed verification*.png from git tracking.
+- P3.2: Each step is a separate job with fail-fast. E2E job uploads playwright-report artifact on failure.
+- P3.3: workflow triggers on pull_request: branches: [main] → PR checks automatic.
+- P3.4: GitHub Pages already configured (https://maaloznal.github.io/cardcraft_v2/, source: main). No preview per PR (would need Vercel/Netlify — MasterTask says don't add new platform).
+- P3.5: GitHub Pages production deployment already works — pages-build-deployment workflow active, auto-deploys on push to main.
+
+Verification (CI run 34586630862 — all 3 jobs SUCCESS):
+- ✅ Lint + Typecheck + Unit tests: 8 steps all success (lint, tsc, unit tests, perf benchmarks)
+- ✅ E2E tests (Playwright): success (chromium installed, 28 E2E tests passed in CI)
+- ✅ Production build: success (next build works in CI — first time verified!)
+- Total CI run: completed, conclusion=success
+
+Stage Summary:
+- P3.1-3.3, 3.5 DONE. P3.4 PARTIAL (no preview per PR, but production deploy works).
+- CI is fully green on first run — all 290 tests (253 unit + 9 perf + 28 E2E) pass in GitHub Actions.
+- Production build verified working in CI environment.
+- GitHub Pages deployment already active.
+- Next: PRIORITY 5 (a11y) + PRIORITY 19 (security hardening).
