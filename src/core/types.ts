@@ -38,11 +38,22 @@ export interface Card {
   theme?: string;
 }
 
-/** Snapshot for undo/redo history */
+/**
+ * Snapshot for undo/redo history.
+ * P1-8: includes the full SettingsState (not just theme+format) so that
+ * undo/redo correctly restores progress bar, list style, char limit,
+ * numbering, and gradient angle changes.
+ */
 export interface Snapshot {
   cards: Card[];
   theme: string;
   format: string;
+  gradientAngle: number;
+  showCardNumbers: boolean;
+  showProgressBar: boolean;
+  progressBarStyle: string;
+  listStyleType: string;
+  charLimitEnabled: boolean;
 }
 
 /** Theme group structure for dropdown rendering */

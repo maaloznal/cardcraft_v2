@@ -33,12 +33,17 @@ export function wireRendererCallbacks(ctx: OrchestratorContext): void {
       const node = document.getElementById(String(data.cardId));
       if (node) void ctx.exporter.copyCardToClipboard(node);
     } else if (action === 'delete-preview') {
-      ctx.cardOps.deleteCard(Number(data.index));
+      // P1-1: resolve index from stable cardId (format: "card-node-<id>")
+      const cardId = String(data.cardId || '').replace(/^card-node-/, '');
+      const idx = stateManager.getCards().findIndex((c) => c.id === cardId);
+      if (idx >= 0) ctx.cardOps.deleteCard(idx);
     } else if (action === 'dblclick') {
       const text = String(data.text || '');
       const field = String(data.field || '');
-      const cardIndex = Number(data.cardIndex);
-      if (text.length > 0) {
+      // P1-1: resolve index from stable cardId
+      const cardId = String(data.cardId || '').replace(/^card-node-/, '');
+      const cardIndex = stateManager.getCards().findIndex((c) => c.id === cardId);
+      if (text.length > 0 && cardIndex >= 0) {
         ctx.wordPopup.openWordStylePopup(
           Number(data.x),
           Number(data.y),

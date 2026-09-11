@@ -185,13 +185,6 @@ export class PreviewRenderer {
           tag.textContent = `${cardNum} / ${totalNum}`;
         }
       }
-      // Update data-index on all elements
-      cardNode.querySelectorAll<HTMLElement>('[data-index]').forEach((el) => {
-        el.dataset.index = String(i);
-      });
-      // Update delete-preview data-index
-      const delPreview = cardNode.parentElement?.querySelector<HTMLElement>('[data-action="delete-preview"]');
-      if (delPreview) delPreview.dataset.index = String(i);
     });
   }
 
@@ -225,6 +218,9 @@ export class PreviewRenderer {
     const footerStyle = buildSectionStyle(card, 'footer');
     const ctaStyle = buildSectionStyle(card, 'cta');
 
+    // Sanitize card.id early — needed for data-card-id on list items + wrapper
+    const safeCardId = sanitizeCardId(card.id);
+
     let listHtml = '';
     if ((card.listItems || '').trim()) {
       const items = card.listItems.split('\n').filter((i) => i.trim());
@@ -232,20 +228,17 @@ export class PreviewRenderer {
         .map(
           (it, idx) => `<li class="card-list-item" ${listStyle}>
             <span class="card-list-num" ${listNumStyle}>${idx + 1}</span>
-            <span class="card-list-text" ${listStyle} data-field="list" data-index="${index}">${applyWordStylesToText(it, card.wordStyles, 'list')}</span>
+            <span class="card-list-text" ${listStyle} data-field="list" data-card-id="${safeCardId}">${applyWordStylesToText(it, card.wordStyles, 'list')}</span>
           </li>`,
         )
         .join('')}</ul>`;
     }
 
-    // Sanitize card.id to prevent XSS
-    const safeCardId = sanitizeCardId(card.id);
-    
     // Validate and sanitize theme
     const cardTheme = card.theme && ALLOWED_THEMES.includes(card.theme as any) ? card.theme : settings.theme;
     const safeTheme = ALLOWED_THEMES.includes(cardTheme as any) ? cardTheme : 'default';
     const themeAttr = safeTheme !== 'default' ? `data-theme="${escapeAttr(safeTheme)}"` : '';
-    
+
     // Validate and sanitize format
     const safeFormat = ALLOWED_FORMATS.includes(settings.format as any) ? settings.format : 'auto';
     const formatAttr = safeFormat !== 'auto' ? `data-format="${escapeAttr(safeFormat)}"` : '';
@@ -258,26 +251,27 @@ export class PreviewRenderer {
 
     const wrapper = document.createElement('div');
     wrapper.className = 'card-wrapper';
+    wrapper.dataset.cardId = safeCardId;
     wrapper.innerHTML = `
       <div class="card" id="card-node-${safeCardId}" ${themeAttr} ${formatAttr}>
         <div class="card-top-content" style="display:flex;flex-direction:column;gap:16px;">
           ${progressHtml}
           ${tagHtml}
           ${emptyHint}
-          ${card.title ? `<h2 class="card-title" ${titleStyle} data-field="title" data-index="${index}">${applyWordStylesToText(card.title, card.wordStyles, 'title')}</h2>` : ''}
-          ${card.subtitle ? `<p class="card-subtitle" ${subtitleStyle} data-field="subtitle" data-index="${index}">${applyWordStylesToText(card.subtitle, card.wordStyles, 'subtitle').replace(/\n/g, '<br>')}</p>` : ''}
-          ${card.text ? `<p class="card-text" ${textStyle} data-field="text" data-index="${index}">${applyWordStylesToText(card.text, card.wordStyles, 'text').replace(/\n/g, '<br>')}</p>` : ''}
+          ${card.title ? `<h2 class="card-title" ${titleStyle} data-field="title" data-card-id="${safeCardId}">${applyWordStylesToText(card.title, card.wordStyles, 'title')}</h2>` : ''}
+          ${card.subtitle ? `<p class="card-subtitle" ${subtitleStyle} data-field="subtitle" data-card-id="${safeCardId}">${applyWordStylesToText(card.subtitle, card.wordStyles, 'subtitle').replace(/\n/g, '<br>')}</p>` : ''}
+          ${card.text ? `<p class="card-text" ${textStyle} data-field="text" data-card-id="${safeCardId}">${applyWordStylesToText(card.text, card.wordStyles, 'text').replace(/\n/g, '<br>')}</p>` : ''}
           ${listHtml}
         </div>
         <div class="card-bottom-content" style="display:flex;flex-direction:column;gap:16px;">
-          ${card.footer ? `<div class="card-footer-text" ${footerStyle} data-field="footer" data-index="${index}">${applyWordStylesToText(card.footer, card.wordStyles, 'footer')}</div>` : ''}
-          ${card.cta ? `<div class="accent-btn" ${ctaStyle} data-field="cta" data-index="${index}">${applyWordStylesToText(card.cta, card.wordStyles, 'cta')}</div>` : ''}
+          ${card.footer ? `<div class="card-footer-text" ${footerStyle} data-field="footer" data-card-id="${safeCardId}">${applyWordStylesToText(card.footer, card.wordStyles, 'footer')}</div>` : ''}
+          ${card.cta ? `<div class="accent-btn" ${ctaStyle} data-field="cta" data-card-id="${safeCardId}">${applyWordStylesToText(card.cta, card.wordStyles, 'cta')}</div>` : ''}
         </div>
       </div>
       <div class="card-actions">
         <button class="btn-card-action" data-action="download" data-card-id="card-node-${safeCardId}" data-filename="card-${index + 1}.png" title="Скачать" aria-label="Скачать"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
         <button class="btn-card-action" data-action="copy" data-card-id="card-node-${safeCardId}" title="Копировать" aria-label="Копировать"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-        <button class="btn-card-action btn-card-action-danger" data-action="delete-preview" data-index="${index}" title="Удалить" aria-label="Удалить"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
+        <button class="btn-card-action btn-card-action-danger" data-action="delete-preview" data-card-id="card-node-${safeCardId}" title="Удалить" aria-label="Удалить"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
       </div>
     `;
     return wrapper;
@@ -300,7 +294,8 @@ export class PreviewRenderer {
     const el = document.createElement(cfg.tag);
     el.className = cfg.cls;
     el.setAttribute('data-field', field);
-    el.setAttribute('data-index', String(cardIndex));
+    // P1-1: use stable data-card-id instead of positional data-index
+    el.setAttribute('data-card-id', sanitizeCardId(card.id));
 
     const styleStr = buildSectionStyle(card, field);
     if (styleStr) el.setAttribute('style', styleStr.replace('style="', '').replace(/"$/, ''));
@@ -333,6 +328,7 @@ export class PreviewRenderer {
   private updateList(cardNode: HTMLElement, card: Card, cardIndex: number): void {
     const listStyle = buildSectionStyle(card, 'list');
     const listNumStyle = buildListNumStyle(card);
+    const safeCardId = sanitizeCardId(card.id);
 
     let listHtml = '';
     if ((card.listItems || '').trim()) {
@@ -341,7 +337,7 @@ export class PreviewRenderer {
         .map(
           (it, idx) => `<li class="card-list-item" ${listStyle}>
             <span class="card-list-num" ${listNumStyle}>${idx + 1}</span>
-            <span class="card-list-text" ${listStyle} data-field="list" data-index="${cardIndex}">${applyWordStylesToText(it, card.wordStyles, 'list')}</span>
+            <span class="card-list-text" ${listStyle} data-field="list" data-card-id="${safeCardId}">${applyWordStylesToText(it, card.wordStyles, 'list')}</span>
           </li>`,
         )
         .join('');
@@ -401,12 +397,18 @@ export class PreviewRenderer {
       const btn = target.closest<HTMLElement>('[data-action]');
       if (!btn) return;
       const action = btn.dataset.action || '';
-      if (action === 'download' || action === 'copy' || action === 'delete-preview') {
+      if (action === 'download' || action === 'copy') {
         e.stopPropagation();
         this.actionHandler?.(action, {
           cardId: btn.dataset.cardId || '',
           filename: btn.dataset.filename || '',
-          index: Number(btn.dataset.index || 0),
+        });
+      } else if (action === 'delete-preview') {
+        e.stopPropagation();
+        // P1-1: delete-preview now uses stable data-card-id (format: "card-node-<id>")
+        // The orchestrator resolves the index from the card id.
+        this.actionHandler?.(action, {
+          cardId: btn.dataset.cardId || '',
         });
       }
     });
@@ -419,13 +421,14 @@ export class PreviewRenderer {
       const selection = window.getSelection();
       const text = selection ? selection.toString().trim() : '';
       const field = el.dataset.field || '';
-      const cardIndex = Number(el.dataset.index);
+      // P1-1: resolve cardId from stable data-card-id (not positional data-index)
+      const cardId = el.dataset.cardId || '';
       if (text.length > 0) {
         const rect = el.getBoundingClientRect();
         this.actionHandler?.('dblclick', {
           text,
           field,
-          cardIndex,
+          cardId,
           x: rect.left,
           y: rect.top + 24,
         });

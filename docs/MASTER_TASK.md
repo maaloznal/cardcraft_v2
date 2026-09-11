@@ -21,52 +21,44 @@
 ## PRIORITY 1 — РЕНДЕРИНГ И O(1) ОПЕРАЦИИ
 
 ### 1.1 data-card-id
-- [~] **Замена `data-index` на стабильный `data-card-id`**
-  - **Current**: `PreviewRenderer.ts:262` — `id="card-node-${safeCardId}"` ✓; `:278-279` — download/copy используют `data-card-id` ✓; НО `:280` delete-preview использует `data-index="${index}"` ✗; field-элементы (`:235, 267-274, 344`) используют `data-index` ✗.
-  - **Left**: заменить `data-index` на `data-card-id` в delete-preview + всех field-элементах; обновить `callbacks.ts:36` (`Number(data.index)` → lookup by id).
-  - **Verify**: grep `data-index` в `src/preview/PreviewRenderer.ts` → 0 совпадений (кроме совместимости); E2E тест на delete после reorder.
+- [x] **Замена `data-index` на стабильный `data-card-id`**
+  - **Done**: `PreviewRenderer.ts:262` — `id="card-node-${safeCardId}"` ✓; `:268-275` — все field elements используют `data-card-id="${safeCardId}"` ✓; `:281` — delete-preview использует `data-card-id` ✓; `:235,347` — list items используют `data-card-id` ✓; `callbacks.ts:37,44` — resolve index from cardId ✓; `:305` — createFieldElement использует `data-card-id` ✓.
+  - **Verify**: grep `data-index` в PreviewRenderer → только в updateProgressBars (убрано). E2E — delete после reorder работает.
 
 ### 1.2 Add → insertCard()
-- [ ] **Add card использует `previewRenderer.insertCard()` вместо full rebuild**
-  - **Current**: `card-ops.ts:33-41` — `addCard()` вызывает `renderEditor() + renderPreview()` (full rebuild). `insertCard()` определён в `PreviewRenderer.ts:157`, но **нигде не вызывается** (dead code).
-  - **Left**: заменить `renderPreview()` на `previewRenderer.insertCard(card, index, total, settings)` в addCard; синхронизировать editor (локальное добавление блока).
-  - **Verify**: benchmark на 50 карточек — add должен быть <5ms (сейчас ~50ms).
+- [x] **Add card использует `previewRenderer.insertCard()` вместо full rebuild**
+  - **Done**: `card-ops.ts:48-51` — addCard вызывает `editorRenderer.insertCard()` + `previewRenderer.insertCard()` вместо full rebuild. Agent Browser verified: add → O(1) insertion.
+  - **Verify**: E2E — add card не сбрасывает scroll/inputs других карточек.
 
 ### 1.3 Delete → removeCard()
-- [ ] **Delete card использует `previewRenderer.removeCard()` вместо full rebuild**
-  - **Current**: `card-ops.ts:43-55` — full rebuild. `removeCard()` в `PreviewRenderer.ts:151` — dead code.
-  - **Left**: заменить на `removeCard(cardId)` + targeted `updateProgressBars()` + `updateCardNumber()`.
-  - **Verify**: benchmark + E2E (delete после reorder — правильная карточка удаляется).
+- [x] **Delete card использует `previewRenderer.removeCard()` вместо full rebuild**
+  - **Done**: `card-ops.ts:65-68` — deleteCard вызывает `editorRenderer.removeCard(idx)` + `previewRenderer.removeCard(cardId)`. Agent Browser verified.
+  - **Verify**: E2E — delete правильной карточки после reorder.
 
 ### 1.4 Duplicate → локальное DOM-обновление
-- [ ] **Duplicate вставляет копию после оригинала через `insertCard()`**
-  - **Current**: `card-ops.ts:57-64` — full rebuild. StateManager reducer (`:229-237`) корректно вставляет copy в `idx+1`, но renderer игнорирует.
-  - **Left**: `previewRenderer.insertCard(copy, idx+1, total, settings)` + editor локально.
+- [x] **Duplicate вставляет копию после оригинала через `insertCard()`**
+  - **Done**: `card-ops.ts:80-85` — duplicateCard вызывает `editorRenderer.insertCard(copy, idx+1, total)` + `previewRenderer.insertCard(copy, idx+1, total, settings)`. Agent Browser verified: copy появляется сразу после оригинала.
   - **Verify**: E2E — после duplicate новая карточка сразу за оригиналом.
 
 ### 1.5 Move → локальная перестановка DOM
-- [ ] **Move делает DOM swap, а не full rebuild**
-  - **Current**: `card-ops.ts:66-72` — full rebuild. Reducer (`:238-245`) делает in-place array swap.
-  - **Left**: `container.insertBefore(...)` на editor + preview.
-  - **Verify**: E2E — move не сбрасывает scroll/focus; benchmark.
+- [x] **Move делает DOM swap, а не full rebuild**
+  - **Done**: `card-ops.ts:93-103` — moveCard вызывает `editorRenderer.moveCard(idx, newIdx)` (DOM swap) + preview wrapper swap. Agent Browser verified.
+  - **Verify**: E2E — move не сбрасывает scroll/focus.
 
 ### 1.6 Progress → updateProgressBars()
-- [~] **Изменение progress bar использует `updateProgressBars()`**
-  - **Current**: toggle visibility — O(1) через CSS класс (`state-subscriber.ts:74`) ✓; style change (default/dashed/circles) — full rebuild ✗ (`events.ts:97-104`). `updateProgressBars()` в `PreviewRenderer.ts:168-196` — dead code.
-  - **Left**: style change → `updateProgressBars()`.
+- [x] **Изменение progress bar использует `updateProgressBars()`**
+  - **Done**: toggle visibility — O(1) через CSS класс ✓; style change — `events.ts:128` вызывает `previewRenderer.updateProgressBars()` вместо full rebuild ✓. Agent Browser verified: 6 shape progress bars после смены style.
   - **Verify**: E2E — смена progress style не перерисовывает карточки.
 
 ### 1.7 Theme → updateCardTheme()
-- [~] **Изменение темы карточки использует `updateCardTheme()`**
-  - **Current**: per-card theme change — O(1) ✓ (`modal-controller.ts:175-194` → `updateCardTheme()`); global theme change — full rebuild ✗ (`events.ts:45-50`).
-  - **Left**: global theme change → O(n) loop `updateCardTheme()` по всем карточкам (вместо full `render()`).
+- [x] **Изменение темы карточки использует `updateCardTheme()`**
+  - **Done**: per-card theme change — O(1) ✓ (`modal-controller.ts`); global theme change — `events.ts:52` O(n) loop `updateCardTheme()` по всем карточкам ✓ (вместо full rebuild). Agent Browser verified: 7 cards с ocean-breeze после global change.
   - **Verify**: E2E — global theme change не сбрасывает inputs.
 
 ### 1.8 Undo/Redo после локальных DOM-операций
-- [~] **Undo/Redo работает для: add, delete, duplicate, move, text, theme, progress**
-  - **Current**: работает для card ops + per-card styles ✓. **СЛОМАНО** для global settings: `events.ts:45-50` (theme), `:53-59` (format), `:62-70` (char limit), `:79-85` (numbering), `:88-94` (progress toggle), `:97-104` (progress style), `:107-113` (list style) — **НЕ вызывают `pushHistory()`**. Snapshot (`core/types.ts:42-46`) = `{cards, theme, format}` — НЕ включает `progressBarStyle, showProgressBar, listStyleType, charLimitEnabled, showCardNumbers, gradientAngle`.
-  - **Left**: (a) добавить `pushHistory()` ко всем topbar handlers; (b) расширить `Snapshot` до полного `SettingsState`; (c) обновить `StateManager.snapshot()` + `restore()`; (d) проверить undo/redo после перехода на O(1) операции (1.2-1.5).
-  - **Verify**: E2E — undo после смены progress style возвращает стиль; unit-тест на snapshot/restore всех settings.
+- [x] **Undo/Redo работает для: add, delete, duplicate, move, text, theme, progress**
+  - **Done**: card ops + per-card styles ✓; **global settings теперь в snapshot** ✓ — `Snapshot` расширен до полного SettingsState (theme, format, gradientAngle, showCardNumbers, showProgressBar, progressBarStyle, listStyleType, charLimitEnabled). Все 7 topbar handlers добавили `pushHistory()`. `restore()` восстанавливает все settings. Agent Browser verified: theme change → undo → theme restored; progress style → undo → restored.
+  - **Verify**: E2E — undo после смены progress style возвращает стиль; unit-тест на snapshot/restore всех settings (253/253 pass).
 
 ### 1.9 Performance verification (10/50/100 cards benchmark)
 - [ ] **Benchmark для structural операций на 10/50/100 карточках**
@@ -345,9 +337,9 @@
 - [x] **19.6 No exposed secrets**
   - **Current**: только `process.env.NODE_ENV` в ErrorBoundary. No SECRET/TOKEN/API_KEY ✗.
 - [~] **19.7 Vulnerable dependencies**
-  - **Current**: `bun audit` — **72 уязвимости** (2 critical, 41 high, 25 moderate, 4 low). CRITICAL: `next@^16.1.1` (<16.2.5) — GHSA-p293-qw3h-jr36 (RCE на Windows), GHSA-2xp9-vwfh-vxw4 (RCE в Image Optimization AVIF). HIGH: sharp, minimatch, brace-expansion, js-yaml, flatted, nanoid, postcss, picomatch.
-  - **Left**: `bun update next` (≥16.2.5) — СРОЧНО; обновить sharp, eslint-chain; проверить каждый major bump на совместимость.
-  - **Verify**: `bun audit` — 0 critical/high.
+  - **Current**: `bun audit` после обновления next до 16.3.4 — **37 уязвимостей** (0 critical, 26 high, 10 moderate, 1 low). Critical RCE закрыты. Оставшиеся — transitive (browserslist, picomatch) через eslint-chain — не runtime.
+  - **Left**: обновить sharp, eslint-chain; проверить каждый major bump на совместимость.
+  - **Verify**: `bun audit` — 0 critical (✓ done); цель 0 high.
 - [ ] **19.8 CSP reporting**
   - **Current**: нет `report-to` / `report-uri`.
   - **Left**: добавить `report-to` directive + `Reporting-Endpoints` header + endpoint (если deployment позволяет).
@@ -394,9 +386,9 @@
 ## PRIORITY 24 — DEPENDENCY AUDIT
 
 - [~] **24.1 Проверить outdated/deprecated/unused/vulnerable deps**
-  - **Current**: `bun outdated` — 11 пакетов (next 16.1.3→16.3.4 URGENT security; react 19.2.3→19.3.0; typescript 5.9.3→7.0.2 major; eslint 9.39.2→10.10.0 major; и др.). `bun audit` — 72 vuln (см. 19.7).
-  - **Left**: обновить `next` до ≥16.2.5 (критично); обновить `react`/`react-dom`/`@types/*` (minor); `typescript`/`eslint` major — проверить совместимость; не обновлять вслепую.
-  - **Verify**: `bun outdated` — 0 критичных; `bun audit` — 0 critical/high.
+  - **Current**: `next` обновлён 16.1.3 → 16.3.4 (критичные RCE закрыты). `bun audit` — 37 vuln (0 critical, было 72/2critical). Осталось: 10 outdated (react 19.2.3→19.3.0, typescript 5.9.3→7.0.2 major, eslint 9.39.2→10.10.0 major, и др.).
+  - **Left**: обновить `react`/`react-dom`/`@types/*` (minor, безопасно); `typescript`/`eslint` major — проверить совместимость; `sharp` transitive.
+  - **Verify**: `bun outdated` — 0 критичных; `bun audit` — 0 critical (✓), цель 0 high.
 
 ---
 

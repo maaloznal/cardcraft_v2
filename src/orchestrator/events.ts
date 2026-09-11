@@ -39,26 +39,34 @@ import type { OrchestratorContext } from './types';
 /* ─── bindTopbarEvents ───────────────────────────────────────── */
 
 export function bindTopbarEvents(ctx: OrchestratorContext): void {
-  const { refs, stateManager, uiAppliers, charLimit, storage } = ctx;
+  const { refs, stateManager, uiAppliers, charLimit, storage, history, previewRenderer } = ctx;
 
   // Theme select change (hidden native select — driven by custom dropdown)
+  // P1-7: global theme change → O(n) updateCardTheme loop (not full rebuild)
+  // P1-8: pushHistory so undo restores the previous theme
   ctx.listeners.addEl(refs.themeSelect, 'change', (e) => {
     const value = (e.target as HTMLSelectElement).value;
     stateManager.dispatch({ type: 'SET_GLOBAL_THEME', payload: { theme: value } });
-    uiAppliers.renderPreview();
+    // O(n) theme update — re-apply data-theme attr on each card node
+    const globalTheme = stateManager.getTheme();
+    stateManager.getCards().forEach((card) => previewRenderer.updateCardTheme(card, globalTheme));
     storage.scheduleSave({ silent: true });
+    history.pushHistory();
   });
 
   // Format select change
+  // P1-8: pushHistory so undo restores the previous format
   ctx.listeners.addEl(refs.formatSelect, 'change', (e) => {
     const value = (e.target as HTMLSelectElement).value;
     stateManager.dispatch({ type: 'SET_FORMAT', payload: { format: value } });
     charLimit.applyCharLimit();
     uiAppliers.renderPreview();
     storage.scheduleSave({ silent: true });
+    history.pushHistory();
   });
 
   // Char limit toggle
+  // P1-8: pushHistory so undo restores char-limit state
   ctx.listeners.addEl(refs.charLimitToggle, 'change', (e) => {
     stateManager.dispatch({
       type: 'SET_CHAR_LIMIT',
@@ -67,49 +75,76 @@ export function bindTopbarEvents(ctx: OrchestratorContext): void {
     charLimit.applyCharLimit();
     charLimit.updateCharCounter(0);
     storage.scheduleSave({ silent: true });
+    history.pushHistory();
   });
 
-  // Gradient angle slider — NO save, NO history (preserve old behavior)
+  // Gradient angle slider — debounced history (rapid slider movement)
+  // P1-8: now captured in snapshot; P3 note: no save (preserves old behavior)
   ctx.listeners.addEl(refs.gradientAngleSlider, 'input', (e) => {
     const angle = Number((e.target as HTMLInputElement).value);
     stateManager.dispatch({ type: 'SET_GRADIENT_ANGLE', payload: { angle } });
+    history.scheduleHistoryPush();
   });
 
   // Numbering toggle
+  // P1-8: pushHistory so undo restores numbering visibility
   ctx.listeners.addEl(refs.numberingToggle, 'change', (e) => {
     stateManager.dispatch({
       type: 'SET_SHOW_CARD_NUMBERS',
       payload: { show: (e.target as HTMLInputElement).checked },
     });
+    // O(n) update tags + progress bars (not full rebuild)
+    previewRenderer.updateProgressBars(stateManager.getCards(), {
+      theme: stateManager.getTheme(),
+      format: stateManager.getFormat(),
+      progressBarStyle: stateManager.getSettings().progressBarStyle,
+      showCardNumbers: stateManager.getSettings().showCardNumbers,
+      showProgressBar: stateManager.getSettings().showProgressBar,
+    });
     storage.scheduleSave({ silent: true });
+    history.pushHistory();
   });
 
   // Progress bar toggle
+  // P1-8: pushHistory so undo restores progress bar visibility
   ctx.listeners.addEl(refs.progressBarToggle, 'change', (e) => {
     stateManager.dispatch({
       type: 'SET_SHOW_PROGRESS_BAR',
       payload: { show: (e.target as HTMLInputElement).checked },
     });
+    // Visibility is applied via CSS class by state-subscriber (O(1))
     storage.scheduleSave({ silent: true });
+    history.pushHistory();
   });
 
   // Progress bar style select
+  // P1-6: use updateProgressBars() (O(n)) instead of full renderPreview() rebuild
+  // P1-8: pushHistory so undo restores the previous progress style
   ctx.listeners.addEl(refs.progressBarStyleSelect, 'change', (e) => {
     stateManager.dispatch({
       type: 'SET_PROGRESS_BAR_STYLE',
       payload: { style: (e.target as HTMLSelectElement).value },
     });
-    uiAppliers.renderPreview();
+    previewRenderer.updateProgressBars(stateManager.getCards(), {
+      theme: stateManager.getTheme(),
+      format: stateManager.getFormat(),
+      progressBarStyle: stateManager.getSettings().progressBarStyle,
+      showCardNumbers: stateManager.getSettings().showCardNumbers,
+      showProgressBar: stateManager.getSettings().showProgressBar,
+    });
     storage.scheduleSave({ silent: true });
+    history.pushHistory();
   });
 
   // List style select
+  // P1-8: pushHistory so undo restores list style
   ctx.listeners.addEl(refs.listStyleSelect, 'change', (e) => {
     stateManager.dispatch({
       type: 'SET_LIST_STYLE',
       payload: { style: (e.target as HTMLSelectElement).value },
     });
     storage.scheduleSave({ silent: true });
+    history.pushHistory();
   });
 }
 

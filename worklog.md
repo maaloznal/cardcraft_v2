@@ -2575,3 +2575,41 @@ Stage Summary:
   8. P22 Onboarding: TODO — no onboarding/tutorial/tour/intro component anywhere in src/. No first-run flow.
   9. P23 Keyboard Shortcuts Panel: TODO — keyboard-controller.ts only handles Escape (priority close) + Ctrl+S/Z/Y. NO `?` key handler. NO shortcuts help panel. Shortcuts are documented only in element `title` attrs (e.g. "Отменить (Ctrl+Z)") and JSDoc comments.
   10. P4 Monitoring: TODO (BLOCKED on choice) — NO Sentry installed, NO telemetry integration. ErrorBoundary.componentDidCatch logs to console.error + persists to localStorage('cardcraft:last-error'). CardCraftApp.ts boot-level handlers (window.error + unhandledrejection) only console.error. Comment at ErrorBoundary.tsx:42 explicitly says "production should send to telemetry" — aspirational, not implemented. No source map upload config in next.config.ts. MasterTask.md L472 recommends "Sentry preferred if it fits the project".
+
+---
+Task ID: master-task-phase1a
+Agent: main-orchestrator
+Task: MasterTask.md PRIORITY 24 (Next.js security) + PRIORITY 1.1-1.8 (O(1) rendering + undo/redo snapshot scope)
+
+Work Log:
+- P24/19.7: Updated next 16.1.3 → 16.3.4 + eslint-config-next. Closed 2 CRITICAL RCE (GHSA-p293-qw3h-jr36, GHSA-2xp9-vwfh-vxw4). bun audit: 72 vuln/2 critical → 37 vuln/0 critical. Remaining 37 are transitive (browserslist, picomatch) via eslint-chain — not runtime.
+- P1-8 (correctness bug fix): Extended Snapshot type from {cards, theme, format} to full SettingsState (gradientAngle, showCardNumbers, showProgressBar, progressBarStyle, listStyleType, charLimitEnabled). Updated StateManager.snapshot() + restore() + RESTORE_SNAPSHOT reducer. Added pushHistory() to all 7 topbar handlers (theme, format, char limit, gradient angle [debounced], numbering, progress toggle, progress style, list style). Updated state-manager.test.ts — 253/253 pass (added snapshot-captures-all-settings test).
+- P1-1: Replaced data-index with stable data-card-id in PreviewRenderer (field elements, list items, delete-preview button). Updated callbacks.ts to resolve cardIndex from cardId. Removed data-index reindexing from updateProgressBars.
+- P1-2/1.3/1.4/1.5: Added O(1) methods to EditorRenderer (insertCard, removeCard, moveCard, reindexBlocks). Rewrote card-ops.ts — addCard/deleteCard/duplicateCard/moveCard now use O(1) DOM updates on both editor + preview renderers instead of full rebuild. Progress bars + tags updated via O(n) updateProgressBars (no DOM rebuild).
+- P1-6: Progress bar style change now uses previewRenderer.updateProgressBars() (O(n)) instead of full renderPreview() rebuild.
+- P1-7: Global theme change now uses O(n) updateCardTheme() loop instead of full renderPreview() rebuild.
+
+Verification:
+- npx tsc --noEmit: 0 errors
+- bun run lint: 0 errors, 11 warnings (pre-existing cosmetic)
+- bun run test: 253/253 passing (4 files, 3.34s) — up from 252 (added snapshot test)
+- bun run dev: clean compilation, GET / 200
+- Agent Browser smoke test:
+  - Add 3 cards → 4 cards, O(1) insertion ✓
+  - Type in title → preview updates ✓
+  - Duplicate → copy appears after original ✓
+  - Move → DOM swap ✓
+  - Delete → O(1) removal ✓
+  - Undo → restores deleted card ✓
+  - Change progress style → 6 shape progress bars ✓
+  - Undo progress style → restored to default ✓
+  - Change theme (ocean-breeze) → 7 cards with data-theme=ocean-breeze ✓
+  - Undo theme → restored through warm-peach back to default ✓
+  - 0 runtime errors, 0 console warnings
+
+Stage Summary:
+- Next.js security: 2 CRITICAL RCE closed. 37 transitive vulns remain (eslint-chain, not runtime).
+- PRIORITY 1 (1.1-1.8): ALL DONE. O(1) rendering methods (insertCard, removeCard, moveCard) now wired up on both editor + preview. Full rebuild eliminated for add/delete/duplicate/move/progress-style/theme-change.
+- P1-8 correctness bug fixed: undo/redo now captures + restores ALL settings (not just theme+format). 7 topbar handlers now push history.
+- 253 unit tests pass. 0 TypeScript errors. 0 lint errors.
+- Next: PRIORITY 1.9 (performance benchmark) + PRIORITY 2 (E2E Playwright).

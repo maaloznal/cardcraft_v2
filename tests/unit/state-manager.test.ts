@@ -529,13 +529,44 @@ describe('StateManager', () => {
       expect(sm.getTheme()).toBe('forest');
       expect(sm.getFormat()).toBe('whatsapp');
     });
-    it('does NOT touch other settings (gradientAngle preserved)', () => {
+    it('does NOT touch settings NOT in snapshot (none — snapshot is now full settings)', () => {
+      // P1-8: Snapshot now includes the full SettingsState, so RESTORE_SNAPSHOT
+      // restores ALL settings. This test verifies that a snapshot taken before
+      // a gradientAngle change, when restored, reverts gradientAngle too.
       sm.dispatch({ type: 'SET_GRADIENT_ANGLE', payload: { angle: 45 } });
-      sm.dispatch({
-        type: 'RESTORE_SNAPSHOT',
-        payload: { snapshot: { cards: sm.getCards(), theme: 'forest', format: 'telegram' } },
-      });
+      const snap = sm.snapshot();
+      sm.dispatch({ type: 'SET_GRADIENT_ANGLE', payload: { angle: 90 } });
+      expect(sm.getGradientAngle()).toBe(90);
+      sm.dispatch({ type: 'RESTORE_SNAPSHOT', payload: { snapshot: snap } });
       expect(sm.getGradientAngle()).toBe(45);
+    });
+    it('snapshot() captures ALL settings (P1-8)', () => {
+      sm.dispatch({ type: 'SET_GLOBAL_THEME', payload: { theme: 'ocean' } });
+      sm.dispatch({ type: 'SET_FORMAT', payload: { format: 'telegram' } });
+      sm.dispatch({ type: 'SET_GRADIENT_ANGLE', payload: { angle: 77 } });
+      sm.dispatch({ type: 'SET_SHOW_CARD_NUMBERS', payload: { show: false } });
+      sm.dispatch({ type: 'SET_SHOW_PROGRESS_BAR', payload: { show: false } });
+      sm.dispatch({ type: 'SET_PROGRESS_BAR_STYLE', payload: { style: 'circles' } });
+      sm.dispatch({ type: 'SET_LIST_STYLE', payload: { style: 'dash' } });
+      sm.dispatch({ type: 'SET_CHAR_LIMIT', payload: { enabled: true } });
+      const snap = sm.snapshot();
+      expect(snap.theme).toBe('ocean');
+      expect(snap.format).toBe('telegram');
+      expect(snap.gradientAngle).toBe(77);
+      expect(snap.showCardNumbers).toBe(false);
+      expect(snap.showProgressBar).toBe(false);
+      expect(snap.progressBarStyle).toBe('circles');
+      expect(snap.listStyleType).toBe('dash');
+      expect(snap.charLimitEnabled).toBe(true);
+      // Restore reverts ALL settings
+      sm.dispatch({ type: 'SET_GLOBAL_THEME', payload: { theme: 'default' } });
+      sm.dispatch({ type: 'SET_GRADIENT_ANGLE', payload: { angle: 0 } });
+      sm.dispatch({ type: 'RESTORE_SNAPSHOT', payload: { snapshot: snap } });
+      expect(sm.getTheme()).toBe('ocean');
+      expect(sm.getGradientAngle()).toBe(77);
+      expect(sm.getSettings().showCardNumbers).toBe(false);
+      expect(sm.getSettings().progressBarStyle).toBe('circles');
+      expect(sm.getSettings().charLimitEnabled).toBe(true);
     });
     it('snapshot() round-trips through RESTORE_SNAPSHOT', () => {
       sm.dispatch({ type: 'ADD_CARD' });

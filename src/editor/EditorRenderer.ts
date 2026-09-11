@@ -48,6 +48,87 @@ export class EditorRenderer {
 
   // ─── Targeted updates ───────────────────────────────────────
 
+  /**
+   * Insert a card editor block at a specific index (O(1) DOM insertion).
+   * P1-2/1.4: used by addCard + duplicateCard to avoid full rebuild.
+   */
+  insertCard(card: Card, index: number, total: number): void {
+    const block = this.buildEditorBlock(card, index, total);
+    const blocks = this.container.querySelectorAll<HTMLElement>('.card-editor-block');
+    if (index >= blocks.length) {
+      this.container.appendChild(block);
+    } else {
+      this.container.insertBefore(block, blocks[index]);
+    }
+    // Re-index all subsequent blocks (badges, data-index attrs, move btn disabled states)
+    this.reindexBlocks();
+  }
+
+  /**
+   * Remove a card editor block by index (O(1) DOM removal).
+   * P1-3: used by deleteCard to avoid full rebuild.
+   */
+  removeCard(index: number): void {
+    const blocks = this.container.querySelectorAll<HTMLElement>('.card-editor-block');
+    const block = blocks[index];
+    if (!block) return;
+    block.remove();
+    this.reindexBlocks();
+  }
+
+  /**
+   * Swap two adjacent card editor blocks (O(1) DOM swap).
+   * P1-5: used by moveCard to avoid full rebuild.
+   */
+  moveCard(fromIndex: number, toIndex: number): void {
+    const blocks = this.container.querySelectorAll<HTMLElement>('.card-editor-block');
+    const a = blocks[fromIndex];
+    const b = blocks[toIndex];
+    if (!a || !b) return;
+    // Swap DOM positions
+    if (fromIndex < toIndex) {
+      // moving down: insert b before a, then a after b's new position
+      this.container.insertBefore(b, a);
+    } else {
+      // moving up: insert a before b
+      this.container.insertBefore(a, b);
+    }
+    this.reindexBlocks();
+  }
+
+  /**
+   * Re-index all editor blocks after a structural change (add/delete/move).
+   * O(n) but cheap (only attribute updates, no DOM rebuild).
+   */
+  private reindexBlocks(): void {
+    const blocks = this.container.querySelectorAll<HTMLElement>('.card-editor-block');
+    blocks.forEach((block, index) => {
+      const badge = block.querySelector<HTMLElement>('.card-editor-num-badge');
+      if (badge) badge.textContent = String(index + 1);
+
+      const h3 = block.querySelector<HTMLElement>('.card-editor-title-group h3');
+      if (h3) {
+        h3.textContent = `Карточка ${index + 1}`;
+        h3.setAttribute('title', `Карточка ${index + 1}`);
+      }
+
+      // Update data-index on all indexed elements
+      block.querySelectorAll<HTMLElement>('[data-index]').forEach((el) => {
+        el.dataset.index = String(index);
+      });
+
+      // Update move button disabled states
+      const moveUp = block.querySelector<HTMLElement>('[data-action="move"][data-dir="-1"]');
+      const moveDown = block.querySelector<HTMLElement>('[data-action="move"][data-dir="1"]');
+      if (moveUp) moveUp.toggleAttribute('disabled', index === 0);
+      if (moveDown) moveDown.toggleAttribute('disabled', index === blocks.length - 1);
+
+      // Show/hide delete button (only hide when single card)
+      const delBtn = block.querySelector<HTMLElement>('[data-action="delete"]');
+      if (delBtn) delBtn.style.display = blocks.length > 1 ? '' : 'none';
+    });
+  }
+
   /** Update card number badge and title (O(1)) */
   updateCardNumber(index: number): void {
     const blocks = this.container.querySelectorAll<HTMLElement>('.card-editor-block');

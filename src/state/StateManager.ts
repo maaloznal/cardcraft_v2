@@ -179,6 +179,12 @@ export class StateManager {
         ...this.state.settings,
         theme: snapshot.theme,
         format: snapshot.format,
+        gradientAngle: snapshot.gradientAngle,
+        showCardNumbers: snapshot.showCardNumbers,
+        showProgressBar: snapshot.showProgressBar,
+        progressBarStyle: snapshot.progressBarStyle,
+        listStyleType: snapshot.listStyleType,
+        charLimitEnabled: snapshot.charLimitEnabled,
       },
     };
     this.listeners.forEach((fn) => fn(this.state));
@@ -186,10 +192,17 @@ export class StateManager {
 
   /** Get a snapshot for history */
   snapshot(): Snapshot {
+    const s = this.state.settings;
     return {
       cards: deepClone(this.state.cards.list),
-      theme: this.state.settings.theme,
-      format: this.state.settings.format,
+      theme: s.theme,
+      format: s.format,
+      gradientAngle: s.gradientAngle,
+      showCardNumbers: s.showCardNumbers,
+      showProgressBar: s.showProgressBar,
+      progressBarStyle: s.progressBarStyle,
+      listStyleType: s.listStyleType,
+      charLimitEnabled: s.charLimitEnabled,
     };
   }
 
@@ -361,6 +374,12 @@ export class StateManager {
             ...state.settings,
             theme: snap.theme,
             format: snap.format,
+            gradientAngle: snap.gradientAngle,
+            showCardNumbers: snap.showCardNumbers,
+            showProgressBar: snap.showProgressBar,
+            progressBarStyle: snap.progressBarStyle,
+            listStyleType: snap.listStyleType,
+            charLimitEnabled: snap.charLimitEnabled,
           },
         };
       }
