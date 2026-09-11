@@ -419,14 +419,14 @@
 | Priority | Статус | Кратко |
 |---|---|---|
 | **0. Аудит** | [x] DONE | 4 субагента завершили аудит |
-| **1.1** data-card-id | [~] PARTIAL | stable id есть, field elements ещё data-index |
-| **1.2** Add insertCard | [ ] TODO | full rebuild, insertCard dead code |
-| **1.3** Delete removeCard | [ ] TODO | full rebuild, removeCard dead code |
-| **1.4** Duplicate local DOM | [ ] TODO | full rebuild |
-| **1.5** Move local swap | [ ] TODO | full rebuild |
-| **1.6** Progress updateProgressBars | [~] PARTIAL | toggle O(1), style change full rebuild |
-| **1.7** Theme updateCardTheme | [~] PARTIAL | per-card O(1), global full rebuild |
-| **1.8** Undo/Redo | [~] PARTIAL | card ops ✓, global settings СЛОМАНО (не в snapshot) |
+| **1.1** data-card-id | [x] DONE | stable data-card-id на всех элементах |
+| **1.2** Add insertCard | [x] DONE | O(1) insertCard на editor + preview |
+| **1.3** Delete removeCard | [x] DONE | O(1) removeCard на editor + preview |
+| **1.4** Duplicate local DOM | [x] DONE | O(1) insertCard после оригинала |
+| **1.5** Move local swap | [x] DONE | O(1) DOM swap на editor + preview |
+| **1.6** Progress updateProgressBars | [x] DONE | toggle O(1), style O(n) updateProgressBars |
+| **1.7** Theme updateCardTheme | [x] DONE | per-card O(1), global O(n) updateCardTheme loop |
+| **1.8** Undo/Redo | [x] DONE | card ops ✓, global settings ✓ (full Snapshot) |
 | **1.9** Benchmark | [ ] TODO | нет |
 | **2.** E2E | [ ] TODO | Playwright не установлен |
 | **3.** CI/CD | [ ] TODO | .github/ не существует |
