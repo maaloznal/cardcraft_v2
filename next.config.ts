@@ -23,7 +23,7 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  reactStrictMode: true,
+  reactStrictMode: false, // Disabled: causes double-mount flickering in dev
   allowedDevOrigins: ["*.space-z.ai"],
   // P4: Sentry source maps — upload to Sentry during build
   productionBrowserSourceMaps: true, // Generate source maps for Sentry upload
