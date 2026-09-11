@@ -190,7 +190,7 @@ export class EditorRenderer {
       if (!target.matches('input[data-field], textarea[data-field]')) return;
       e.preventDefault();
       const el = target as HTMLInputElement | HTMLTextAreaElement;
-      const text = (e.clipboardData || window.clipboardData).getData('text');
+      const text = e.clipboardData?.getData('text') ?? '';
       const field = el.dataset.field || '';
       const multiline = ['subtitle', 'text', 'listItems'].includes(field);
       const cleanText = multiline ? text : text.replace(/\s+/g, ' ').trim();

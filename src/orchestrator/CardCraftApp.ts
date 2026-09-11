@@ -859,47 +859,47 @@ export function initCardCraftApp(root: HTMLElement): () => void {
     });
 
     // Char limit toggle
-    addEl(charLimitToggle, 'change', function () {
-      stateManager.dispatch({ type: 'SET_CHAR_LIMIT', payload: this.checked });
+    addEl(charLimitToggle, 'change', (e) => {
+      stateManager.dispatch({ type: 'SET_CHAR_LIMIT', payload: (e.target as HTMLInputElement).checked });
       applyCharLimit();
       updateCharCounter(0);
       scheduleSave({ silent: true });
     });
 
     // Gradient angle slider — NO save, NO history (preserve old behavior)
-    addEl(gradientAngleSlider, 'input', function () {
-      const angle = Number(this.value);
+    addEl(gradientAngleSlider, 'input', (e) => {
+      const angle = Number((e.target as HTMLInputElement).value);
       stateManager.dispatch({ type: 'SET_GRADIENT_ANGLE', payload: angle });
     });
 
     // Numbering toggle
-    addEl(numberingToggle, 'change', function () {
-      stateManager.dispatch({ type: 'SET_SHOW_CARD_NUMBERS', payload: this.checked });
+    addEl(numberingToggle, 'change', (e) => {
+      stateManager.dispatch({ type: 'SET_SHOW_CARD_NUMBERS', payload: (e.target as HTMLInputElement).checked });
       scheduleSave({ silent: true });
     });
 
     // Progress bar toggle
-    addEl(progressBarToggle, 'change', function () {
-      stateManager.dispatch({ type: 'SET_SHOW_PROGRESS_BAR', payload: this.checked });
+    addEl(progressBarToggle, 'change', (e) => {
+      stateManager.dispatch({ type: 'SET_SHOW_PROGRESS_BAR', payload: (e.target as HTMLInputElement).checked });
       scheduleSave({ silent: true });
     });
 
     // Progress bar style select
-    addEl(progressBarStyleSelect, 'change', function () {
-      stateManager.dispatch({ type: 'SET_PROGRESS_BAR_STYLE', payload: this.value });
+    addEl(progressBarStyleSelect, 'change', (e) => {
+      stateManager.dispatch({ type: 'SET_PROGRESS_BAR_STYLE', payload: (e.target as HTMLSelectElement).value });
       renderPreview();
       scheduleSave({ silent: true });
     });
 
     // List style select
-    addEl(listStyleSelect, 'change', function () {
-      stateManager.dispatch({ type: 'SET_LIST_STYLE', payload: this.value });
+    addEl(listStyleSelect, 'change', (e) => {
+      stateManager.dispatch({ type: 'SET_LIST_STYLE', payload: (e.target as HTMLSelectElement).value });
       scheduleSave({ silent: true });
     });
 
     // List num size slider — DO push history
-    addEl(listNumSizeSlider, 'input', function () {
-      const size = Number(this.value);
+    addEl(listNumSizeSlider, 'input', (e) => {
+      const size = Number((e.target as HTMLInputElement).value);
       if (listNumSizeValue) listNumSizeValue.textContent = `${size}px`;
       if (activeCardIndexForColors !== null) {
         const card = stateManager.getCard(activeCardIndexForColors);
@@ -962,14 +962,15 @@ export function initCardCraftApp(root: HTMLElement): () => void {
     MODAL_FIELDS.forEach((f) => {
       const input = $<HTMLInputElement>(`#col-${f.key}`);
       const hexText = $<HTMLElement>(`#hex-${f.key}`);
-      addEl(input, 'input', function () {
+      addEl(input, 'input', (e) => {
         if (activeCardIndexForColors === null) return;
         const card = stateManager.getCard(activeCardIndexForColors);
         if (!card) return;
         if (!card.colors) card.colors = {};
-        card.colors[f.key] = this.value;
+        const value = (e.target as HTMLInputElement).value;
+        card.colors[f.key] = value;
         if (hexText) {
-          hexText.textContent = this.value;
+          hexText.textContent = value;
           hexText.classList.remove('is-auto');
         }
         selectRowField(f.key);

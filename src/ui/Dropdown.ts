@@ -62,6 +62,12 @@ export class Dropdown {
   private closeHandlers: Array<() => void> = [];
   private selectHandlers: Array<(value: string, item: HTMLElement) => void> = [];
 
+  /** Pending requestAnimationFrame ID for the deferred doc-click listener.
+   *  Tracked so destroy()/close() can cancel it before it fires. */
+  private rafId: number | null = null;
+  /** Once destroyed, the rAF callback refuses to attach the doc listener. */
+  private destroyed = false;
+
   private clickHandler: (e: Event) => void;
   private docClickHandler: (e: Event) => void;
   private keydownHandler: (e: KeyboardEvent) => void;
@@ -100,8 +106,15 @@ export class Dropdown {
     this.menu.classList.add('open');
     this.trigger?.setAttribute('aria-expanded', 'true');
     if (this.closeOnClickOutside) {
-      // Defer to avoid catching the click that opened the menu
-      requestAnimationFrame(() => document.addEventListener('click', this.docClickHandler));
+      // Defer to avoid catching the click that opened the menu.
+      // Track the rAF so destroy()/close() can cancel it before it fires —
+      // otherwise the doc-click listener could be attached AFTER teardown,
+      // leaking forever.
+      this.rafId = requestAnimationFrame(() => {
+        this.rafId = null;
+        if (this.destroyed) return;
+        document.addEventListener('click', this.docClickHandler);
+      });
     }
     if (this.closeOnEscape) {
       document.addEventListener('keydown', this.keydownHandler);
@@ -113,6 +126,12 @@ export class Dropdown {
     if (!this.menu || !this.isOpen) return;
     this.menu.classList.remove('open');
     this.trigger?.setAttribute('aria-expanded', 'false');
+    // Cancel a pending rAF so the doc-click listener is not attached
+    // after we've already started closing (rapid open→close).
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
     document.removeEventListener('click', this.docClickHandler);
     document.removeEventListener('keydown', this.keydownHandler);
     this.closeHandlers.forEach((fn) => fn());
@@ -154,6 +173,13 @@ export class Dropdown {
   }
 
   destroy(): void {
+    this.destroyed = true;
+    // Cancel any pending rAF so its callback can't attach the doc-click
+    // listener AFTER we've torn everything down (React StrictMode remount).
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
     this.dropdown.removeEventListener('click', this.clickHandler);
     document.removeEventListener('click', this.docClickHandler);
     document.removeEventListener('keydown', this.keydownHandler);

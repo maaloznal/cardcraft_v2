@@ -40,6 +40,14 @@ export class WordEditorManager {
   private removeWordHandler: RemoveWordHandler | null = null;
   private clearHandler: ClearHandler | null = null;
 
+  /** Tracked event listeners (added via trackListener) — removed in destroy(). */
+  private listeners: Array<{
+    target: EventTarget;
+    type: string;
+    handler: EventListenerOrEventListenerObject;
+    options?: AddEventListenerOptions | boolean;
+  }> = [];
+
   private dragCleanup: (() => void) | null = null;
 
   constructor(
@@ -122,6 +130,23 @@ export class WordEditorManager {
     this.activeWordStyles = { text: '' };
   }
 
+  // ─── Tracked listener helper ───────────────────────────────
+
+  /**
+   * Attach a listener AND record it so destroy() can remove it.
+   * Use this instead of raw addEventListener to prevent listener leaks
+   * across React StrictMode double-mounts.
+   */
+  private trackListener(
+    target: EventTarget,
+    type: string,
+    handler: EventListenerOrEventListenerObject,
+    options?: AddEventListenerOptions | boolean,
+  ): void {
+    target.addEventListener(type, handler, options);
+    this.listeners.push({ target, type, handler, options });
+  }
+
   // ─── Word style list ────────────────────────────────────────
 
   renderWordStyleList(card: Card): void {
@@ -151,9 +176,10 @@ export class WordEditorManager {
         )
         .join('');
 
-    // Attach remove handlers
+    // Attach remove handlers (tracked so destroy() cleans them up —
+    // otherwise they'd accumulate on every renderWordStyleList() call).
     this.wordList.querySelectorAll<HTMLElement>('.word-list-remove').forEach((btn) =>
-      btn.addEventListener('click', () => {
+      this.trackListener(btn, 'click', () => {
         const key = btn.dataset.wordKey || '';
         if (this.activeCardIndex !== null && this.removeWordHandler) {
           this.removeWordHandler(this.activeCardIndex, key);
@@ -205,7 +231,7 @@ export class WordEditorManager {
 
     // Format buttons
     root.querySelectorAll<HTMLElement>('.format-btn').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
+      this.trackListener(btn, 'click', (e) => {
         e.stopPropagation();
         const fmt = btn.dataset.format || '';
         btn.classList.toggle('active');
@@ -224,7 +250,7 @@ export class WordEditorManager {
     });
 
     // Size slider
-    this.sizeSlider.addEventListener('input', () => {
+    this.trackListener(this.sizeSlider, 'input', () => {
       this.activeWordStyles.fontSize = Number(this.sizeSlider.value);
       this.sizeValue.textContent = `${this.sizeSlider.value}px`;
       this.commitStyle();
@@ -232,7 +258,7 @@ export class WordEditorManager {
 
     // Color presets
     root.querySelectorAll<HTMLElement>('.color-preset[data-color]').forEach((p) => {
-      p.addEventListener('click', (e) => {
+      this.trackListener(p, 'click', (e) => {
         e.stopPropagation();
         root.querySelectorAll<HTMLElement>('.color-preset').forEach((x) => x.classList.remove('active'));
         p.classList.add('active');
@@ -243,23 +269,25 @@ export class WordEditorManager {
 
     // Accordion sections
     root.querySelectorAll<HTMLElement>('.popup-section-title').forEach((title) => {
-      title.addEventListener('click', () => {
+      this.trackListener(title, 'click', () => {
         title.closest('.popup-section')?.classList.toggle('collapsed');
       });
     });
 
     // Clear button
     const clearBtn = this.popup.querySelector<HTMLElement>('#wordClearBtn');
-    clearBtn?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (this.activeCardIndex === null || !this.activeWordStyles.text || !this.activeField) return;
-      this.clearHandler?.(this.activeCardIndex, this.activeField, this.activeWordStyles.text);
-      // Reset active styles
-      this.activeWordStyles = { text: this.activeWordStyles.text };
-      this.syncFormatButtons();
-      this.syncColorPresets();
-      this.syncSizeSlider();
-    });
+    if (clearBtn) {
+      this.trackListener(clearBtn, 'click', (e) => {
+        e.stopPropagation();
+        if (this.activeCardIndex === null || !this.activeWordStyles.text || !this.activeField) return;
+        this.clearHandler?.(this.activeCardIndex, this.activeField, this.activeWordStyles.text);
+        // Reset active styles
+        this.activeWordStyles = { text: this.activeWordStyles.text };
+        this.syncFormatButtons();
+        this.syncColorPresets();
+        this.syncSizeSlider();
+      });
+    }
   }
 
   private initDrag(): void {
@@ -316,8 +344,17 @@ export class WordEditorManager {
     };
   }
 
-  /** Cleanup all listeners */
+  /** Cleanup all listeners (tracked + drag) */
   destroy(): void {
+    // Remove all tracked listeners (format-btn, color-preset, popup-section-title,
+    // size-slider, clearBtn, word-list-remove buttons) so React StrictMode
+    // double-mounts don't accumulate duplicates.
+    for (const { target, type, handler, options } of this.listeners) {
+      target.removeEventListener(type, handler, options);
+    }
+    this.listeners = [];
+
+    // Drag listeners (header pointerdown + any lingering document move/up).
     if (this.dragCleanup) this.dragCleanup();
   }
 }

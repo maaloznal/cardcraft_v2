@@ -5,7 +5,6 @@ import "@fontsource/lora";
 import "@fontsource/manrope";
 import "@fontsource/plus-jakarta-sans";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const geistSans = Geist({
@@ -49,7 +48,6 @@ export default function RootLayout({
         <ErrorBoundary>
           {children}
         </ErrorBoundary>
-        <Toaster />
       </body>
     </html>
   );
