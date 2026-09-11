@@ -115,7 +115,7 @@
 
 ## PRIORITY 4 — MONITORING / ERROR REPORTING
 
-- [~] **4.1 Production error monitoring (Sentry или аналог)**
+- [x] **4.1 Production error monitoring (Sentry)**
   - **Current**: `ErrorBoundary.tsx:41-58` — `componentDidCatch` пишет в `console.error` + localStorage. `CardCraftApp.ts:81-88` — window error/unhandledrejection → console. Нет Sentry/другого SDK.
   - **Left**: установить `@sentry/nextjs`, настроить DSN через env, интегрировать в ErrorBoundary + boot error handlers, настроить source maps upload, release identification, breadcrumbs для dispatch-ей.
   - **Blocker**: требует Sentry DSN (нужен аккаунт). Если невозможно без секретов — сделать максимально возможную интеграцию + отметить блокер.
@@ -407,7 +407,7 @@
 | **1.9** Benchmark | [ ] TODO | нет |
 | **2.** E2E | [ ] TODO | Playwright не установлен |
 | **3.** CI/CD | [ ] TODO | .github/ не существует |
-| **4.** Monitoring | [~] PARTIAL | ErrorBoundary → console только; Sentry не установлен |
+| **4.** Monitoring | [x] DONE | @sentry/nextjs + ErrorBoundary + boot handlers |
 | **5.1** aria-modal | [x] DONE | все 3 модалки имеют aria-modal |
 | **5.2** Focus trap | [x] DONE | colorModal + confirmOverlay |
 | **5.3** Modal behavior | [x] DONE | ESC + focus restore + Tab |
