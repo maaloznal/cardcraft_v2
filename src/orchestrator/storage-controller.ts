@@ -19,9 +19,11 @@
  */
 
 import * as Storage from '@/storage/StorageManager';
-import * as IndexedDB from '@/storage/IndexedDBBackend';
 import { CONFIG } from '@/core/constants';
 import type { OrchestratorContext } from './types';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('Storage');
 
 export interface StorageController {
   scheduleSave(opts?: { silent?: boolean }): void;
@@ -67,20 +69,27 @@ export function createStorageController(ctx: OrchestratorContext): StorageContro
       const err = e as Error;
       if (err.message === 'QuotaExceededError') {
         // P8.4: Fallback to IndexedDB when localStorage quota is exceeded
-        if (IndexedDB.isAvailable()) {
-          void IndexedDB.save(stateToSave)
-            .then(() => {
-              if (!silent) showToast('Сохранено в резервное хранилище');
-            })
-            .catch(() => {
+        // P8.5: Lazy-load IndexedDBBackend only when needed (not in initial bundle)
+        void import('@/storage/IndexedDBBackend')
+          .then((IndexedDB) => {
+            if (!IndexedDB.isAvailable()) {
               if (!silent)
                 showToast('Недостаточно места. Удалите старые карточки.', 2500, {
                   priority: true,
                 });
-            });
-        } else if (!silent) {
-          showToast('Недостаточно места. Удалите старые карточки.', 2500, { priority: true });
-        }
+              return;
+            }
+            return IndexedDB.save(stateToSave);
+          })
+          .then(() => {
+            if (!silent) showToast('Сохранено в резервное хранилище');
+          })
+          .catch(() => {
+            if (!silent)
+              showToast('Недостаточно места. Удалите старые карточки.', 2500, {
+                priority: true,
+              });
+          });
       } else if (!silent) {
         showToast('Ошибка при сохранении карточек');
       }

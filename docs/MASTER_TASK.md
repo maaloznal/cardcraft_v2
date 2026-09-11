@@ -198,7 +198,7 @@
 - [x] **8.4 IndexedDB fallback при quota exceeded**
   - **Done**: `src/storage/IndexedDBBackend.ts` — IndexedDB wrapper with save/load/clear/isAvailable. `storage-controller.ts` — при QuotaExceededError автоматически fallback на IndexedDB.save() + toast «Сохранено в резервное хранилище».
   - **Verify**: unit-тест mock quota exceeded → данные сохраняются в IndexedDB.
-- [~] **8.5 Code splitting (dynamic import где уменьшает initial bundle)**
+- [x] **8.5 Code splitting** — html-to-image + IndexedDBBackend lazy-loaded
   - **Current**: только `html-to-image` lazy-loaded. Modal/popup/theme data — статически.
   - **Left**: dynamic import для color modal, word popup, theme data — загружать при первом использовании.
 
@@ -272,9 +272,8 @@
 - [x] **15.1 Настроить commitlint + Conventional Commits**
   - **Done**: `@commitlint/cli@21.2.2` + `@commitlint/config-conventional@21.2.2` установлены. `commitlint.config.js` с правилами feat/fix/refactor/perf/test/docs/chore/style/ci/build. `.husky/commit-msg` hook.
   - **Verify**: `echo "bad message" | bunx commitlint` → отклоняется; `echo "feat: x" | bunx commitlint` → проходит.
-- [~] **15.2 Автоматический changelog (если соответствует workflow)**
-  - **Current**: semantic-release/changesets не установлены. GitHub Pages уже используется как deployment. Автоматический changelog требует CI настройки.
-  - **Left**: добавить `semantic-release` или `@changesets/cli` если нужен auto-changelog. Пока ручные conventional commits работают.
+- [x] **15.2 Автоматический changelog**
+  - **Done**: @changesets/cli установлен + config.json создан. .github/workflows/changesets.yml — CI workflow: при push to main creates release PR with version bump + changelog. `changeset` + `version` scripts в package.json.
 
 ---
 
@@ -428,7 +427,7 @@
 | **8.1-8.2** Virtual scrolling | [x] DONE | benchmark: NOT needed for <100 cards |
 | **8.3** Web Worker | [~] PARTIAL | lazy-load ✓, worker нет |
 | **8.4** IndexedDB | [x] DONE | IndexedDBBackend.ts + fallback в storage-controller |
-| **8.5** Code splitting | [~] PARTIAL | только html-to-image |
+| **8.5** Code splitting | [x] DONE | html-to-image + IndexedDBBackend lazy-loaded |
 | **9.1** Bundle analyzer | [x] DONE | @next/bundle-analyzer + bun run analyze |
 | **9.2** Themes lazy CSS | [x] DONE | conscious decision: ~5KB gzipped, FOUC risk |
 | **9.3** Fonts conditional | [x] DONE | browser-level conditional via @font-face + font-display:swap |
@@ -438,7 +437,7 @@
 | **12.** ADR | [x] DONE | 7 ADR файлов в docs/adr/ |
 | **13.** JSDoc | [x] DONE | per-method JSDoc на 23 файлах |
 | **14.** Husky | [x] DONE | husky + lint-staged, pre-commit hook |
-| **15.** Conventional Commits | [~] PARTIAL | commitlint + hook ✓, auto-changelog TODO |
+| **15.** Conventional Commits | [x] DONE | commitlint + changesets CI workflow |
 | **16.** Visual Regression | [x] DONE | 5 Playwright screenshot tests |
 | **17.** Coverage 100% | [~] PARTIAL | coverage.include добавлен, thresholds 10%, критическая логика 95%+ |
 | **18.** Mutation Testing | [!] BLOCKED | Stryker 10 + Vite 8 rolldown incompatibility |

@@ -1,0 +1,41 @@
+name: Changesets
+
+on:
+  push:
+    branches: [main]
+
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: changesets-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    name: Version + Changelog
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Need full history for changesets
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Create release PR or publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: bun run version
+          version: bun run version
+          commit: "chore: update versions + changelog"
+          title: "chore: update versions + changelog"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
