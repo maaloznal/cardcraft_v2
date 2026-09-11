@@ -20,6 +20,9 @@ export interface SectionStyle {
   fontSize?: number;
 }
 
+/** Editable section-style properties (used by SET_SECTION_STYLE_FIELD action) */
+export type SectionStyleProperty = 'fontWeight' | 'fontStyle' | 'textDecoration';
+
 /** A single card in the project */
 export interface Card {
   id: string;
@@ -72,31 +75,100 @@ export interface FieldConfig {
   order: number;
 }
 
-/** Action types for the centralized state manager */
-export type ActionType =
-  | 'ADD_CARD'
-  | 'DELETE_CARD'
-  | 'DUPLICATE_CARD'
-  | 'MOVE_CARD'
-  | 'UPDATE_CARD_FIELD'
-  | 'SET_CARD_THEME'
-  | 'SET_CARD_COLORS'
-  | 'SET_CARD_SECTION_STYLES'
-  | 'SET_CARD_WORD_STYLES'
-  | 'DELETE_CARD_WORD_STYLE'
-  | 'SET_GLOBAL_THEME'
-  | 'SET_FORMAT'
-  | 'SET_GRADIENT_ANGLE'
-  | 'SET_SHOW_CARD_NUMBERS'
-  | 'SET_SHOW_PROGRESS_BAR'
-  | 'SET_PROGRESS_BAR_STYLE'
-  | 'SET_LIST_STYLE'
-  | 'SET_CHAR_LIMIT'
-  | 'RESTORE_SNAPSHOT'
-  | 'CLEAR_ALL';
+// ─── UI State (moved from orchestrator shadow vars — P1-3) ──────────────
 
-/** Action interface for state manager */
-export interface Action {
-  type: ActionType;
-  payload?: unknown;
+/**
+ * UI state — single source of truth for transient view state.
+ * Replaces the 5 shadow `let` vars that previously lived in the orchestrator.
+ * All changes go through dispatch({ type: 'SET_UI', payload: Partial<UIState> }).
+ */
+export interface UIState {
+  /** Color modal: is it open */
+  colorModalOpen: boolean;
+  /** Color modal: which card index is being edited */
+  activeCardIndexForColors: number | null;
+  /** Color modal: which field row is currently selected (e.g. 'title') */
+  lastActiveField: string;
+
+  /** Word popup: is it open */
+  wordPopupOpen: boolean;
+  /** Word popup: which card index is being edited */
+  activeCardIndexForWord: number | null;
+  /** Word popup: which field is being edited */
+  activeFieldForWord: string | null;
+
+  /** Sidebar: open/closed (logical state; DOM class is the source for layout) */
+  sidebarOpen: boolean;
+  /** Sidebar: captured state before modal opened, restored on close */
+  sidebarWasCollapsedBeforeModal: boolean;
+
+  /** Confirm dialog: is it open */
+  confirmDialogOpen: boolean;
+
+  /** Export pipeline: batch export in progress (blocks editing) */
+  isExporting: boolean;
 }
+
+// ─── Action: type-safe discriminated union (P1-2) ───────────────────────
+
+/**
+ * Action — discriminated union. Every dispatch site gets a typed payload;
+ * the reducer receives a typed action per case branch. No more `as` casts.
+ *
+ * Card operations use `idx: number` (positional). A future refactor may
+ * switch to `cardId: string` for robustness against reordering, but that
+ * is out of scope for P1 (state-contract restoration).
+ */
+export type Action =
+  // ── Card operations ──
+  | { type: 'ADD_CARD' }
+  | { type: 'DELETE_CARD'; payload: { idx: number } }
+  | { type: 'DUPLICATE_CARD'; payload: { idx: number } }
+  | { type: 'MOVE_CARD'; payload: { idx: number; dir: number } }
+  | { type: 'UPDATE_CARD_FIELD'; payload: { idx: number; field: keyof Card; value: string } }
+  | { type: 'SET_CARD_THEME'; payload: { idx: number; theme: string | undefined } }
+  | { type: 'SET_CARD_COLORS'; payload: { idx: number; colors: Record<string, string> } }
+  | {
+      type: 'SET_CARD_SECTION_STYLES';
+      payload: { idx: number; sectionStyles: Record<string, SectionStyle> };
+    }
+  | {
+      type: 'SET_CARD_WORD_STYLES';
+      payload: { idx: number; wordStyles: Record<string, WordStyle> };
+    }
+  | { type: 'DELETE_CARD_WORD_STYLE'; payload: { idx: number; key: string } }
+
+  // ── Granular card mutations (P1-1: replace direct card.colors/sectionStyles writes) ──
+  | { type: 'SET_CARD_COLOR_FIELD'; payload: { idx: number; field: string; value: string } }
+  | { type: 'DELETE_CARD_COLOR_FIELD'; payload: { idx: number; field: string } }
+  | {
+      type: 'SET_SECTION_STYLE_FIELD';
+      payload: {
+        idx: number;
+        field: string;
+        property: SectionStyleProperty;
+        value: string | undefined;
+      };
+    }
+  | { type: 'SET_SECTION_FONT_SIZE'; payload: { idx: number; field: string; size: number } }
+  | { type: 'RESET_CARD_STYLES'; payload: { idx: number } }
+
+  // ── Settings ──
+  | { type: 'SET_GLOBAL_THEME'; payload: { theme: string } }
+  | { type: 'SET_FORMAT'; payload: { format: string } }
+  | { type: 'SET_GRADIENT_ANGLE'; payload: { angle: number } }
+  | { type: 'SET_SHOW_CARD_NUMBERS'; payload: { show: boolean } }
+  | { type: 'SET_SHOW_PROGRESS_BAR'; payload: { show: boolean } }
+  | { type: 'SET_PROGRESS_BAR_STYLE'; payload: { style: string } }
+  | { type: 'SET_LIST_STYLE'; payload: { style: string } }
+  | { type: 'SET_CHAR_LIMIT'; payload: { enabled: boolean } }
+
+  // ── Snapshot / clear ──
+  | { type: 'RESTORE_SNAPSHOT'; payload: { snapshot: Snapshot } }
+  | { type: 'CLEAR_ALL' }
+
+  // ── UI state (P1-3: replace shadow `let` vars) ──
+  | { type: 'SET_UI'; payload: Partial<UIState> };
+
+/** String literal union of all action types — useful for devtools/logging */
+export type ActionType = Action['type'];

@@ -30,13 +30,21 @@ export class ToastQueue {
     this.el = element;
   }
 
-  show(msg: string, duration = 2500): void {
+  show(msg: string, duration = 2500, options?: { priority?: boolean }): void {
     // Ignore any toast scheduled after teardown (e.g. a queued timer
     // that fired following a React StrictMode unmount).
     if (this.destroyed) return;
 
-    // Long toasts bypass the queue
-    if (this.showing && duration < 10000) {
+    const priority = options?.priority === true;
+
+    // Priority toasts (errors, final completion) bypass the queue AND clear
+    // any queued toasts so the user sees the important message immediately.
+    if (priority) {
+      this.queue.length = 0;
+    }
+
+    // Non-priority short toasts queue behind the current toast
+    if (!priority && this.showing && duration < 10000) {
       this.queue.push({ msg, duration });
       return;
     }

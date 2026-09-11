@@ -1,0 +1,63 @@
+/* tokens.css — CSS custom-property tokens (variables, colors, spacing) */
+
+/* ================= БАЗОВЫЕ ПЕРЕМЕННЫЕ ================= */
+:root {
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --card-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.05),
+    0 8px 10px -6px rgba(0, 0, 0, 0.01);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --accent-color: #4f46e5;
+  --accent-glow: rgba(79, 70, 229, 0.15);
+  --progress-bg: #e2e8f0;
+  --btn-accent-bg: #f8fafc;
+  --btn-accent-border: #cbd5e1;
+  --font-family: "Golos Text", sans-serif;
+  --card-radius: 0px; /* Острые углы */
+  --preview-bg: #f1f5f9;
+  --cta-text-color: #0f172a;
+}
+
+/* ================= ДИЗАЙН-СИСТЕМА «CARDCRAFT» ================= */
+/* Философия: тихая уверенность. Zinc-палитра, near-black акцент, */
+/* 4px система отступов, layered shadows, spring transitions.    */
+
+:root {
+  /* UI поверхности */
+  --ui-bg: #fafafa;
+  --ui-surface: #ffffff;
+  --ui-surface-hover: #f4f4f5;
+  --ui-border: #e4e4e7;
+  --ui-border-strong: #d4d4d8;
+  /* UI текст */
+  --ui-text: #18181b;
+  --ui-text-secondary: #71717a;
+  --ui-text-tertiary: #a1a1aa;
+  /* UI акцент (near-black, премиальный) */
+  --ui-accent: #18181b;
+  --ui-accent-hover: #27272a;
+  --ui-accent-fg: #fafafa;
+  /* UI состояния */
+  --ui-success: #16a34a;
+  --ui-danger: #dc2626;
+  --ui-danger-bg: #fef2f2;
+  --ui-danger-border: #fecaca;
+  --ui-focus: #18181b;
+  /* Радиусы */
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  /* Тени (layered, мягкие) */
+  --sh-sm: 0 1px 2px 0 rgba(0,0,0,0.04);
+  --sh-md: 0 4px 12px -2px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.04);
+  --sh-lg: 0 16px 40px -8px rgba(0,0,0,0.10), 0 4px 12px -4px rgba(0,0,0,0.06);
+  --sh-xl: 0 24px 56px -12px rgba(0,0,0,0.16), 0 8px 20px -8px rgba(0,0,0,0.08);
+  /* Transitions */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur: 150ms;
+  --dur-slow: 300ms;
+}

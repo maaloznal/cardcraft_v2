@@ -1,0 +1,451 @@
+/* editor.css — #editorCardsList, .editor-card, inputs, textareas, buttons, char counter, toggle switch, focus visible */
+
+/* Поля ввода */
+.cc-root input[type="text"],
+.cc-root textarea,
+.cc-root select {
+  width: 100%;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--r-md);
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--ui-text);
+  outline: none;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.cc-root input[type="text"]:focus,
+.cc-root textarea:focus,
+.cc-root select:focus {
+  border-color: var(--ui-focus);
+  box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08);
+}
+.cc-root textarea {
+  resize: vertical;
+  min-height: 56px;
+  line-height: 1.5;
+}
+.cc-root select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 34px;
+  cursor: pointer;
+}
+
+/* Form group */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.form-group label {
+  color: var(--ui-text-tertiary);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Divider */
+.cc-root hr {
+  border: 0;
+  border-top: 1px solid var(--ui-border);
+  margin: 0;
+}
+
+/* ================= CARD EDITOR BLOCKS ================= */
+#editorCardsList {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-editor-block {
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--r-lg);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.card-editor-block:hover {
+  border-color: var(--ui-border-strong);
+  box-shadow: var(--sh-sm);
+}
+
+.card-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.card-editor-header h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ui-text);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+}
+.card-editor-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Collapse toggle */
+.card-collapse-toggle svg {
+  transition: transform var(--dur) var(--ease);
+}
+
+/* Collapsible body */
+.card-editor-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+  transition: max-height var(--dur-slow) var(--ease), opacity var(--dur) var(--ease), margin var(--dur) var(--ease);
+  max-height: 2000px;
+  opacity: 1;
+}
+.card-editor-block.collapsed .card-editor-body {
+  max-height: 0;
+  opacity: 0;
+  margin-top: -10px;
+  margin-bottom: -10px;
+}
+
+/* Full-width "Стили" button below the header */
+.btn-card-editor-palette {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  max-width: 220px;
+  margin: 0 auto;
+  height: 32px;
+  background: var(--ui-bg);
+  color: var(--ui-text);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--r-md);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--dur) var(--ease);
+}
+.btn-card-editor-palette:hover {
+  background: var(--ui-text);
+  color: var(--ui-accent-fg);
+  border-color: var(--ui-text);
+}
+.btn-card-editor-palette:active {
+  transform: scale(0.98);
+}
+.btn-card-editor-palette svg {
+  flex-shrink: 0;
+}
+
+/* SVG icons inside btn-icon should not affect sizing */
+.cc-root .btn-icon svg,
+.cc-root .btn-delete svg {
+  display: block;
+  pointer-events: none;
+}
+
+
+/* ================= BUTTONS ================= */
+.cc-root .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--ui-accent);
+  color: var(--ui-accent-fg);
+  border: 1px solid var(--ui-accent);
+  padding: 0 16px;
+  height: 36px;
+  border-radius: var(--r-md);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--dur) var(--ease);
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+.cc-root .btn-primary:hover {
+  background: var(--ui-accent-hover);
+  border-color: var(--ui-accent-hover);
+  box-shadow: var(--sh-md);
+}
+.cc-root .btn-primary:active {
+  transform: scale(0.97);
+}
+
+.cc-root .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  border: 1px solid var(--ui-border);
+  padding: 0 12px;
+  height: 32px;
+  border-radius: var(--r-md);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--dur) var(--ease);
+  white-space: nowrap;
+}
+.cc-root .btn-secondary:hover {
+  background: var(--ui-surface-hover);
+  border-color: var(--ui-border-strong);
+}
+.cc-root .btn-secondary:active {
+  transform: scale(0.97);
+}
+.cc-root .btn-secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cc-root .btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ui-surface);
+  color: var(--ui-text-secondary);
+  border: 1px solid var(--ui-border);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: inherit;
+  transition: all var(--dur) var(--ease);
+  padding: 0;
+}
+.cc-root .btn-icon:hover {
+  background: var(--ui-surface-hover);
+  color: var(--ui-text);
+  border-color: var(--ui-border-strong);
+}
+.cc-root .btn-icon:active {
+  transform: scale(0.92);
+}
+.cc-root .btn-icon:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.cc-root .btn-palette {
+  background: var(--ui-text);
+  color: var(--ui-accent-fg);
+  border-color: var(--ui-text);
+  width: auto;
+  padding: 0 10px;
+  font-size: 11px;
+}
+.cc-root .btn-palette:hover {
+  background: var(--ui-accent-hover);
+  border-color: var(--ui-accent-hover);
+  color: var(--ui-accent-fg);
+}
+
+.cc-root .btn-delete {
+  background: var(--ui-danger-bg);
+  color: var(--ui-danger);
+  border: 1px solid var(--ui-danger-border);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: inherit;
+  transition: all var(--dur) var(--ease);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.cc-root .btn-delete:hover {
+  background: var(--ui-danger);
+  color: #fff;
+  border-color: var(--ui-danger);
+}
+.cc-root .btn-delete:active {
+  transform: scale(0.92);
+}
+
+.cc-root .btn-add {
+  background: var(--ui-surface);
+  color: var(--ui-text-secondary);
+  border: 1px dashed var(--ui-border-strong);
+  padding: 12px;
+  border-radius: var(--r-md);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--dur) var(--ease);
+  width: 100%;
+}
+.cc-root .btn-add:hover {
+  background: var(--ui-surface-hover);
+  border-color: var(--ui-text-secondary);
+  color: var(--ui-text);
+}
+.cc-root .btn-add:active {
+  transform: scale(0.98);
+}
+
+/* Card editor theme select */
+.cc-root .card-editor-block select[data-action="card-theme"] {
+  font-size: 12px;
+  padding: 6px 28px 6px 10px;
+}
+
+/* Focus visible */
+.cc-root .sidebar-toggle:focus-visible,
+.cc-root .btn-primary:focus-visible,
+.cc-root .btn-secondary:focus-visible,
+.cc-root .btn-icon:focus-visible,
+.cc-root .btn-add:focus-visible,
+.cc-root .modal-close:focus-visible {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 2px;
+}
+
+/* ============================ TASK 10: Card editor title group ============================ */
+.card-editor-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.card-editor-num-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  background: var(--ui-text);
+  color: var(--ui-accent-fg);
+  border-radius: var(--r-sm);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  line-height: 1;
+}
+.card-editor-title-group h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ui-text);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+}
+
+/* ============================ Toggle switch ============================ */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.toggle-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ui-text);
+}
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--ui-border-strong);
+  border-radius: 20px;
+  transition: background var(--dur) var(--ease);
+}
+.switch-slider::before {
+  content: '';
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background: var(--ui-surface);
+  border-radius: 50%;
+  transition: transform var(--dur) var(--ease-spring);
+  box-shadow: var(--sh-sm);
+}
+.switch input:checked + .switch-slider {
+  background: var(--ui-text);
+}
+.switch input:checked + .switch-slider::before {
+  transform: translateX(16px);
+}
+.switch input:focus-visible + .switch-slider {
+  box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.12);
+}
+
+@media (max-width: 600px) {
+  .top-bar-right .btn-primary {
+    padding: 0 12px;
+    font-size: 12px;
+    height: 32px;
+  }
+}
+
+/* ============================ Char counter ============================ */
+.char-counter {
+  margin-top: 4px;
+  text-align: right;
+  font-size: 11px;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  color: var(--ui-text-tertiary);
+}
+.char-counter.near-limit {
+  color: var(--ui-danger);
+  font-weight: 600;
+}

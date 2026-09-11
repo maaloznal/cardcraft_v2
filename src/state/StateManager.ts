@@ -2,9 +2,14 @@
  * StateManager — centralized application state with sub-structures and selectors.
  * All state changes go through dispatch(). No direct mutation.
  * UI reads state via selectors, not direct field access.
+ *
+ * P1-1: direct card.colors / card.sectionStyles mutations removed — replaced
+ *       with granular typed actions (SET_CARD_COLOR_FIELD, SET_SECTION_STYLE_FIELD, etc.).
+ * P1-2: Action is a discriminated union — reducer cases receive typed payloads.
+ * P1-3: UI state (formerly 5 shadow `let` vars in orchestrator) lives here.
  */
 
-import type { Card, Snapshot, Action } from '../core/types';
+import type { Card, Snapshot, Action, UIState, SectionStyle } from '../core/types';
 import { generateId, deepClone } from '../core/utils';
 import {
   DEFAULT_THEME,
@@ -31,14 +36,6 @@ export interface SettingsState {
   charLimitEnabled: boolean;
 }
 
-export interface UIState {
-  sidebarOpen: boolean;
-  activeCardIndex: number | null;
-  colorModalOpen: boolean;
-  wordPopupOpen: boolean;
-  confirmDialogOpen: boolean;
-}
-
 export interface AppState {
   cards: CardsState;
   settings: SettingsState;
@@ -46,6 +43,21 @@ export interface AppState {
 }
 
 // ─── Default state factory ─────────────────────────────────────
+
+function createDefaultUIState(): UIState {
+  return {
+    colorModalOpen: false,
+    activeCardIndexForColors: null,
+    lastActiveField: 'title',
+    wordPopupOpen: false,
+    activeCardIndexForWord: null,
+    activeFieldForWord: null,
+    sidebarOpen: false,
+    sidebarWasCollapsedBeforeModal: true,
+    confirmDialogOpen: false,
+    isExporting: false,
+  };
+}
 
 function createDefaultState(): AppState {
   return {
@@ -60,13 +72,7 @@ function createDefaultState(): AppState {
       listStyleType: DEFAULT_LIST_STYLE,
       charLimitEnabled: false,
     },
-    ui: {
-      sidebarOpen: false,
-      activeCardIndex: null,
-      colorModalOpen: false,
-      wordPopupOpen: false,
-      confirmDialogOpen: false,
-    },
+    ui: createDefaultUIState(),
   };
 }
 
@@ -79,7 +85,11 @@ export class StateManager {
   private listeners: Set<Listener> = new Set();
 
   constructor(initial?: Partial<AppState>) {
-    this.state = { ...createDefaultState(), ...initial };
+    this.state = {
+      ...createDefaultState(),
+      ...initial,
+      ui: { ...createDefaultUIState(), ...(initial?.ui ?? {}) },
+    };
   }
 
   // ─── Selectors (read-only) ──────────────────────────────────
@@ -192,6 +202,11 @@ export class StateManager {
     this.listeners.forEach((fn) => fn(this.state));
   }
 
+  /** Convenience: update UI state (wraps SET_UI dispatch) */
+  setUI(patch: Partial<UIState>): void {
+    this.dispatch({ type: 'SET_UI', payload: patch });
+  }
+
   // ─── Reducer ────────────────────────────────────────────────
 
   private reduce(state: AppState, action: Action): AppState {
@@ -205,14 +220,14 @@ export class StateManager {
         };
       }
       case 'DELETE_CARD': {
-        const idx = action.payload as number;
+        const { idx } = action.payload;
         if (state.cards.list.length <= 1 || idx < 0 || idx >= state.cards.list.length) return state;
         const list = [...state.cards.list];
         list.splice(idx, 1);
         return { ...state, cards: { list } };
       }
       case 'DUPLICATE_CARD': {
-        const idx = action.payload as number;
+        const { idx } = action.payload;
         if (idx < 0 || idx >= state.cards.list.length) return state;
         const copy = deepClone(state.cards.list[idx]);
         copy.id = generateId();
@@ -221,7 +236,7 @@ export class StateManager {
         return { ...state, cards: { list } };
       }
       case 'MOVE_CARD': {
-        const { idx, dir } = action.payload as { idx: number; dir: number };
+        const { idx, dir } = action.payload;
         const newIdx = idx + dir;
         if (newIdx < 0 || newIdx >= state.cards.list.length) return state;
         const list = [...state.cards.list];
@@ -229,48 +244,42 @@ export class StateManager {
         return { ...state, cards: { list } };
       }
       case 'UPDATE_CARD_FIELD': {
-        const { idx, field, value } = action.payload as { idx: number; field: keyof Card; value: string };
+        const { idx, field, value } = action.payload;
         if (idx < 0 || idx >= state.cards.list.length) return state;
         const list = [...state.cards.list];
         list[idx] = { ...list[idx], [field]: value };
         return { ...state, cards: { list } };
       }
       case 'SET_CARD_THEME': {
-        const { idx, theme } = action.payload as { idx: number; theme: string | undefined };
+        const { idx, theme } = action.payload;
         if (idx < 0 || idx >= state.cards.list.length) return state;
         const list = [...state.cards.list];
         list[idx] = { ...list[idx], theme };
         return { ...state, cards: { list } };
       }
       case 'SET_CARD_COLORS': {
-        const { idx, colors } = action.payload as { idx: number; colors: Record<string, string> };
+        const { idx, colors } = action.payload;
         if (idx < 0 || idx >= state.cards.list.length) return state;
         const list = [...state.cards.list];
         list[idx] = { ...list[idx], colors: { ...colors } };
         return { ...state, cards: { list } };
       }
       case 'SET_CARD_SECTION_STYLES': {
-        const { idx, sectionStyles } = action.payload as {
-          idx: number;
-          sectionStyles: Record<string, import('../core/types').SectionStyle>;
-        };
+        const { idx, sectionStyles } = action.payload;
         if (idx < 0 || idx >= state.cards.list.length) return state;
         const list = [...state.cards.list];
         list[idx] = { ...list[idx], sectionStyles: { ...sectionStyles } };
         return { ...state, cards: { list } };
       }
       case 'SET_CARD_WORD_STYLES': {
-        const { idx, wordStyles } = action.payload as {
-          idx: number;
-          wordStyles: Record<string, import('../core/types').WordStyle>;
-        };
+        const { idx, wordStyles } = action.payload;
         if (idx < 0 || idx >= state.cards.list.length) return state;
         const list = [...state.cards.list];
         list[idx] = { ...list[idx], wordStyles: { ...wordStyles } };
         return { ...state, cards: { list } };
       }
       case 'DELETE_CARD_WORD_STYLE': {
-        const { idx, key } = action.payload as { idx: number; key: string };
+        const { idx, key } = action.payload;
         if (idx < 0 || idx >= state.cards.list.length) return state;
         const card = state.cards.list[idx];
         if (!card.wordStyles || !(key in card.wordStyles)) return state;
@@ -280,8 +289,71 @@ export class StateManager {
         list[idx] = { ...card, wordStyles: newWordStyles };
         return { ...state, cards: { list } };
       }
+
+      // ── Granular card mutations (P1-1) ──
+      case 'SET_CARD_COLOR_FIELD': {
+        const { idx, field, value } = action.payload;
+        if (idx < 0 || idx >= state.cards.list.length) return state;
+        const card = state.cards.list[idx];
+        const list = [...state.cards.list];
+        list[idx] = { ...card, colors: { ...card.colors, [field]: value } };
+        return { ...state, cards: { list } };
+      }
+      case 'DELETE_CARD_COLOR_FIELD': {
+        const { idx, field } = action.payload;
+        if (idx < 0 || idx >= state.cards.list.length) return state;
+        const card = state.cards.list[idx];
+        if (!(field in card.colors)) return state;
+        const newColors = { ...card.colors };
+        delete newColors[field];
+        const list = [...state.cards.list];
+        list[idx] = { ...card, colors: newColors };
+        return { ...state, cards: { list } };
+      }
+      case 'SET_SECTION_STYLE_FIELD': {
+        const { idx, field, property, value } = action.payload;
+        if (idx < 0 || idx >= state.cards.list.length) return state;
+        const card = state.cards.list[idx];
+        const prevFieldStyle: SectionStyle = card.sectionStyles[field] ?? {};
+        let newFieldStyle: SectionStyle;
+        if (value === undefined) {
+          newFieldStyle = { ...prevFieldStyle };
+          delete newFieldStyle[property];
+        } else {
+          newFieldStyle = { ...prevFieldStyle, [property]: value };
+        }
+        const list = [...state.cards.list];
+        list[idx] = {
+          ...card,
+          sectionStyles: { ...card.sectionStyles, [field]: newFieldStyle },
+        };
+        return { ...state, cards: { list } };
+      }
+      case 'SET_SECTION_FONT_SIZE': {
+        const { idx, field, size } = action.payload;
+        if (idx < 0 || idx >= state.cards.list.length) return state;
+        const card = state.cards.list[idx];
+        const prevFieldStyle: SectionStyle = card.sectionStyles[field] ?? {};
+        const newFieldStyle: SectionStyle = { ...prevFieldStyle, fontSize: size };
+        const list = [...state.cards.list];
+        list[idx] = {
+          ...card,
+          sectionStyles: { ...card.sectionStyles, [field]: newFieldStyle },
+        };
+        return { ...state, cards: { list } };
+      }
+      case 'RESET_CARD_STYLES': {
+        const { idx } = action.payload;
+        if (idx < 0 || idx >= state.cards.list.length) return state;
+        const card = state.cards.list[idx];
+        const list = [...state.cards.list];
+        list[idx] = { ...card, colors: {}, sectionStyles: {} };
+        return { ...state, cards: { list } };
+      }
+
+      // ── Snapshot / clear ──
       case 'RESTORE_SNAPSHOT': {
-        const snap = action.payload as Snapshot;
+        const { snapshot: snap } = action.payload;
         return {
           ...state,
           cards: { list: deepClone(snap.cards) },
@@ -297,24 +369,45 @@ export class StateManager {
 
       // ── Settings ──
       case 'SET_GLOBAL_THEME':
-        return { ...state, settings: { ...state.settings, theme: action.payload as string } };
+        return { ...state, settings: { ...state.settings, theme: action.payload.theme } };
       case 'SET_FORMAT':
-        return { ...state, settings: { ...state.settings, format: action.payload as string } };
+        return { ...state, settings: { ...state.settings, format: action.payload.format } };
       case 'SET_GRADIENT_ANGLE':
-        return { ...state, settings: { ...state.settings, gradientAngle: action.payload as number } };
+        return { ...state, settings: { ...state.settings, gradientAngle: action.payload.angle } };
       case 'SET_SHOW_CARD_NUMBERS':
-        return { ...state, settings: { ...state.settings, showCardNumbers: action.payload as boolean } };
+        return {
+          ...state,
+          settings: { ...state.settings, showCardNumbers: action.payload.show },
+        };
       case 'SET_SHOW_PROGRESS_BAR':
-        return { ...state, settings: { ...state.settings, showProgressBar: action.payload as boolean } };
+        return {
+          ...state,
+          settings: { ...state.settings, showProgressBar: action.payload.show },
+        };
       case 'SET_PROGRESS_BAR_STYLE':
-        return { ...state, settings: { ...state.settings, progressBarStyle: action.payload as string } };
+        return {
+          ...state,
+          settings: { ...state.settings, progressBarStyle: action.payload.style },
+        };
       case 'SET_LIST_STYLE':
-        return { ...state, settings: { ...state.settings, listStyleType: action.payload as string } };
+        return { ...state, settings: { ...state.settings, listStyleType: action.payload.style } };
       case 'SET_CHAR_LIMIT':
-        return { ...state, settings: { ...state.settings, charLimitEnabled: action.payload as boolean } };
+        return {
+          ...state,
+          settings: { ...state.settings, charLimitEnabled: action.payload.enabled },
+        };
 
-      default:
+      // ── UI state (P1-3) ──
+      case 'SET_UI':
+        return { ...state, ui: { ...state.ui, ...action.payload } };
+
+      default: {
+        // Exhaustiveness check — if a new Action variant is added without a
+        // reducer case, TypeScript will error here at compile time.
+        const _exhaustive: never = action;
+        void _exhaustive;
         return state;
+      }
     }
   }
 }

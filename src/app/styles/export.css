@@ -1,0 +1,26 @@
+/* export.css — .cc-root.exporting overrides, export-mode rules, .cc-styled-word marker visibility during export */
+
+/* P3-3: exporting-busy blocks editor interaction during batch export */
+.cc-root.exporting-busy .editor-sidebar,
+.cc-root.exporting-busy #editorCardsList,
+.cc-root.exporting-busy .editor-card,
+.cc-root.exporting-busy .editor-card input,
+.cc-root.exporting-busy .editor-card textarea,
+.cc-root.exporting-busy .editor-card button,
+.cc-root.exporting-busy #addCardBtn,
+.cc-root.exporting-busy #deleteAllBtn,
+.cc-root.exporting-busy #undoBtn,
+.cc-root.exporting-busy #redoBtn,
+.cc-root.exporting-busy #saveAll {
+  pointer-events: none;
+  opacity: 0.6;
+  user-select: none;
+}
+
+.cc-root.exporting .card-empty-hint {
+  display: none !important;
+}
+
+.cc-root.exporting .cc-styled-word {
+  text-decoration: none;
+}

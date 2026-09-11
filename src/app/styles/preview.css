@@ -1,0 +1,481 @@
+/* preview.css — #cardsArea, .card, .card-list, section elements, progress bar, card numbers, list styles, card actions */
+
+/* Cards container */
+.cards-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 32px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  padding-bottom: 32px;
+}
+.card-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  animation: cardFadeIn 0.4s var(--ease) both;
+}
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Card action buttons (under preview cards) */
+.cc-root button.btn-card-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: var(--ui-surface);
+  color: var(--ui-text-secondary);
+  border: 1px solid var(--ui-border);
+  padding: 0 12px;
+  height: 32px;
+  border-radius: var(--r-md);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--dur) var(--ease);
+}
+.cc-root button.btn-card-action:hover {
+  background: var(--ui-surface-hover);
+  color: var(--ui-text);
+  border-color: var(--ui-border-strong);
+  box-shadow: var(--sh-sm);
+}
+.cc-root button.btn-card-action:active {
+  transform: scale(0.97);
+}
+
+/* ================= CARD (preview, exportable) ================= */
+/* Карточка получает свои стили от тем, но базовая структура здесь */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 0 !important;
+  padding: 32px;
+  width: 380px;
+  max-width: 100%;
+  min-height: 400px;
+  box-shadow: var(--card-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  font-family: var(--font-family);
+  transition: box-shadow var(--dur-slow) var(--ease), transform var(--dur-slow) var(--ease);
+}
+.card[data-format="aspect-4-5"],
+.card[data-format="telegram"] {
+  min-height: 475px;
+  justify-content: space-between;
+}
+.card[data-format="aspect-9-16"],
+.card[data-format="whatsapp"] {
+  min-height: 675px;
+  justify-content: space-between;
+}
+.card[data-format="vk"] {
+  min-height: 200px;
+  justify-content: space-between;
+}
+
+/* Hover — карточка приподнимается */
+.cc-root .card-wrapper:hover .card {
+  box-shadow: var(--sh-lg);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 480px) {
+  .cc-root .card {
+    padding: 24px;
+    width: 100%;
+  }
+}
+
+/* Empty card placeholder */
+.card-empty-hint {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: center;
+  padding: 48px 16px;
+  opacity: 0.5;
+  font-style: italic;
+  border: 1px dashed var(--card-border);
+  border-radius: 12px;
+  margin: 8px 0;
+}
+
+
+/* Card inner elements (defined by themes) */
+.progress {
+  width: 100%;
+  height: 4px;
+  background-color: var(--progress-bg);
+  border-radius: 0px;
+  overflow: hidden;
+  margin-bottom: -4px;
+}
+.progress-fill {
+  height: 100%;
+  background-color: var(--accent-color);
+  box-shadow: 0 0 10px var(--accent-glow);
+  transition: width 0.3s var(--ease);
+}
+.tag {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.card-title {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text-primary);
+  margin: 0;
+  word-break: break-word;
+}
+.card-subtitle {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--accent-color);
+  margin: 0;
+  word-break: break-word;
+}
+.card-text {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  margin: 0;
+  word-break: break-word;
+}
+.card-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: block;
+  width: 100%;
+}
+.card-list-item {
+  display: block;
+  position: relative;
+  padding-left: 28px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+.card-list-item:last-child {
+  margin-bottom: 0;
+}
+.card-list-num {
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--num-color, var(--accent-color));
+  font-weight: 700;
+  line-height: 1.5;
+}
+.card-list-text {
+  display: block;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+.card-footer-text {
+  padding-top: 14px;
+  border-top: 1px solid var(--card-border);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--accent-color);
+  word-break: break-word;
+}
+.accent-btn {
+  background-color: var(--btn-accent-bg);
+  border: 1px solid var(--btn-accent-border);
+  border-radius: 0px;
+  padding: 12px 16px;
+  text-align: center;
+  color: var(--cta-text-color);
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  word-break: break-word;
+}
+
+/* Styled word marker */
+.cc-styled-word {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-color: rgba(99, 102, 241, 0.5);
+  text-underline-offset: 3px;
+}
+
+/* ============================ TASK 7: Card numbering toggle ============================ */
+.cc-root.no-card-numbers .tag {
+  display: none !important;
+}
+
+/* ============================ Progress bar styles ============================ */
+/* Видимость через класс, стиль через data-progress-style на root */
+
+.cc-root.no-progress-bar .progress {
+  display: none !important;
+}
+
+/* Базовые стили для дискретных индикаторов */
+.progress-shapes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 16px;
+  overflow: visible;
+  background: transparent !important;
+  margin-bottom: 0;
+}
+.ps-item {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  position: relative;
+}
+.ps-item.filled {
+  background: var(--accent-color);
+}
+.ps-item:not(.filled) {
+  background: transparent;
+  border: 1.5px solid var(--accent-color);
+  opacity: 0.35;
+}
+
+/* default — сплошная линия (заполнение + контур) */
+.cc-root[data-progress-style="default"] .progress {
+  height: 4px;
+  background: var(--progress-bg);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.cc-root[data-progress-style="default"] .progress-fill {
+  height: 100%;
+  background: var(--accent-color);
+  border-radius: 2px;
+  transition: width 0.3s var(--ease);
+}
+
+/* dashed — пунктирная линия (без фоновой полосы) */
+.cc-root[data-progress-style="dashed"] .progress {
+  height: 4px;
+  background: transparent;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.cc-root[data-progress-style="dashed"] .progress-fill {
+  height: 100%;
+  background: repeating-linear-gradient(90deg, var(--accent-color) 0 6px, transparent 6px 10px);
+  border-radius: 2px;
+  transition: width 0.3s var(--ease);
+}
+
+/* circles — круглые индикаторы */
+.cc-root[data-progress-style="circles"] .ps-item {
+  border-radius: 50%;
+}
+.cc-root[data-progress-style="circles"] .ps-item.filled {
+  border-radius: 50%;
+}
+.cc-root[data-progress-style="circles"] .ps-item:not(.filled) {
+  border-radius: 50%;
+}
+
+/* squares — квадратные индикаторы */
+.cc-root[data-progress-style="squares"] .ps-item {
+  border-radius: 2px;
+}
+
+/* diamonds — ромбы */
+.cc-root[data-progress-style="diamonds"] .ps-item {
+  transform: rotate(45deg);
+  border-radius: 2px;
+}
+
+/* hexagons — шестиугольники */
+.cc-root[data-progress-style="hexagons"] .ps-item {
+  width: 14px;
+  height: 14px;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+.cc-root[data-progress-style="hexagons"] .ps-item:not(.filled) {
+  border: none;
+  background: var(--accent-color);
+  opacity: 0.18;
+}
+
+/* stars — звёзды */
+.cc-root[data-progress-style="stars"] .ps-item {
+  width: 16px;
+  height: 16px;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+.cc-root[data-progress-style="stars"] .ps-item:not(.filled) {
+  border: none;
+  background: var(--accent-color);
+  opacity: 0.18;
+}
+
+/* ============================ TASK 9: List styles ============================ */
+/* Базовый сброс — управляем через data-list-style на root */
+.cc-root[data-list-style] .card-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.cc-root[data-list-style] .card-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-left: 0;
+  position: relative;
+}
+.cc-root[data-list-style] .card-list-num {
+  position: static;
+  flex-shrink: 0;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* numbers — классическая нумерация (1. 2. 3.) */
+.cc-root[data-list-style="numbers"] .card-list-num::after {
+  content: '.';
+}
+
+/* bullets — маркеры (•) */
+.cc-root[data-list-style="bullets"] .card-list-num {
+  display: none;
+}
+.cc-root[data-list-style="bullets"] .card-list-text::before {
+  content: '•';
+  color: var(--accent-color);
+  font-weight: 700;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+.cc-root[data-list-style="bullets"] .card-list-text {
+  display: flex;
+  align-items: flex-start;
+}
+
+/* dashes — тире (—) */
+.cc-root[data-list-style="dashes"] .card-list-num {
+  display: none;
+}
+.cc-root[data-list-style="dashes"] .card-list-text::before {
+  content: '—';
+  color: var(--accent-color);
+  font-weight: 700;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+.cc-root[data-list-style="dashes"] .card-list-text {
+  display: flex;
+  align-items: flex-start;
+}
+
+/* circles — цифры в круге */
+.cc-root[data-list-style="circles"] .card-list-num {
+  width: var(--num-size, 22px);
+  height: var(--num-size, 22px);
+  border-radius: 50%;
+  background: var(--num-bg, var(--accent-color));
+  color: var(--num-color, var(--card-bg));
+  border: var(--num-border, none);
+  border-style: solid;
+  border-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--num-size, 22px) * 0.5);
+  font-weight: 700;
+  line-height: 1;
+  box-sizing: border-box;
+}
+.cc-root[data-list-style="circles"] .card-list-num::after {
+  content: '';
+}
+
+/* squares — цифры в квадрате */
+.cc-root[data-list-style="squares"] .card-list-num {
+  width: var(--num-size, 22px);
+  height: var(--num-size, 22px);
+  border-radius: 4px;
+  background: var(--num-bg, var(--accent-color));
+  color: var(--num-color, var(--card-bg));
+  border: var(--num-border, none);
+  border-style: solid;
+  border-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--num-size, 22px) * 0.5);
+  font-weight: 700;
+  line-height: 1;
+  box-sizing: border-box;
+}
+.cc-root[data-list-style="squares"] .card-list-num::after {
+  content: '';
+}
+
+/* decorative — декоративные маркеры (◆) */
+.cc-root[data-list-style="decorative"] .card-list-num {
+  display: none;
+}
+.cc-root[data-list-style="decorative"] .card-list-text::before {
+  content: '◆';
+  color: var(--accent-color);
+  font-size: 10px;
+  margin-right: 8px;
+  flex-shrink: 0;
+  line-height: 1.5;
+}
+.cc-root[data-list-style="decorative"] .card-list-text {
+  display: flex;
+  align-items: flex-start;
+}
+
+/* Card action danger (delete in preview) */
+.btn-card-action-danger:hover {
+  color: var(--ui-danger);
+  border-color: var(--ui-danger-border);
+  background: var(--ui-danger-bg);
+}
+
+/* Card actions — icon only */
+.card-actions .btn-card-action {
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 1023px) {
+  .cards-container {
+    gap: 20px;
+  }
+}

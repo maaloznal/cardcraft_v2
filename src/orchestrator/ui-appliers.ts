@@ -1,0 +1,137 @@
+/**
+ * ui-appliers.ts — pure UI sync functions + render wrappers.
+ *
+ * Every function here reads state and writes DOM (idempotent). Called by:
+ *   - the state subscriber (on settings change)
+ *   - card-ops controllers (after add/delete/duplicate/move → full re-render)
+ *   - history restore (after undo/redo → full re-render)
+ *
+ * Extracted from CardCraftApp.ts sections 8 + 9 (lines 285-419).
+ *
+ * Public API:
+ *   applyThemeToWorkspace()    — apply theme attr + gradient angle + dropdown sync
+ *   applyGradientAngle()       -- set --gradient-angle CSS var
+ *   applyNumberingVisibility() -- toggle .no-card-numbers root class
+ *   applyProgressBarVisibility()
+ *   applyProgressBarStyle()
+ *   applyListStyle()
+ *   syncThemeDropdown()        — sync theme dropdown label + .selected item
+ *   updateCardCountBadge()     — sync "N карточки" badge
+ *   renderPreview()            — full preview rebuild + badge update
+ *   renderEditor()             — full editor rebuild
+ */
+
+import * as Theme from '@/themes/ThemeManager';
+import type { PreviewSettings } from '@/preview/PreviewRenderer';
+import type { OrchestratorContext } from './types';
+import { perfMark } from './helpers';
+
+export interface UIAppliers {
+  applyThemeToWorkspace(): void;
+  applyGradientAngle(): void;
+  applyNumberingVisibility(): void;
+  applyProgressBarVisibility(): void;
+  applyProgressBarStyle(): void;
+  applyListStyle(): void;
+  syncThemeDropdown(): void;
+  updateCardCountBadge(): void;
+  renderPreview(): void;
+  renderEditor(): void;
+  destroy(): void;
+}
+
+export function createUIAppliers(ctx: OrchestratorContext): UIAppliers {
+  const { root, refs, stateManager, previewRenderer, editorRenderer } = ctx;
+
+  function applyGradientAngle(): void {
+    if (!refs.previewWorkspace) return;
+    refs.previewWorkspace.style.setProperty(
+      '--gradient-angle',
+      `${stateManager.getGradientAngle()}deg`,
+    );
+  }
+
+  function syncThemeDropdown(): void {
+    if (!refs.themeDropdownLabel || !refs.themeDropdown) return;
+    const theme = stateManager.getTheme();
+    refs.themeDropdownLabel.textContent = Theme.getThemeLabel(theme);
+    refs.themeDropdown.querySelectorAll<HTMLElement>('.theme-item').forEach((item) => {
+      item.classList.toggle('selected', item.dataset.value === theme);
+    });
+  }
+
+  function applyThemeToWorkspace(): void {
+    if (!refs.previewWorkspace) return;
+    Theme.applyThemeToElement(refs.previewWorkspace, stateManager.getTheme());
+    applyGradientAngle();
+    syncThemeDropdown();
+  }
+
+  function applyNumberingVisibility(): void {
+    root.classList.toggle('no-card-numbers', !stateManager.getSettings().showCardNumbers);
+  }
+
+  function applyProgressBarVisibility(): void {
+    root.classList.toggle('no-progress-bar', !stateManager.getSettings().showProgressBar);
+  }
+
+  function applyProgressBarStyle(): void {
+    root.setAttribute('data-progress-style', stateManager.getSettings().progressBarStyle);
+  }
+
+  function applyListStyle(): void {
+    root.setAttribute('data-list-style', stateManager.getListStyle());
+  }
+
+  function updateCardCountBadge(): void {
+    if (!refs.cardCountBadge) return;
+    const n = stateManager.getCardCount();
+    const word = n === 1 ? 'карточка' : n >= 2 && n <= 4 ? 'карточки' : 'карточек';
+    refs.cardCountBadge.textContent = `${n} ${word}`;
+    refs.cardCountBadge.style.display = n > 0 ? '' : 'none';
+  }
+
+  function renderPreview(): void {
+    const end = perfMark('renderPreview');
+    try {
+      const settings = stateManager.getSettings();
+      const previewSettings: PreviewSettings = {
+        theme: settings.theme,
+        format: settings.format,
+        progressBarStyle: settings.progressBarStyle,
+        showCardNumbers: settings.showCardNumbers,
+        showProgressBar: settings.showProgressBar,
+      };
+      previewRenderer.render(stateManager.getCards(), previewSettings);
+      updateCardCountBadge();
+    } catch (err) {
+      console.error('[Cardcraft] Error in renderPreview:', err);
+    } finally {
+      end();
+    }
+  }
+
+  function renderEditor(): void {
+    try {
+      editorRenderer.render(stateManager.getCards());
+    } catch (err) {
+      console.error('[Cardcraft] Error in renderEditor:', err);
+    }
+  }
+
+  return {
+    applyThemeToWorkspace,
+    applyGradientAngle,
+    applyNumberingVisibility,
+    applyProgressBarVisibility,
+    applyProgressBarStyle,
+    applyListStyle,
+    syncThemeDropdown,
+    updateCardCountBadge,
+    renderPreview,
+    renderEditor,
+    destroy() {
+      /* stateless — listeners are tracked + cleaned up by ctx.listeners.destroy() */
+    },
+  };
+}
