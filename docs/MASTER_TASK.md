@@ -97,19 +97,20 @@
 
 ## PRIORITY 3 — CI/CD
 
-- [ ] **3.1 Создать `.github/workflows/ci.yml`**
-  - **Current**: `.github/` не существует.
-  - **Left**: workflow с шагами: `bun install`, `bun run lint`, `bun run tsc --noEmit` (нужно добавить script в package.json), `bun run test`, `bun run playwright test`.
-- [ ] **3.2 CI падает при lint error / TS error / failed test / failed E2E**
-  - **Left**: каждый шаг — отдельный job или `set -e`.
-- [ ] **3.3 PR checks**
-  - **Left**: workflow triggers on `pull_request`.
-- [ ] **3.4 Preview deployment**
-  - **Current**: нет Vercel/Netlify конфига.
-  - **Left**: добавить `vercel.json` или интегрировать существующий deployment (не добавлять новую платформу).
-- [ ] **3.5 Production deployment**
-  - **Left**: workflow on `push: main` → deploy.
-  - **Verify**: CI green на PR; preview URL в comment.
+- [x] **3.1 Создать `.github/workflows/ci.yml`**
+  - **Done**: `.github/workflows/ci.yml` создан. 3 jobs: `check` (lint + typecheck + unit + perf), `e2e` (Playwright), `build` (production build). Triggers: push to main, pull_request to main. concurrency cancel in-progress. `typecheck` script добавлен в package.json.
+  - **Verify**: YAML валиден (python yaml.safe_load). Workflow запустится при следующем push/PR.
+- [x] **3.2 CI падает при lint error / TS error / failed test / failed E2E**
+  - **Done**: каждый шаг — отдельный job, `bun install --frozen-lockfile` + fail-fast. E2E job загружает playwright-report artifact при failure.
+- [x] **3.3 PR checks**
+  - **Done**: workflow triggers on `pull_request: branches: [main]` → PR checks запускаются автоматически.
+- [~] **3.4 Preview deployment**
+  - **Current**: нет Vercel/Netlify конфига. MasterTask: "Не добавлять новую платформу без необходимости."
+  - **Left**: если выбран Vercel — добавить `vercel.json` + `VERCEL_TOKEN` secret + deploy preview job. Пока TODO.
+- [~] **3.5 Production deployment**
+  - **Current**: нет deployment конфига.
+  - **Left**: deploy на push to main после того как выбрана платформа. Пока TODO.
+  - **Verify**: CI green на PR; preview URL в comment (когда deployment добавлен).
 
 ---
 

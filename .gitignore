@@ -53,3 +53,11 @@ prompt
 server.log
 # Skills directory
 /skills/
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+
+# Verification screenshots
+verification*.png
