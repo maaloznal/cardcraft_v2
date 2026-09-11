@@ -40,6 +40,8 @@
     "node_modules",
     "examples",
     "skills",
-    "tests"
+    "tests",
+    "commitlint.config.js",
+    ".husky"
   ]
 }

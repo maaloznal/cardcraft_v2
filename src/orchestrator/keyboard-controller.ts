@@ -95,9 +95,11 @@ export function createKeyboardController(ctx: OrchestratorContext): KeyboardCont
   }
 
   return {
+    /** Register the keydown handler on document via ctx.listeners (auto-cleaned on teardown). */
     bind() {
       ctx.listeners.addDoc('keydown', handleKeyDown);
     },
+    /** No-op — the keydown listener is tracked + removed by ctx.listeners.destroy(). */
     destroy() {
       /* listener is tracked + cleaned up by ctx.listeners.destroy() */
     },

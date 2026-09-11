@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# P15: Conventional Commits — enforce feat:/fix:/refactor:/perf:/test:/docs:/chore: format
+bunx commitlint --edit "$1"

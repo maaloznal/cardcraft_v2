@@ -31,6 +31,11 @@ export interface CharLimitController {
 export function createCharLimitController(ctx: OrchestratorContext): CharLimitController {
   const { refs, stateManager } = ctx;
 
+  /**
+   * Apply current char-limit settings to every editor input/textarea: set
+   * `maxlength` to the format-specific limit when enabled, or fall back to
+   * each field's per-field default. Toggle the char-counter widget visibility.
+   */
   function applyCharLimit(): void {
     if (!refs.editorCardsList) return;
     const settings = stateManager.getSettings();
@@ -51,6 +56,11 @@ export function createCharLimitController(ctx: OrchestratorContext): CharLimitCo
     }
   }
 
+  /**
+   * Refresh the char counter for card at idx: sum title+subtitle+text+list+
+   * footer+cta lengths against the format limit, show `n / limit`, and toggle
+   * the .near-limit class at ≥90 %. No-op when char-limit is disabled.
+   */
   function updateCharCounter(idx: number): void {
     const settings = stateManager.getSettings();
     if (!settings.charLimitEnabled || !refs.charCounterText || !refs.charCounter) return;
@@ -75,6 +85,7 @@ export function createCharLimitController(ctx: OrchestratorContext): CharLimitCo
   return {
     applyCharLimit,
     updateCharCounter,
+    /** No-op — the controller is stateless (settings live in StateManager). */
     destroy() {
       /* stateless */
     },

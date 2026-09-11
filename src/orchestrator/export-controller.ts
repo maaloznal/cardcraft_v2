@@ -39,6 +39,11 @@ export function createExportController(ctx: OrchestratorContext): ExportControll
   /** AbortController for the current batch export (null when idle). */
   let batchAbort: AbortController | null = null;
 
+  /**
+   * Render a single card node to PNG and trigger a browser download.
+   * Wraps ExportManager.downloadPng in export-mode class toggling and toasts
+   * success / failure.
+   */
   async function generateAndDownloadPng(node: HTMLElement, filename: string): Promise<void> {
     try {
       await withExportMode(root, node, (n) => Export.downloadPng(n, filename, root));
@@ -48,6 +53,11 @@ export function createExportController(ctx: OrchestratorContext): ExportControll
     }
   }
 
+  /**
+   * Copy a card node's PNG to the clipboard. Falls back to downloading a PNG
+   * on insecure contexts (no Clipboard API), on clipboard rejection, or on
+   * unexpected errors — surfaces user-facing toasts at every branch.
+   */
   async function copyCardToClipboard(node: HTMLElement): Promise<void> {
     try {
       if (!window.isSecureContext) {
@@ -74,6 +84,12 @@ export function createExportController(ctx: OrchestratorContext): ExportControll
     }
   }
 
+  /**
+   * Batch-download every card as card-<n>.png with a progress toast (60 s).
+   * Blocks editing via UIState.isExporting + .exporting-busy on root, supports
+   * cancel via AbortController, waits 250 ms between downloads to let the
+   * browser flush each file. No-op (with toast) if a batch is already running.
+   */
   async function downloadAllPng(): Promise<void> {
     // Prevent overlapping batch exports
     if (batchAbort) {
@@ -128,6 +144,7 @@ export function createExportController(ctx: OrchestratorContext): ExportControll
     }
   }
 
+  /** Abort the running batch export (if any) — the downloadAllPng loop checks the signal between cards. */
   function cancelExport(): void {
     if (batchAbort) {
       batchAbort.abort();
@@ -139,6 +156,7 @@ export function createExportController(ctx: OrchestratorContext): ExportControll
     copyCardToClipboard,
     downloadAllPng,
     cancelExport,
+    /** Abort any in-flight batch export and remove the .exporting-busy blocker class — call on app teardown. */
     destroy() {
       // Cancel any in-flight export on teardown
       if (batchAbort) batchAbort.abort();

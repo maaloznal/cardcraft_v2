@@ -37,10 +37,16 @@ export function createStorageController(ctx: OrchestratorContext): StorageContro
 
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
+  /** Show a toast via the shared toast queue (default 2500 ms; priority toasts bypass the queue). */
   function showToast(msg: string, duration = 2500, options?: { priority?: boolean }): void {
     toastQueue.show(msg, duration, options);
   }
 
+  /**
+   * Persist cards + all settings to localStorage synchronously. Falls back to
+   * IndexedDB on QuotaExceededError (P8.4). Toasts success / fallback / error
+   * unless called with { silent: true }.
+   */
   function saveCardsToLocalStorage({ silent = false } = {}): void {
     const state = stateManager.get();
     const stateToSave = {
@@ -81,11 +87,13 @@ export function createStorageController(ctx: OrchestratorContext): StorageContro
     }
   }
 
+  /** Debounce saveCardsToLocalStorage by CONFIG.SAVE_DEBOUNCE_MS — coalesces rapid edits into one write. */
   function scheduleSave(opts: { silent?: boolean } = {}): void {
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(() => saveCardsToLocalStorage(opts), CONFIG.SAVE_DEBOUNCE_MS);
   }
 
+  /** Load cards + settings from localStorage and dispatch them into StateManager (replaces in-memory state). */
   function loadCardsFromLocalStorage(): void {
     const saved = Storage.load();
     if (saved.cards && saved.cards.length) {
@@ -107,6 +115,7 @@ export function createStorageController(ctx: OrchestratorContext): StorageContro
       stateManager.dispatch({ type: 'SET_CHAR_LIMIT', payload: { enabled: saved.charLimitEnabled } });
   }
 
+  /** Synchronous silent save used by the beforeunload handler — no toast, no debounce. */
   function saveOnUnload(): void {
     saveCardsToLocalStorage({ silent: true });
   }
@@ -117,6 +126,7 @@ export function createStorageController(ctx: OrchestratorContext): StorageContro
     loadCardsFromLocalStorage,
     saveOnUnload,
     showToast,
+    /** Cancel any pending debounced save timer — call on app teardown. */
     destroy() {
       if (saveTimer) clearTimeout(saveTimer);
       saveTimer = null;

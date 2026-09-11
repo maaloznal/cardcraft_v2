@@ -60,10 +60,16 @@ export class Modal {
     this.modal.addEventListener('click', this.clickHandler);
   }
 
+  /** Whether the modal is currently open (.active class or aria-hidden=false). */
   get isOpen(): boolean {
     return this.modal.classList.contains('active') || this.modal.getAttribute('aria-hidden') === 'false';
   }
 
+  /**
+   * Open the modal: capture the previously-focused element, add .active,
+   * set aria-hidden=false, attach the Escape key listener, then focus the
+   * initial element (or first focusable). Fires all onOpen callbacks.
+   */
   open(): void {
     if (this.isOpen) return;
     this.previouslyFocused = document.activeElement as HTMLElement | null;
@@ -87,6 +93,11 @@ export class Modal {
     this.openHandlers.forEach((fn) => fn());
   }
 
+  /**
+   * Close the modal: remove .active, set aria-hidden=true, detach the Escape
+   * listener, restore focus to the previously-focused element, then fire all
+   * onClose callbacks. No-op if already closed.
+   */
   close(): void {
     if (!this.isOpen) return;
     this.modal.classList.remove('active');
@@ -101,19 +112,23 @@ export class Modal {
     this.closeHandlers.forEach((fn) => fn());
   }
 
+  /** Toggle the modal open/closed based on its current state. */
   toggle(): void {
     if (this.isOpen) this.close();
     else this.open();
   }
 
+  /** Register a callback fired after the modal opens. */
   onOpen(cb: () => void): void {
     this.openHandlers.push(cb);
   }
 
+  /** Register a callback fired after the modal closes. */
   onClose(cb: () => void): void {
     this.closeHandlers.push(cb);
   }
 
+  /** Remove the click + keydown listeners + clear all open/close callbacks — call on app teardown. */
   destroy(): void {
     this.modal.removeEventListener('click', this.clickHandler);
     document.removeEventListener('keydown', this.keydownHandler);

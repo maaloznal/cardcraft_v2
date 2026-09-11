@@ -56,6 +56,7 @@ export class EditorRenderer {
 
   // ─── Full render ────────────────────────────────────────────
 
+  /** Full O(n) rebuild — wipe #editorCardsList and append a fresh editor block per card. */
   render(cards: Card[]): void {
     this.container.innerHTML = '';
     cards.forEach((card, index) => {

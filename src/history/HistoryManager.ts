@@ -70,14 +70,17 @@ export class HistoryManager<T> {
     this.histIndex = 0;
   }
 
+  /** Whether there's an earlier snapshot on the undo stack (histIndex > 0). */
   get canUndo(): boolean {
     return this.histIndex > 0;
   }
 
+  /** Whether there's a later snapshot on the redo stack (histIndex < history.length - 1). */
   get canRedo(): boolean {
     return this.histIndex < this.history.length - 1;
   }
 
+  /** Empty the undo + redo stacks and cancel any pending debounced push. */
   clear(): void {
     this.history = [];
     this.histIndex = -1;

@@ -97,10 +97,16 @@ export class Dropdown {
     }
   }
 
+  /** Whether the dropdown menu is currently open (.open class on the menu). */
   get isOpen(): boolean {
     return this.menu?.classList.contains('open') ?? false;
   }
 
+  /**
+   * Open the dropdown menu: add .open to the menu, set aria-expanded=true on
+   * the trigger, defer-attach the document click listener (rAF so it doesn't
+   * catch the opening click) + Escape listener. Fires all onOpen callbacks.
+   */
   open(): void {
     if (!this.menu || this.isOpen) return;
     this.menu.classList.add('open');
@@ -122,6 +128,11 @@ export class Dropdown {
     this.openHandlers.forEach((fn) => fn());
   }
 
+  /**
+   * Close the menu: remove .open, set aria-expanded=false, cancel any pending
+   * rAF that would have attached the doc-click listener, detach doc-click +
+   * Escape listeners, fire all onClose callbacks. No-op if already closed.
+   */
   close(): void {
     if (!this.menu || !this.isOpen) return;
     this.menu.classList.remove('open');
@@ -137,11 +148,17 @@ export class Dropdown {
     this.closeHandlers.forEach((fn) => fn());
   }
 
+  /** Toggle the dropdown open/closed based on its current state. */
   toggle(): void {
     if (this.isOpen) this.close();
     else this.open();
   }
 
+  /**
+   * Programmatically select an item by value: mark it .selected (and clear
+   * .selected on siblings), update the stored value. If fireCallback is true
+   * (default), also fire all onSelect callbacks with the value + item element.
+   */
   setValue(value: string, fireCallback = true): void {
     this.value = value;
     if (!this.menu) return;
@@ -156,22 +173,31 @@ export class Dropdown {
     }
   }
 
+  /** Get the currently selected value (or undefined if none). */
   getValue(): string | undefined {
     return this.value;
   }
 
+  /** Register a callback fired after the menu opens. */
   onOpen(cb: () => void): void {
     this.openHandlers.push(cb);
   }
 
+  /** Register a callback fired after the menu closes. */
   onClose(cb: () => void): void {
     this.closeHandlers.push(cb);
   }
 
+  /** Register a callback fired when an item is selected (receives value + the item element). */
   onSelect(cb: (value: string, item: HTMLElement) => void): void {
     this.selectHandlers.push(cb);
   }
 
+  /**
+   * Mark instance destroyed, cancel any pending rAF, remove all listeners
+   * (dropdown click + doc click + Escape), and clear all handler arrays —
+   * safe to call multiple times.
+   */
   destroy(): void {
     this.destroyed = true;
     // Cancel any pending rAF so its callback can't attach the doc-click

@@ -38,6 +38,7 @@ import type { OrchestratorContext } from './types';
 
 /* ─── bindTopbarEvents ───────────────────────────────────────── */
 
+/** Register top-bar event listeners: theme select, format select, char-limit toggle, gradient-angle slider, numbering toggle, progress-bar toggle + style, list-style select. Every change dispatches its typed action + pushHistory (P1-8) + scheduleSave. */
 export function bindTopbarEvents(ctx: OrchestratorContext): void {
   const { refs, stateManager, uiAppliers, charLimit, storage, history, previewRenderer } = ctx;
 
@@ -150,6 +151,12 @@ export function bindTopbarEvents(ctx: OrchestratorContext): void {
 
 /* ─── bindSidebarEvents ──────────────────────────────────────── */
 
+/**
+ * Register sidebar event listeners: add-card / save-all / delete-all (with
+ * confirm-dialog focus trap), undo / redo, sidebar toggle, backdrop click,
+ * and beforeunload save. The confirm dialog implements an accessible focus
+ * trap (Tab cycles between Cancel + Delete) + Escape-to-close.
+ */
 export function bindSidebarEvents(ctx: OrchestratorContext): void {
   const { refs, stateManager, uiAppliers, history, sidebar, cardOps, exporter, storage } = ctx;
 
@@ -237,6 +244,7 @@ export function bindSidebarEvents(ctx: OrchestratorContext): void {
 
 /* ─── bindEditorEvents ───────────────────────────────────────── */
 
+/** No-op — editor input/paste/click events are delegated to editorRenderer.onAction (wired in callbacks.ts). */
 export function bindEditorEvents(_ctx: OrchestratorContext): void {
   // No-op — editor events are delegated to editorRenderer.onAction
   // (wired in callbacks.ts via wireRendererCallbacks).
@@ -245,6 +253,7 @@ export function bindEditorEvents(_ctx: OrchestratorContext): void {
 
 /* ─── bindPreviewEvents ──────────────────────────────────────── */
 
+/** No-op — preview download/copy/dblclick/delete events are delegated to previewRenderer.onAction (wired in callbacks.ts). */
 export function bindPreviewEvents(_ctx: OrchestratorContext): void {
   // No-op — preview events are delegated to previewRenderer.onAction
   // (wired in callbacks.ts via wireRendererCallbacks).
@@ -253,6 +262,14 @@ export function bindPreviewEvents(_ctx: OrchestratorContext): void {
 
 /* ─── bindModalEvents ────────────────────────────────────────── */
 
+/**
+ * Register color-modal event listeners: listNumSize slider, color-picker row
+ * selection, per-field color inputs, reset-single-color, color swatches +
+ * presets, section format buttons (bold / italic / underline / strikethrough),
+ * section size sliders, and reset-all-styles. Every change dispatches a
+ * granular SET_CARD_COLOR_FIELD / SET_SECTION_STYLE_FIELD action (P1-1) +
+ * scheduleHistoryPush + scheduleSave.
+ */
 export function bindModalEvents(ctx: OrchestratorContext): void {
   const { root, refs, stateManager, previewRenderer, uiState, modal, history, storage } = ctx;
 
@@ -469,6 +486,11 @@ export function bindModalEvents(ctx: OrchestratorContext): void {
 
 /* ─── bindPopupEvents ────────────────────────────────────────── */
 
+/**
+ * Register a document-level click handler that closes the word-style popup
+ * when the click falls outside the popup, sidebar, color modal, any
+ * .cc-styled-word span, or any form control (5-condition check).
+ */
 export function bindPopupEvents(ctx: OrchestratorContext): void {
   const { refs } = ctx;
 
@@ -488,6 +510,7 @@ export function bindPopupEvents(ctx: OrchestratorContext): void {
 
 /* ─── bindExportEvents ───────────────────────────────────────── */
 
+/** No-op — export is initiated via previewRenderer.onAction 'download' / 'copy' (wired in callbacks.ts) + saveAllBtn click (wired in bindSidebarEvents). */
 export function bindExportEvents(_ctx: OrchestratorContext): void {
   // No-op — export is initiated via previewRenderer.onAction 'download'/'copy'
   // (wired in callbacks.ts) + saveAllBtn 'click' (wired in bindSidebarEvents).
@@ -496,6 +519,7 @@ export function bindExportEvents(_ctx: OrchestratorContext): void {
 
 /* ─── bindKeyboardEvents ─────────────────────────────────────── */
 
+/** Delegate to ctx.keyboard.bind() — handler logic + Escape priority live in keyboard-controller. */
 export function bindKeyboardEvents(ctx: OrchestratorContext): void {
   // Delegate to keyboard-controller — handler logic + Escape priority lives there.
   ctx.keyboard.bind();
@@ -503,6 +527,7 @@ export function bindKeyboardEvents(ctx: OrchestratorContext): void {
 
 /* ─── bindResizeEvents ───────────────────────────────────────── */
 
+/** No-op — VerticalResize + HorizontalResize instances register their own pointerdown listeners and are destroyed separately by CardCraftApp.cleanup. */
 export function bindResizeEvents(_ctx: OrchestratorContext): void {
   // No-op — VerticalResize + HorizontalResize instances are constructed in
   // CardCraftApp.ts and have their own destroy() methods called during cleanup.
@@ -512,6 +537,11 @@ export function bindResizeEvents(_ctx: OrchestratorContext): void {
 
 /* ─── bindAll — composite entry point ────────────────────────── */
 
+/**
+ * Composite entry point — invoke every bind* function and return a single
+ * cleanup that calls ctx.listeners.destroy() (removes all tracked listeners)
+ * plus detaches the beforeunload save handler.
+ */
 export function bindAll(ctx: OrchestratorContext): () => void {
   bindTopbarEvents(ctx);
   bindSidebarEvents(ctx);

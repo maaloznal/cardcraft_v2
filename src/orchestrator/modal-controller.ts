@@ -38,6 +38,7 @@ export function createModalController(ctx: OrchestratorContext): ModalController
 
   /* ---------- Modal row selection ---------- */
 
+  /** Highlight the preset color swatch matching the active card's color for `field` (clears highlight if no override). */
   function syncPresetIndicator(field: string): void {
     const activeColor =
       uiState.activeCardIndexForColors !== null
@@ -48,6 +49,7 @@ export function createModalController(ctx: OrchestratorContext): ModalController
     });
   }
 
+  /** Mark `field` as the active modal row, update the preset-target label, and sync the preset swatch indicator. */
   function selectRowField(field: string): void {
     uiState.lastActiveField = field;
     const label = refs.$<HTMLElement>('#presetTargetLabel');
@@ -60,6 +62,12 @@ export function createModalController(ctx: OrchestratorContext): ModalController
 
   /* ---------- Color modal open/close ---------- */
 
+  /**
+   * Open the color modal for card at `index`: capture sidebar state, populate
+   * all per-field color inputs / hex labels / format buttons / size sliders
+   * from card state, default-select the title row, sync the per-card theme
+   * dropdown + listNumSize slider, then open the underlying Modal primitive.
+   */
   function openColorModal(index: number): void {
     uiState.activeCardIndexForColors = index;
     if (refs.modalCardTitle) refs.modalCardTitle.textContent = `Стили · Карточка ${index + 1}`;
@@ -136,6 +144,7 @@ export function createModalController(ctx: OrchestratorContext): ModalController
     ctx.colorModalController.open();
   }
 
+  /** Close the color modal (delegates to the underlying Modal primitive's close()). */
   function closeColorModal(): void {
     ctx.colorModalController.close();
   }
@@ -198,6 +207,10 @@ export function createModalController(ctx: OrchestratorContext): ModalController
     closeColorModal,
     selectRowField,
     syncPresetIndicator,
+    /**
+     * No-op — the underlying Modal + Dropdown primitives are destroyed
+     * separately by CardCraftApp.cleanup (they own their own listeners).
+     */
     destroy() {
       /* colorModalController.destroy() + modalCardThemeDropdownController.destroy()
          are called separately by CardCraftApp.cleanup. */

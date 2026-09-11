@@ -20,6 +20,13 @@
 import type { AppState } from '@/state/StateManager';
 import type { OrchestratorContext } from './types';
 
+/**
+ * Subscribe to StateManager and sync the UI on every state change. Tracks the
+ * previous settings reference so the expensive settings-sync path (sync
+ * selects / toggles / sliders, apply CSS state, apply char limit) is skipped
+ * when only UI state changed — keeps O(1) typing responsiveness. Returns the
+ * unsubscribe function returned by StateManager.subscribe.
+ */
 export function createStateSubscriber(ctx: OrchestratorContext): () => void {
   const { stateManager, refs, uiAppliers, history } = ctx;
 

@@ -22,6 +22,11 @@ export interface SidebarController {
 export function createSidebarController(ctx: OrchestratorContext): SidebarController {
   const { root, refs, stateManager } = ctx;
 
+  /**
+   * Toggle sidebar open/closed: add/remove .collapsed on #editorSidebar +
+   * .sidebar-open on root, and sync the logical sidebarOpen flag into
+   * StateManager UI state (P1-3).
+   */
   function setSidebarOpen(open: boolean): void {
     if (!refs.editorSidebar) return;
     if (open) {
@@ -37,6 +42,7 @@ export function createSidebarController(ctx: OrchestratorContext): SidebarContro
 
   return {
     setSidebarOpen,
+    /** No-op — the controller is stateless (open/closed state lives in StateManager). */
     destroy() {
       /* stateless */
     },

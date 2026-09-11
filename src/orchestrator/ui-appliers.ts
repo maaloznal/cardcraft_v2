@@ -43,6 +43,7 @@ export interface UIAppliers {
 export function createUIAppliers(ctx: OrchestratorContext): UIAppliers {
   const { root, refs, stateManager, previewRenderer, editorRenderer } = ctx;
 
+  /** Apply the current gradient angle to #previewWorkspace via the `--gradient-angle` CSS variable. */
   function applyGradientAngle(): void {
     if (!refs.previewWorkspace) return;
     refs.previewWorkspace.style.setProperty(
@@ -51,6 +52,7 @@ export function createUIAppliers(ctx: OrchestratorContext): UIAppliers {
     );
   }
 
+  /** Sync the theme dropdown label + .selected item with StateManager's current theme. */
   function syncThemeDropdown(): void {
     if (!refs.themeDropdownLabel || !refs.themeDropdown) return;
     const theme = stateManager.getTheme();
@@ -60,6 +62,7 @@ export function createUIAppliers(ctx: OrchestratorContext): UIAppliers {
     });
   }
 
+  /** Apply the global theme attr + gradient angle + dropdown sync to the preview workspace. */
   function applyThemeToWorkspace(): void {
     if (!refs.previewWorkspace) return;
     Theme.applyThemeToElement(refs.previewWorkspace, stateManager.getTheme());
@@ -67,22 +70,30 @@ export function createUIAppliers(ctx: OrchestratorContext): UIAppliers {
     syncThemeDropdown();
   }
 
+  /** Toggle the .no-card-numbers class on root based on settings.showCardNumbers. */
   function applyNumberingVisibility(): void {
     root.classList.toggle('no-card-numbers', !stateManager.getSettings().showCardNumbers);
   }
 
+  /** Toggle the .no-progress-bar class on root based on settings.showProgressBar. */
   function applyProgressBarVisibility(): void {
     root.classList.toggle('no-progress-bar', !stateManager.getSettings().showProgressBar);
   }
 
+  /** Set data-progress-style on root to the configured progress bar style. */
   function applyProgressBarStyle(): void {
     root.setAttribute('data-progress-style', stateManager.getSettings().progressBarStyle);
   }
 
+  /** Set data-list-style on root to the configured list bullet style. */
   function applyListStyle(): void {
     root.setAttribute('data-list-style', stateManager.getListStyle());
   }
 
+  /**
+   * Update the sidebar card-count badge with the correct Russian plural form
+   * (карточка / карточки / карточек) and hide it when the deck is empty.
+   */
   function updateCardCountBadge(): void {
     if (!refs.cardCountBadge) return;
     const n = stateManager.getCardCount();
@@ -91,6 +102,10 @@ export function createUIAppliers(ctx: OrchestratorContext): UIAppliers {
     refs.cardCountBadge.style.display = n > 0 ? '' : 'none';
   }
 
+  /**
+   * Full preview rebuild via previewRenderer.render + card-count badge refresh.
+   * Wrapped in perfMark to warn if it exceeds one frame (16 ms).
+   */
   function renderPreview(): void {
     const end = perfMark('renderPreview');
     try {
@@ -111,6 +126,7 @@ export function createUIAppliers(ctx: OrchestratorContext): UIAppliers {
     }
   }
 
+  /** Full editor rebuild via editorRenderer.render with all current cards. */
   function renderEditor(): void {
     try {
       editorRenderer.render(stateManager.getCards());
@@ -130,6 +146,7 @@ export function createUIAppliers(ctx: OrchestratorContext): UIAppliers {
     updateCardCountBadge,
     renderPreview,
     renderEditor,
+    /** No-op — the appliers are stateless (settings live in StateManager); listeners are tracked + cleaned up by ctx.listeners.destroy(). */
     destroy() {
       /* stateless — listeners are tracked + cleaned up by ctx.listeners.destroy() */
     },

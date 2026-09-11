@@ -64,6 +64,7 @@ export class PreviewRenderer {
 
   // ─── Full render ────────────────────────────────────────────
 
+  /** Full O(n) rebuild — wipe #cardsArea and append a fresh wrapper per card. */
   render(cards: Card[], settings: PreviewSettings): void {
     this.container.innerHTML = '';
     cards.forEach((card, index) => {

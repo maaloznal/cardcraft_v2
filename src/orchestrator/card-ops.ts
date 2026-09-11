@@ -63,6 +63,11 @@ export function createCardOpsController(ctx: OrchestratorContext): CardOpsContro
     previewRenderer.updateProgressBars(stateManager.getCards(), previewSettings());
   }
 
+  /**
+   * Add a new empty card at the end: dispatch ADD_CARD, O(1) insert into
+   * editor + preview renderers, refresh progress bars + count badge, collapse
+   * the new card, push history, schedule a silent save, toast + SR announce.
+   */
   function addCard(): void {
     stateManager.dispatch({ type: 'ADD_CARD' });
     const cards = stateManager.getCards();
@@ -81,6 +86,11 @@ export function createCardOpsController(ctx: OrchestratorContext): CardOpsContro
     announce(`Карточка ${stateManager.getCardCount()} добавлена`);
   }
 
+  /**
+   * Delete card at idx (no-op if it's the last card or idx is out of range /
+   * NaN). Dispatch DELETE_CARD, O(1) removal from editor + preview, refresh
+   * progress bars + badge, push history, schedule silent save, toast + SR.
+   */
   function deleteCard(idx: number): void {
     const cardCount = stateManager.getCardCount();
     if (cardCount <= 1) return;
@@ -101,6 +111,11 @@ export function createCardOpsController(ctx: OrchestratorContext): CardOpsContro
     announce('Карточка удалена');
   }
 
+  /**
+   * Duplicate card at idx: dispatch DUPLICATE_CARD, O(1) insertion of the
+   * cloned card immediately after the original on both renderers, refresh
+   * progress bars + badge, push history, schedule silent save, toast + SR.
+   */
   function duplicateCard(idx: number): void {
     stateManager.dispatch({ type: 'DUPLICATE_CARD', payload: { idx } });
     const cards = stateManager.getCards();
@@ -119,6 +134,12 @@ export function createCardOpsController(ctx: OrchestratorContext): CardOpsContro
     announce('Карточка дублирована');
   }
 
+  /**
+   * Move card at idx by dir (-1 up, +1 down): no-op if out of range.
+   * Dispatch MOVE_CARD, O(1) DOM swap on editor + preview (no full rebuild),
+   * refresh progress bars (positions changed), push history, schedule silent
+   * save, SR announce direction. Silent — no toast.
+   */
   function moveCard(idx: number, dir: number): void {
     const newIdx = idx + dir;
     if (newIdx < 0 || newIdx >= stateManager.getCardCount()) return;
@@ -148,6 +169,10 @@ export function createCardOpsController(ctx: OrchestratorContext): CardOpsContro
     deleteCard,
     duplicateCard,
     moveCard,
+    /**
+     * No-op teardown — controller is stateless (DOM mutations live in the
+     * renderers, which are torn down separately by CardCraftApp.cleanup).
+     */
     destroy() {
       /* stateless */
     },

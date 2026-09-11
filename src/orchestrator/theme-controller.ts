@@ -40,6 +40,7 @@ export function createThemeController(ctx: OrchestratorContext): ThemeController
   });
 
   return {
+    /** No-op — the underlying themeDropdownController is destroyed separately by CardCraftApp.cleanup (it owns its own listeners). */
     destroy() {
       /* themeDropdownController.destroy() is called separately by CardCraftApp.cleanup. */
     },

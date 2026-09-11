@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# P14: Pre-commit checks — lint staged files + typecheck (fast, not all tests)
+# Kept lightweight so developers don't bypass it.
+bunx lint-staged

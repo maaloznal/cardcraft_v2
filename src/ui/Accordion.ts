@@ -75,11 +75,16 @@ export class Accordion {
     this.toggle(group);
   }
 
+  /** Toggle a specific group's expanded state. */
   toggle(group: HTMLElement): void {
     if (group.classList.contains('expanded')) this.collapse(group);
     else this.expand(group);
   }
 
+  /**
+   * Expand a specific group. When `exclusive` is true, collapse sibling groups
+   * sharing the same parent first. Fires onChange with the new state.
+   */
   expand(group: HTMLElement): void {
     if (this.exclusive) {
       // Collapse siblings sharing the same parent
@@ -94,11 +99,13 @@ export class Accordion {
     this.onChange?.(group, true);
   }
 
+  /** Collapse a specific group + fire onChange with the new state. */
   collapse(group: HTMLElement): void {
     group.classList.remove('expanded');
     this.onChange?.(group, false);
   }
 
+  /** Expand every group under root (ignores `exclusive`) + fire onChange for each. */
   expandAll(): void {
     this.root.querySelectorAll<HTMLElement>(this.groupSelector).forEach((g) => {
       g.classList.add('expanded');
@@ -106,6 +113,7 @@ export class Accordion {
     });
   }
 
+  /** Collapse every group under root + fire onChange for each. */
   collapseAll(): void {
     this.root.querySelectorAll<HTMLElement>(this.groupSelector).forEach((g) => {
       g.classList.remove('expanded');
@@ -113,10 +121,12 @@ export class Accordion {
     });
   }
 
+  /** Toggle exclusive mode — when true, expanding one group collapses its siblings. */
   setExclusive(exclusive: boolean): void {
     this.exclusive = exclusive;
   }
 
+  /** Remove the capture-phase click listener on root — call on app teardown. */
   destroy(): void {
     this.root.removeEventListener('click', this.clickHandler, true);
   }

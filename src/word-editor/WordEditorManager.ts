@@ -67,24 +67,34 @@ export class WordEditorManager {
     this.initControls();
   }
 
+  /** Whether the word-style popup is currently visible (.active class on the popup element). */
   get isOpen(): boolean {
     return this.popup.classList.contains('active');
   }
 
+  /** Register the callback fired when the user changes a word's style (font weight / style / decoration / color / size). */
   onStyleChange(handler: StyleChangeHandler): void {
     this.styleChangeHandler = handler;
   }
 
+  /** Register the callback fired when the user clicks the ✕ on a styled-word list entry (key format: `${field}::${word}`). */
   onRemoveWord(handler: RemoveWordHandler): void {
     this.removeWordHandler = handler;
   }
 
+  /** Register the callback fired when the user clicks the Clear button (resets all styles for the active word). */
   onClear(handler: ClearHandler): void {
     this.clearHandler = handler;
   }
 
   // ─── Open / Close ───────────────────────────────────────────
 
+  /**
+   * Open the word-style popup at (x, y): seed the active word / field / card
+   * index + any pre-existing styles, populate the header label, sync the
+   * format buttons / color presets / size slider to reflect the active
+   * styles, then position the popup clamped to the viewport (with padding).
+   */
   open(
     x: number,
     y: number,
@@ -123,6 +133,7 @@ export class WordEditorManager {
     this.popup.style.top = `${top}px`;
   }
 
+  /** Close the popup + clear all active state (field, card index, word styles). */
   close(): void {
     this.popup.classList.remove('active');
     this.activeField = null;
@@ -149,6 +160,12 @@ export class WordEditorManager {
 
   // ─── Word style list ────────────────────────────────────────
 
+  /**
+   * Rebuild the styled-words list for the active field of the given card.
+   * Lists every `wordStyles` entry whose key matches the active field (or
+   * unscoped keys), shows an empty-state message when none, and wires a
+   * tracked ✕ handler per row that calls onRemoveWord.
+   */
   renderWordStyleList(card: Card): void {
     if (this.activeCardIndex === null || !this.activeField) {
       this.wordList.innerHTML = '';

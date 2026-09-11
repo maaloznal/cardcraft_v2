@@ -37,20 +37,28 @@ export interface HistoryController {
 export function createHistoryController(ctx: OrchestratorContext): HistoryController {
   const { stateManager, historyManager, refs, uiState } = ctx;
 
+  /** Toggle the disabled state of #undoBtn / #redoBtn based on history stack pointers. */
   function updateUndoRedoButtons(): void {
     if (refs.undoBtn) refs.undoBtn.disabled = !historyManager.canUndo;
     if (refs.redoBtn) refs.redoBtn.disabled = !historyManager.canRedo;
   }
 
+  /** Take a snapshot of current state and push it onto the undo stack immediately (clears redo). */
   function pushHistory(): void {
     historyManager.push(stateManager.snapshot());
     updateUndoRedoButtons();
   }
 
+  /** Debounced variant of pushHistory — merges rapid edits (e.g. typing) into one history entry. */
   function scheduleHistoryPush(): void {
     historyManager.schedulePush(stateManager.snapshot());
   }
 
+  /**
+   * Apply a snapshot to StateManager, fully re-render editor + preview,
+   * schedule silent save, refresh undo/redo buttons, close any open modal /
+   * word popup, and reset stale active indices. Used by undo() and redo().
+   */
   function restore(s: Snapshot): void {
     stateManager.restore(s);
     ctx.uiAppliers.renderEditor();
@@ -65,6 +73,7 @@ export function createHistoryController(ctx: OrchestratorContext): HistoryContro
     uiState.lastActiveField = 'title';
   }
 
+  /** Pop the previous snapshot off the undo stack, restore it, toast 'action undone'. */
   function undo(): void {
     const snap = historyManager.undo();
     if (!snap) return;
@@ -72,6 +81,7 @@ export function createHistoryController(ctx: OrchestratorContext): HistoryContro
     ctx.storage.showToast('Действие отменено');
   }
 
+  /** Re-apply a previously undone snapshot from the redo stack, restore it, toast 'action redone'. */
   function redo(): void {
     const snap = historyManager.redo();
     if (!snap) return;
@@ -86,6 +96,10 @@ export function createHistoryController(ctx: OrchestratorContext): HistoryContro
     undo,
     redo,
     updateUndoRedoButtons,
+    /**
+     * No-op — historyManager.clear() is invoked separately by CardCraftApp.cleanup
+     * so the stack is shared across the controller's lifetime.
+     */
     destroy() {
       /* historyManager.clear() is called separately by CardCraftApp.cleanup. */
     },

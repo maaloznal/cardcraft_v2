@@ -70,10 +70,15 @@ export class Switch {
     this.syncVisual();
   }
 
+  /** Get the current checked state. */
   get checked(): boolean {
     return this.checked_;
   }
 
+  /**
+   * Set the checked state programmatically: update internal state, sync the
+   * visual, and fire onChange with source='program'. No-op if unchanged.
+   */
   set checked(value: boolean) {
     if (value === this.checked_) return;
     this.checked_ = value;
@@ -81,16 +86,19 @@ export class Switch {
     this.onChange?.(value, 'program');
   }
 
+  /** Flip the checked state + fire onChange with source='user'. */
   toggle(): void {
     this.checked_ = !this.checked_;
     this.syncVisual();
     this.onChange?.(this.checked_, 'user');
   }
 
+  /** Register the callback fired on every state change (user click or programmatic set). */
   onToggle(cb: (checked: boolean, source: 'user' | 'program') => void): void {
     this.onChange = cb;
   }
 
+  /** Remove the change (checkbox) or click (button) listener — call on app teardown. */
   destroy(): void {
     if (this.isCheckbox && this.checkbox) {
       this.checkbox.removeEventListener('change', this.clickHandler);

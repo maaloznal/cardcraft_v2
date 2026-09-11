@@ -2689,3 +2689,47 @@ Work Log:
 
 Stage Summary:
 - 6 ADRs created in docs/adr/ (001-006), all 50-100 lines, each citing real file paths + line numbers from the actual codebase. ADR-007 intentionally skipped; ADR-008 (dark mode) already existed.
+
+---
+Task ID: p13-jsdoc
+Agent: general-purpose
+Task: Add per-method JSDoc to all controllers (PRIORITY 13)
+
+Work Log:
+- src/orchestrator/card-ops.ts (5 methods: addCard, deleteCard, duplicateCard, moveCard, destroy)
+- src/orchestrator/storage-controller.ts (6: showToast, saveCardsToLocalStorage, scheduleSave, loadCardsFromLocalStorage, saveOnUnload, destroy)
+- src/orchestrator/history-controller.ts (7: updateUndoRedoButtons, pushHistory, scheduleHistoryPush, restore, undo, redo, destroy)
+- src/orchestrator/modal-controller.ts (5: syncPresetIndicator, selectRowField, openColorModal, closeColorModal, destroy)
+- src/orchestrator/export-controller.ts (5: generateAndDownloadPng, copyCardToClipboard, downloadAllPng, cancelExport, destroy)
+- src/orchestrator/theme-controller.ts (1: destroy — only public method)
+- src/orchestrator/keyboard-controller.ts (2: bind, destroy)
+- src/orchestrator/char-limit-controller.ts (3: applyCharLimit, updateCharCounter, destroy)
+- src/orchestrator/sidebar-controller.ts (2: setSidebarOpen, destroy)
+- src/orchestrator/ui-state.ts (createUIStateProxy — already had file-level JSDoc, added function-level)
+- src/orchestrator/dom-refs.ts (collectDOMRefs — already had JSDoc, left as-is)
+- src/orchestrator/helpers.ts (ListenerTracker.addEl/addDoc/destroy, guard, perfMark — all already had JSDoc, left as-is)
+- src/orchestrator/ui-appliers.ts (11: applyGradientAngle, syncThemeDropdown, applyThemeToWorkspace, applyNumberingVisibility, applyProgressBarVisibility, applyProgressBarStyle, applyListStyle, updateCardCountBadge, renderPreview, renderEditor, destroy)
+- src/orchestrator/state-subscriber.ts (createStateSubscriber — added function-level JSDoc)
+- src/orchestrator/callbacks.ts (wireRendererCallbacks — added function-level JSDoc)
+- src/orchestrator/events.ts (10: bindTopbarEvents, bindSidebarEvents, bindEditorEvents, bindPreviewEvents, bindModalEvents, bindPopupEvents, bindExportEvents, bindKeyboardEvents, bindResizeEvents, bindAll)
+- src/preview/PreviewRenderer.ts (render — onAction/destroy/updateCardField/updateCardStyle/updateCardTheme/removeCard/insertCard/updateProgressBars already had JSDoc; added to render)
+- src/editor/EditorRenderer.ts (render — onAction/destroy/insertCard/removeCard/moveCard/updateCardNumber/collapseLastCard already had JSDoc; added to render)
+- src/word-editor/WordEditorManager.ts (7: isOpen, onStyleChange, onRemoveWord, onClear, open, close, renderWordStyleList — destroy already had JSDoc)
+- src/ui/Modal.ts (7: isOpen, open, close, toggle, onOpen, onClose, destroy)
+- src/ui/Dropdown.ts (10: isOpen, open, close, toggle, setValue, getValue, onOpen, onClose, onSelect, destroy)
+- src/ui/Accordion.ts (7: toggle, expand, collapse, expandAll, collapseAll, setExclusive, destroy)
+- src/ui/Switch.ts (5: get checked, set checked, toggle, onToggle, destroy)
+- src/storage/StorageManager.ts (3: save, load, clear)
+- src/storage/IndexedDBBackend.ts (already had JSDoc on all 4 public functions — left as-is)
+- src/history/HistoryManager.ts (3: canUndo, canRedo, clear — push/schedulePush/undo/redo/init already had JSDoc)
+- src/styles/StyleHelpers.ts (already had JSDoc on all 5 public functions — left as-is)
+- src/themes/ThemeManager.ts (already had JSDoc on all 5 public functions — left as-is)
+- src/export/ExportManager.ts (already had JSDoc on all 4 public functions — left as-is)
+
+Stage Summary:
+- 29 files audited; 23 files updated with per-method JSDoc (6 already had full per-method JSDoc and were left untouched)
+- ~100 public methods documented with concise `/** */` JSDoc explaining WHAT each does (not just repeating the name)
+- No code logic changed — only JSDoc comments added
+- tsc --noEmit: 0 errors
+- bun run lint: 0 errors, 21 warnings (all pre-existing cosmetic — unused imports, `any` types in PreviewRenderer, eslint-disable comments in test files)
+- bun run test: 253/253 passing (4 unit test files, 3.35s)

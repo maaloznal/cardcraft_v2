@@ -21,6 +21,15 @@ import { pruneOrphanWordStyles } from '@/styles/StyleHelpers';
 import { splitOnce } from '@/core/utils';
 import type { OrchestratorContext } from './types';
 
+/**
+ * Wire PreviewRenderer / EditorRenderer / WordEditorManager action callbacks
+ * to their controller methods (cardOps, modal, wordPopup, exporter, charLimit,
+ * history, storage, uiAppliers). Routes every emitted action — download /
+ * copy / delete-preview / dblclick from preview, input / paste / palette /
+ * delete / duplicate / move / focus from editor, styleChange / removeWord /
+ * clear from word editor — to the right controller. Idempotent: safe to call
+ * once per app boot.
+ */
 export function wireRendererCallbacks(ctx: OrchestratorContext): void {
   const { stateManager, previewRenderer, editorRenderer, wordEditorManager, uiState } = ctx;
 

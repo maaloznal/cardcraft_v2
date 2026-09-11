@@ -35,6 +35,12 @@ export interface SavedState {
   headerHeight: number | null;
 }
 
+/**
+ * Persist a partial SavedState to localStorage. Strips empty `wordStyles` /
+ * `sectionStyles` / `colors` / `theme` from each card to save space. Re-throws
+ * QuotaExceededError as a string-tagged Error so the caller can fall back to
+ * IndexedDB.
+ */
 export function save(state: Partial<SavedState>): void {
   try {
     if (state.cards !== undefined) {
@@ -69,6 +75,12 @@ export function save(state: Partial<SavedState>): void {
   }
 }
 
+/**
+ * Load + validate every SavedState field from localStorage. Runs each saved
+ * card through migrateCard (sanitize id / colors / theme / wordStyles /
+ * sectionStyles). Clears corrupted cards + theme + format keys on JSON parse
+ * failure. Returns a Partial<SavedState> with only the keys actually present.
+ */
 export function load(): Partial<SavedState> {
   const result: Partial<SavedState> = {};
 
@@ -124,6 +136,7 @@ export function load(): Partial<SavedState> {
   return result;
 }
 
+/** Remove every cardcraft-related key from localStorage (used by 'delete all' + reset flows). */
 export function clear(): void {
   Object.values(KEYS).forEach((key) => localStorage.removeItem(key));
 }
