@@ -60,4 +60,4 @@ server.log
 /playwright/.cache/
 
 # Verification screenshots
-verification*.png
+verification*.png.tool-results/
