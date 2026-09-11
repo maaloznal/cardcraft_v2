@@ -162,19 +162,18 @@
 
 ## PRIORITY 6 — DARK MODE
 
-- [~] **6.1 Аудит dark mode + решение (реализовать ИЛИ удалить)**
-  - **Current**: `src/app/globals.css:81-113` — 31 shadcn `.dark` token (dead, не используется app CSS); `src/app/styles/tokens.css` — только `:root`, НЕТ `.dark` вариантов. Toggle не существует. `next-themes` удалён.
-  - **Left**: **решение** — (A) реализовать: добавить `.dark` варианты в tokens.css для всех `--ui-*`/`--text-*`, добавить toggle в top-bar, persistence, контраст; ИЛИ (B) удалить `.dark` блок из globals.css. Решение документировать в ADR.
-  - **Verify**: если A — toggle работает, контраст AA; если B — `grep ".dark" src/app/` → 0.
+- [x] **6.1 Аудит dark mode + решение (реализовать ИЛИ удалить)**
+  - **Done**: Decision — **удалить** dead `.dark` block. Обоснование в `docs/adr/008-dark-mode-decision.md`.
+  - `globals.css` — удалён `.dark` block (~31 shadcn tokens) + `@custom-variant dark` directive. App использует собственную дизайн-систему (`--ui-*` tokens из `tokens.css`), не shadcn. Реализация dark mode для 48 тем карточек — нерационально.
+  - **Verify**: `rg "\.dark\b" src/app/` → только комментарий ADR. 253 tests pass.
 
 ---
 
 ## PRIORITY 7 — LIVE PREVIEW
 
-- [~] **7.1 Color/style modal с split-screen (контролы | preview) на desktop**
-  - **Current**: modal slides OVER preview (rgba backdrop + blur). Live updates РАБОТАЮТ (`events.ts:222-242` → `previewRenderer.updateCardStyle()`). НО split-screen НЕТ — preview перекрыт modal.
-  - **Left**: на desktop (≥1024px) — layout `контролы | preview` side-by-side; на mobile — адаптированный UX. Real-time update уже есть.
-  - **Verify**: E2E — открыть modal, видеть карточку, менять цвет — preview обновляется без закрытия modal.
+- [x] **7.1 Color/style modal с split-screen (контролы | preview) на desktop**
+  - **Done**: `modal.css` — на desktop (≥1024px) modal-overlay transparent (no backdrop blur), `.preview-workspace` получает `margin-right: 360px` через `:has(.modal-overlay.active)` → preview виден рядом с контролами. Modal card 360px width, full height. На mobile — slide-in как раньше. Live updates работали и раньше (`previewRenderer.updateCardStyle`), теперь preview ещё и ВИДЕН во время редактирования.
+  - **Verify**: Agent Browser — modal открыт, preview width 616px (не перекрыт), color swatch click → preview updates live, typing → preview updates live.
 
 ---
 
@@ -430,8 +429,8 @@
 | **5.6** Screen reader | [x] DONE | #srAnnouncer + announce() в card-ops |
 | **5.7** Color contrast | [ ] TODO | нет tooling |
 | **5.8** Reduced motion | [x] DONE | @media prefers-reduced-motion |
-| **6.** Dark Mode | [~] PARTIAL | dead .dark block, решение нужно |
-| **7.** Live Preview | [~] PARTIAL | live update ✓, split-screen ✗ |
+| **6.** Dark Mode | [x] DONE | dead .dark block удалён, ADR-008 |
+| **7.** Live Preview | [x] DONE | split-screen на desktop, live update |
 | **8.1-8.2** Virtual scrolling | [ ] TODO | нет |
 | **8.3** Web Worker | [~] PARTIAL | lazy-load ✓, worker нет |
 | **8.4** IndexedDB | [ ] TODO | нет |

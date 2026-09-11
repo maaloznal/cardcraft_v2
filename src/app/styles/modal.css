@@ -1,6 +1,9 @@
 /* modal.css — #colorModal, .modal-overlay, .modal-card, color picker rows, swatches, presets, format buttons, size sliders, confirm dialog */
 
 /* ================= MODAL ================= */
+/* P7: On desktop (≥1024px) the modal is a split-screen layout:
+   controls (340px right panel) + live preview (remaining space).
+   On mobile it slides in from the right over the workspace. */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -22,6 +25,23 @@
 .modal-overlay.active .modal-card {
   transform: translateX(0);
 }
+
+/* P7: On desktop — split-screen, no backdrop blur, preview visible */
+@media (min-width: 1024px) {
+  .modal-overlay {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    /* Reserve 360px for the modal card; preview fills the rest */
+    justify-content: flex-end;
+  }
+  /* Shrink the preview workspace to make room for the modal panel */
+  .cc-root:has(.modal-overlay.active) .preview-workspace {
+    margin-right: 360px;
+    transition: margin-right var(--dur-slow) var(--ease);
+  }
+}
+
 .modal-card {
   width: 340px;
   max-width: calc(100vw - 16px);
@@ -34,6 +54,14 @@
   transition: transform var(--dur-slow) var(--ease);
   display: flex;
   flex-direction: column;
+  /* P7: On desktop, modal card takes full height (split-screen) */
+  height: 100vh;
+}
+@media (min-width: 1024px) {
+  .modal-card {
+    width: 360px;
+    max-width: 360px;
+  }
 }
 .modal-header {
   display: flex;
