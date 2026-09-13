@@ -11,6 +11,29 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const handleGoogleLogin = async () => {
+    setLoading(true)
+    setError(null)
+
+    if (!supabase) {
+      setError('Supabase не настроен. Обратитесь к администратору.')
+      setLoading(false)
+      return
+    }
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/` },
+      })
+
+      if (error) throw error
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ошибка входа через Google')
+      setLoading(false)
+    }
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -77,6 +100,27 @@ export default function LoginPage() {
             {error}
           </div>
         )}
+
+        <button
+          type="button"
+          onClick={handleGoogleLogin}
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-3 px-4 py-3 border rounded-md bg-background hover:bg-secondary disabled:opacity-50"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20">
+            <path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.39-.18-2.05H12v3.88h5.38a4.6 4.6 0 0 1-2 3.02v2.51h3.24c1.9-1.75 2.98-4.33 2.98-7.36Z" />
+            <path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.62-2.41l-3.24-2.51c-.9.6-2.04.96-3.38.96-2.6 0-4.81-1.76-5.6-4.12H3.06v2.59A10 10 0 0 0 12 22Z" />
+            <path fill="#FBBC05" d="M6.4 13.92a6 6 0 0 1 0-3.84V7.49H3.06a10 10 0 0 0 0 9.02l3.34-2.59Z" />
+            <path fill="#EA4335" d="M12 5.96c1.47 0 2.79.51 3.83 1.51l2.87-2.87A9.62 9.62 0 0 0 12 2a10 10 0 0 0-8.94 5.49l3.34 2.59C7.19 7.72 9.4 5.96 12 5.96Z" />
+          </svg>
+          Войти через Google
+        </button>
+
+        <div className="flex items-center gap-3 my-6 text-sm text-muted-foreground">
+          <div className="h-px flex-1 bg-border" />
+          <span>или по email</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
