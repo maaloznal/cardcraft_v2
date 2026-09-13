@@ -8,6 +8,7 @@ import "./globals.css";
 // P4: Sentry client init — client component wrapper for Turbopack dev
 import { SentryProvider } from '@/components/SentryProvider';
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { AuthProvider } from '@/auth/AuthProvider';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,11 +48,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
-        <SentryProvider>
-          <ErrorBoundary>
-            {children}
-          </ErrorBoundary>
-        </SentryProvider>
+        <AuthProvider>
+          <SentryProvider>
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
+          </SentryProvider>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef } from 'react';
 import { initCardCraftApp, THEME_GROUPS } from '@/orchestrator/CardCraftApp';
+import { AuthButton } from '@/auth/AuthButton';
 import './card-constructor.css';
 
 const initCardConstructor = initCardCraftApp;
@@ -95,6 +96,7 @@ export default function Home() {
           <button className="btn-icon top-bar-btn" id="redoBtn" title="Повторить (Ctrl+Y)" aria-label="Повторить" type="button">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           </button>
+          <AuthButton />
         </div>
       </header>
 

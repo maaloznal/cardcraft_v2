@@ -1,32 +1,32 @@
 import type { NextConfig } from "next";
-import bundleAnalyzer from "@next/bundle-analyzer";
-import { withSentryConfig } from "@sentry/nextjs";
 
 /**
  * Next.js config for Cardcraft.
  *
- * PRIORITY 4 (Monitoring): Sentry wrapper added for error tracking +
- * source maps upload (requires SENTRY_AUTH_TOKEN env var).
- *
- * PRIORITY 19 (Security hardening):
- *   - CSP is now nonce-based, generated per-request in src/middleware.ts.
- *   - HSTS (Strict-Transport-Security) added in middleware.
- *
- * PRIORITY 9.1 (Bundle analysis):
- *   - @next/bundle-analyzer wrapped via withBundleAnalyzer.
- *   - Run `ANALYZE=true bun run build` to generate reports at .next/analyze/.
+ * Static export for GitHub Pages deployment.
+ * - output: "export" for GitHub Pages compatibility
+ * - basePath: "/cardcraft" for GitHub Pages subdirectory
+ * - trailingSlash: true for GitHub Pages static hosting
+ * - images: unoptimized required for static export
  */
 
-const withBundleAnalyzer = bundleAnalyzer({
-  enabled: process.env.ANALYZE === "true",
-});
+const isProd = process.env.NODE_ENV === 'production';
+const GITHUB_PAGES_BASE = '/cardcraft';
 
 const nextConfig: NextConfig = {
-  output: "standalone",
-  reactStrictMode: false, // Disabled: causes double-mount flickering in dev
+  // Static export for GitHub Pages
+  output: "export",
+  // basePath only in production — dev server stays at root for local testing
+  basePath: isProd ? GITHUB_PAGES_BASE : '',
+  assetPrefix: isProd ? `${GITHUB_PAGES_BASE}/` : '',
+  reactStrictMode: true,
   allowedDevOrigins: ["*.space-z.ai"],
-  // P4: Sentry source maps — upload to Sentry during build
-  productionBrowserSourceMaps: true, // Generate source maps for Sentry upload
+  // trailingSlash recommended for GitHub Pages static hosting
+  trailingSlash: true,
+  // images: unoptimized required for static export
+  images: {
+    unoptimized: true,
+  },
   async headers() {
     return [
       {
@@ -37,19 +37,14 @@ const nextConfig: NextConfig = {
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
           { key: 'X-XSS-Protection', value: '1; mode=block' },
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://z-cdn.chatglm.cn; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+          },
         ]
       }
     ];
   }
 };
 
-// P4: Sentry config wrapper
-const sentryConfig = withSentryConfig(nextConfig, {
-  org: 'maaloznal',
-  project: 'cardcraft',
-  silent: true,
-  // Source maps upload requires SENTRY_AUTH_TOKEN env var
-  // (set in .env — uploaded during production build)
-});
-
-export default withBundleAnalyzer(sentryConfig);
+export default nextConfig;

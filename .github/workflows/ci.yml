@@ -99,6 +99,9 @@ jobs:
         env:
           # Skip static copy if .next/standalone doesn't exist (standalone output)
           CI: true
+          # Supabase environment variables
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
   # Note: SENTRY_AUTH_TOKEN must be set as GitHub Actions Secret
   # for production source maps upload during build job.

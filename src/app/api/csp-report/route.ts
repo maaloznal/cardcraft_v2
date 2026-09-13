@@ -12,6 +12,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createLogger } from '@/lib/logger';
 
+export const dynamic = "force-static";
+
 const log = createLogger('CSP');
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
