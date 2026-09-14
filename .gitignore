@@ -60,7 +60,13 @@ server.log
 /playwright/.cache/
 
 # Verification screenshots
-verification*.png.tool-results/
+verification*.png
+# Tool results dumps (agent persisted-output)
+tool-results/
+# Pasted agent context files
+Pasted markdown*.md
+# Runtime artifacts
+.zscripts/dev.pid
 # Visual regression baselines (platform-specific — regenerate locally)
 tests/e2e/__screenshots__/
 upload/
@@ -69,4 +75,6 @@ upload/
 # Supabase CLI local state
 supabase/.temp/
 supabase/.branches/
+# Agent work context (prompts, not product source)
+agent-ctx/
 
