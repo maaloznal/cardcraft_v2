@@ -65,3 +65,8 @@ verification*.png.tool-results/
 tests/e2e/__screenshots__/
 upload/
 .stryker-tmp/
+
+# Supabase CLI local state
+supabase/.temp/
+supabase/.branches/
+
