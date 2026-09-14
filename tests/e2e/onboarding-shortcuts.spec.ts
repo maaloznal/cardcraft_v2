@@ -43,7 +43,7 @@ test.describe('P22: Onboarding', () => {
     await expect(page.locator('#onboardingOverlay')).not.toHaveClass(/active/);
   });
 
-  test('onboarding does NOT show on reload after Skip', async ({ page, _context }) => {
+  test('onboarding does NOT show on reload after Skip', async ({ page }) => {
     // Use a fresh context (no addInitScript) so reload preserves localStorage
     // Clear storage on first load, then test persistence
     await page.goto('/');
