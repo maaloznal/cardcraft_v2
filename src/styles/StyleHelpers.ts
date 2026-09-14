@@ -3,7 +3,7 @@
  * No DOM access, no side effects.
  */
 
-import type { Card, WordStyle, SectionStyle } from '../core/types';
+import type { Card, WordStyle } from '../core/types';
 import { escapeHtml, isWordChar, splitOnce } from '../core/utils';
 
 /** Build inline style string for a section field (color, fontWeight, fontSize, etc.) */

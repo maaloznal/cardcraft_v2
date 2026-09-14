@@ -4,7 +4,7 @@
  */
 
 import type { Card } from '../core/types';
-import { deepClone, sanitizeCardId, isValidHexColor, clampFontSize, isValidTheme, isValidFormat } from '../core/utils';
+import { sanitizeCardId, isValidHexColor, clampFontSize, isValidTheme, isValidFormat } from '../core/utils';
 import { ALLOWED_THEMES, ALLOWED_FORMATS } from '../core/constants';
 
 const KEYS = {

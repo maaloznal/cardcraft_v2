@@ -77,4 +77,6 @@ supabase/.temp/
 supabase/.branches/
 # Agent work context (prompts, not product source)
 agent-ctx/
-
+# Agent/runtime tracking junk
+worklog.md
+.zcode/

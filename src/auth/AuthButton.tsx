@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuth } from './AuthProvider'
+import Link from 'next/link'
 
 export function AuthButton() {
   const { user, loading, signOut, enabled } = useAuth()
@@ -38,7 +39,7 @@ export function AuthButton() {
   }
 
   return (
-    <a
+    <Link
       href="/login"
       className="btn-icon top-bar-btn"
       title="Войти"
@@ -48,6 +49,6 @@ export function AuthButton() {
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
         <circle cx="12" cy="7" r="4"/>
       </svg>
-    </a>
+    </Link>
   )
 }

@@ -21,9 +21,6 @@
 import * as Storage from '@/storage/StorageManager';
 import { CONFIG } from '@/core/constants';
 import type { OrchestratorContext } from './types';
-import { createLogger } from '@/lib/logger';
-
-const log = createLogger('Storage');
 
 export interface StorageController {
   scheduleSave(opts?: { silent?: boolean }): void;

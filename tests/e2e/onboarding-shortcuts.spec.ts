@@ -12,7 +12,7 @@ import { test, expect } from '@playwright/test';
  * flag directly to test onboarding behavior.
  */
 
-const ONBOARDING_KEY = 'flashcard-onboarding-seen';
+const _ONBOARDING_KEY = 'flashcard-onboarding-seen';
 
 test.describe('P22: Onboarding', () => {
   test('onboarding shows on first visit (no localStorage flag)', async ({ page }) => {
@@ -43,7 +43,7 @@ test.describe('P22: Onboarding', () => {
     await expect(page.locator('#onboardingOverlay')).not.toHaveClass(/active/);
   });
 
-  test('onboarding does NOT show on reload after Skip', async ({ page, context }) => {
+  test('onboarding does NOT show on reload after Skip', async ({ page, _context }) => {
     // Use a fresh context (no addInitScript) so reload preserves localStorage
     // Clear storage on first load, then test persistence
     await page.goto('/');

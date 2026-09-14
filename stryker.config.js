@@ -16,7 +16,7 @@
  *
  * @type {import('@stryker-mutator/core').StrykerOptions}
  */
-export default {
+const strykerConfig = {
   $schema: './node_modules/@stryker-mutator/core/schema/stryker-core.schema.json',
   packageManager: 'npm', // Stryker doesn't support 'bun'
   reporters: ['html', 'clear-text', 'progress'],
@@ -42,3 +42,5 @@ export default {
   concurrency: 2,
   timeoutMS: 30000,
 };
+
+export default strykerConfig;

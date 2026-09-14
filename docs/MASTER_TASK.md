@@ -6,6 +6,9 @@
 >
 > Each task lists: **Requirement** · **Current state** · **What's left** · **Verification**.
 > A task is `[x]` only when implementation exists, is integrated, TS+lint+tests pass, and the result is factually verified.
+>
+> **См. также:** `docs/AGENT_ENCYCLOPEDIA.md` — единственная энциклопедия для нового агента.
+> Устаревшие отчёты (`FINAL_*`, `POST_*`, `PRODUCTION_DIVERGENCE_REPORT`) перемещены в `docs/archive/`.
 
 ---
 

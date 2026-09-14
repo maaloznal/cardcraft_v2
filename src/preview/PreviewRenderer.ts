@@ -13,7 +13,7 @@
  */
 
 import type { Card } from '../core/types';
-import { escapeHtml, escapeAttr, sanitizeCardId } from '../core/utils';
+import { escapeAttr, sanitizeCardId } from '../core/utils';
 import {
   FIELD_CONFIG,
   SHAPE_PROGRESS_STYLES,
@@ -338,7 +338,7 @@ export class PreviewRenderer {
     else container.appendChild(el);
   }
 
-  private updateList(cardNode: HTMLElement, card: Card, cardIndex: number): void {
+  private updateList(cardNode: HTMLElement, card: Card, _cardIndex: number): void {
     const listStyle = buildSectionStyle(card, 'list');
     const listNumStyle = buildListNumStyle(card);
     const safeCardId = sanitizeCardId(card.id);

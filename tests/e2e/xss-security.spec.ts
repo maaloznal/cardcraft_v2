@@ -104,8 +104,6 @@ test.describe('XSS security audit (P19.4)', () => {
     });
     await page.reload();
     await page.waitForTimeout(1500);
-    // card.id should be sanitized — no script in DOM
-    const scriptCount = await page.locator('script:not([src])').count();
     // The malicious script tag should not be in the DOM as an executable element
     // (it may appear as text content but not as a script element)
     const maliciousScripts = await page

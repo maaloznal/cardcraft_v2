@@ -385,7 +385,6 @@
     // 28. Размер фигуры (slider)
     q('[data-action="palette"]')?.click();
     var sizeSlider = q('#listNumSizeSlider');
-    var sizeValue = q('#listStyleSelect');
     if (sizeSlider) {
       sizeSlider.value = '32';
       sizeSlider.dispatchEvent(new Event('input', {bubbles: true}));

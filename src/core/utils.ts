@@ -3,8 +3,6 @@
  * Every function here can be unit-tested in isolation.
  */
 
-import type { Card } from './types';
-
 /** Escape HTML special characters to prevent XSS */
 export function escapeHtml(str: string): string {
   return (str || '')

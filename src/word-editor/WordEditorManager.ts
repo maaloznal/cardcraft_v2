@@ -12,7 +12,7 @@
  */
 
 import type { WordStyle, Card } from '../core/types';
-import { escapeHtml, splitOnce, stripMeta } from '../core/utils';
+import { escapeHtml, splitOnce } from '../core/utils';
 import { FIELD_LABELS } from '../core/constants';
 
 type StyleChangeHandler = (
