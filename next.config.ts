@@ -5,13 +5,13 @@ import type { NextConfig } from "next";
  *
  * Static export for GitHub Pages deployment.
  * - output: "export" for GitHub Pages compatibility
- * - basePath: "/cardcraft" for GitHub Pages subdirectory
+ * - basePath: "/cardcraft_v2" for GitHub Pages subdirectory (matches repo name)
  * - trailingSlash: true for GitHub Pages static hosting
  * - images: unoptimized required for static export
  */
 
 const isProd = process.env.NODE_ENV === 'production';
-const GITHUB_PAGES_BASE = '/cardcraft';
+const GITHUB_PAGES_BASE = '/cardcraft_v2';
 
 const nextConfig: NextConfig = {
   // Static export for GitHub Pages
