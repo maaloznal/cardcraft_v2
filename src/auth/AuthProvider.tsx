@@ -16,14 +16,11 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
-  const [loading, setLoading] = useState(true)
   const enabled = supabase !== null
+  const [loading, setLoading] = useState(() => enabled)
 
   useEffect(() => {
-    if (!supabase) {
-      setLoading(false)
-      return
-    }
+    if (!supabase) return
 
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
