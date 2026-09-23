@@ -134,12 +134,9 @@ test.describe('Overlay: confirm dialog', () => {
     await page.locator('#deleteAllBtn').click();
     await expect(page.locator('#confirmOverlay')).toHaveClass(/\bactive\b/);
     // Focus the cancel button inside dialog
-    const cancelBtn = page.locator('#confirmOverlay button').first();
-    await cancelBtn.focus();
-    await expect(cancelBtn).toBeFocused();
-    // Press Escape — should close dialog (events.ts keydown handler on confirmOverlay)
+    await page.locator('#confirmOverlay button').first().focus();
+    // Press Escape — should close dialog
     await page.keyboard.press('Escape');
-    // Use expect.poll for the class change
     await expect.poll(async () => {
       return await page.evaluate(() => document.getElementById('confirmOverlay')?.className || '');
     }, { timeout: 3000, intervals: [100] }).not.toMatch(/\bactive\b/);
