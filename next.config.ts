@@ -21,6 +21,11 @@ const nextConfig: NextConfig = {
   assetPrefix: isProd ? `${GITHUB_PAGES_BASE}/` : '',
   reactStrictMode: true,
   allowedDevOrigins: ["*.space-z.ai"],
+  // Expose basePath to client-side code so OAuth redirects can construct
+  // URLs that match Supabase's uri_allow_list (which includes basePath).
+  env: {
+    NEXT_PUBLIC_BASE_PATH: isProd ? GITHUB_PAGES_BASE : '',
+  },
   // trailingSlash recommended for GitHub Pages static hosting
   trailingSlash: true,
   // images: unoptimized required for static export

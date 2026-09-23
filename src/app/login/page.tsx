@@ -49,9 +49,17 @@ export default function LoginPage() {
     }
 
     try {
+      // Use full href (origin + basePath + path) — `window.location.origin` does
+      // NOT include Next.js basePath, so on production it would be just
+      // `https://maaloznal.github.io` (without `/cardcraft_v2`), which is not
+      // in Supabase's uri_allow_list and falls back to site_url → 404.
+      // Using `window.location.origin + window.location.pathname` keeps the
+      // basePath segment so the redirect target matches the allow_list entry.
+      const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+      const redirectTo = `${window.location.origin}${basePath}/`
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: `${window.location.origin}/` },
+        options: { redirectTo },
       })
       if (error) throw error
       // OAuth redirects away — no setLoading(false) needed
