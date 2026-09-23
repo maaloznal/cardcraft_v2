@@ -46,6 +46,7 @@ import type { createKeyboardController } from './keyboard-controller';
 import type { createHistoryController } from './history-controller';
 import type { createCardOpsController } from './card-ops';
 import type { createSidebarController } from './sidebar-controller';
+import type { createCloudSyncController } from './cloud-sync-controller';
 
 export interface OrchestratorContext {
   // ── Core DOM + state ──
@@ -79,4 +80,5 @@ export interface OrchestratorContext {
   history: ReturnType<typeof createHistoryController>;
   cardOps: ReturnType<typeof createCardOpsController>;
   sidebar: ReturnType<typeof createSidebarController>;
+  cloudSync: ReturnType<typeof createCloudSyncController>;
 }

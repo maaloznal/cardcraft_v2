@@ -66,6 +66,7 @@ import { createKeyboardController } from './keyboard-controller';
 import { createHistoryController } from './history-controller';
 import { createCardOpsController } from './card-ops';
 import { createSidebarController } from './sidebar-controller';
+import { createCloudSyncController } from './cloud-sync-controller';
 import { createStateSubscriber } from './state-subscriber';
 import { wireRendererCallbacks } from './callbacks';
 import { bindAll } from './events';
@@ -190,6 +191,11 @@ export function initCardCraftApp(root: HTMLElement): () => void {
   ctx.history = createHistoryController(ctx);
   ctx.cardOps = createCardOpsController(ctx);
   ctx.sidebar = createSidebarController(ctx);
+  // Cloud sync — must be created AFTER storage (it references ctx.storage for
+  // toasts) and BEFORE the init sequence (so it can do the initial pull as
+  // part of the boot flow). The initial pull is async and happens after the
+  // first paint, so the UI shows local state first, then updates from cloud.
+  ctx.cloudSync = createCloudSyncController(ctx);
 
   /* ---------- 7. Wire renderer callbacks (composition root) ---------- */
   // Routes PreviewRenderer/EditorRenderer/WordEditorManager action
@@ -235,6 +241,7 @@ export function initCardCraftApp(root: HTMLElement): () => void {
     ctx.history.destroy();
     ctx.cardOps.destroy();
     ctx.sidebar.destroy();
+    ctx.cloudSync.destroy();
     // Destroy UI primitives
     sidebarAccordion.destroy();
     modalAccordion.destroy();

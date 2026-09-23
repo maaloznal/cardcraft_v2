@@ -44,7 +44,8 @@ export function createStorageController(ctx: OrchestratorContext): StorageContro
   /**
    * Persist cards + all settings to localStorage synchronously. Falls back to
    * IndexedDB on QuotaExceededError (P8.4). Toasts success / fallback / error
-   * unless called with { silent: true }.
+   * unless called with { silent: true }. Also schedules a debounced cloud
+   * push if the user is logged in (handled by cloud-sync-controller).
    */
   function saveCardsToLocalStorage({ silent = false } = {}): void {
     const state = stateManager.get();
@@ -61,6 +62,8 @@ export function createStorageController(ctx: OrchestratorContext): StorageContro
     };
     try {
       Storage.save(stateToSave);
+      // Schedule a cloud push if user is logged in (no-op otherwise)
+      ctx.cloudSync?.scheduleCloudPush();
       if (!silent) showToast('Карточки успешно сохранены!');
     } catch (e) {
       const err = e as Error;
