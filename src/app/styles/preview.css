@@ -64,7 +64,9 @@
   padding: 32px;
   width: 380px;
   max-width: 100%;
-  min-height: 400px;
+  /* No min-height for default 'auto' format — card adapts to content.
+     A card with only a title will be short; a card with title+text+list
+     will be taller. Fixed-aspect formats (below) override this. */
   box-shadow: var(--card-shadow);
   display: flex;
   flex-direction: column;

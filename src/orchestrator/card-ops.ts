@@ -65,8 +65,11 @@ export function createCardOpsController(ctx: OrchestratorContext): CardOpsContro
 
   /**
    * Add a new empty card at the end: dispatch ADD_CARD, O(1) insert into
-   * editor + preview renderers, refresh progress bars + count badge, collapse
-   * the new card, push history, schedule a silent save, toast + SR announce.
+   * editor + preview renderers, refresh progress bars + count badge.
+   * The new card is OPEN for editing (user just added it — they want to type
+   * in it immediately). All previously-open cards are COLLAPSED to keep the
+   * editor compact (only one open at a time after add).
+   * Pushes history, schedules silent save, toast + SR announce.
    */
   function addCard(): void {
     stateManager.dispatch({ type: 'ADD_CARD' });
@@ -79,7 +82,8 @@ export function createCardOpsController(ctx: OrchestratorContext): CardOpsContro
     // Progress bars + tags need reindex (O(n), but no DOM rebuild)
     updateProgressAndTags();
     uiAppliers.updateCardCountBadge();
-    editorRenderer.collapseLastCard();
+    // Collapse all previously-open cards, keep the new (last) one open.
+    editorRenderer.collapseAllExceptLast();
     ctx.history.pushHistory();
     ctx.storage.scheduleSave({ silent: true });
     ctx.storage.showToast('Карточка добавлена');

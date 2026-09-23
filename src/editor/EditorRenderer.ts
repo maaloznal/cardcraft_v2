@@ -189,6 +189,28 @@ export class EditorRenderer {
     if (chevron) chevron.style.transform = 'rotate(-90deg)';
   }
 
+  /**
+   * Collapse all card blocks EXCEPT the last one. Used by addCard() so the
+   * newly-added card is open and ready for editing, while previously-open
+   * cards are collapsed to keep the editor compact.
+   */
+  collapseAllExceptLast(): void {
+    const blocks = this.container.querySelectorAll<HTMLElement>('.card-editor-block');
+    blocks.forEach((block, i) => {
+      if (i === blocks.length - 1) {
+        // Last (new) card — ensure it's expanded
+        block.classList.remove('collapsed');
+        const chevron = block.querySelector<HTMLElement>('.card-collapse-toggle svg');
+        if (chevron) chevron.style.transform = '';
+      } else {
+        // All others — collapse
+        block.classList.add('collapsed');
+        const chevron = block.querySelector<HTMLElement>('.card-collapse-toggle svg');
+        if (chevron) chevron.style.transform = 'rotate(-90deg)';
+      }
+    });
+  }
+
   // ─── Private helpers ────────────────────────────────────────
 
   private buildEditorBlock(card: Card, index: number, total: number): HTMLElement {
@@ -219,13 +241,18 @@ export class EditorRenderer {
         </button>
         ${EDITOR_FIELDS.map(
           (f) => `
-        <div class="form-group">
+        <div class="form-group form-group-with-clear">
           <label>${f.label}</label>
+          <div class="input-wrapper">
           ${
             f.multiline
               ? `<textarea data-field="${f.key}" data-index="${index}" maxlength="${f.maxlength}" placeholder="${f.label}…">${escapeHtml(card[f.key])}</textarea>`
               : `<input type="text" data-field="${f.key}" data-index="${index}" maxlength="${f.maxlength}" placeholder="${f.label}…" value="${escapeHtml(card[f.key])}">`
           }
+          <button class="btn-clear-field" data-action="clear-field" data-index="${index}" data-field="${f.key}" title="Очистить" aria-label="Очистить ${f.label}" type="button">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          </div>
         </div>`,
         ).join('')}
       </div>
@@ -248,6 +275,20 @@ export class EditorRenderer {
         block.classList.toggle('collapsed');
         const svg = btn.querySelector('svg');
         if (svg) svg.style.transform = block.classList.contains('collapsed') ? 'rotate(-90deg)' : '';
+        return;
+      }
+
+      // Clear field: empty the input/textarea value and dispatch 'input' action
+      // so StateManager updates the card content (and scheduleSave fires).
+      if (action === 'clear-field') {
+        const wrapper = btn.closest('.input-wrapper');
+        const input = wrapper?.querySelector('input[data-field], textarea[data-field]') as HTMLInputElement | HTMLTextAreaElement | null;
+        if (input) {
+          input.value = '';
+          input.focus();
+          // Dispatch 'input' event so the existing inputHandler picks it up
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        }
         return;
       }
 

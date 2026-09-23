@@ -50,6 +50,53 @@
   letter-spacing: 0.04em;
 }
 
+/* Input wrapper — contains input/textarea + clear button */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+.input-wrapper input,
+.input-wrapper textarea {
+  flex: 1;
+  padding-right: 28px; /* room for clear button */
+}
+/* Clear-field button (× icon on the right of each input/textarea) */
+.btn-clear-field {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ui-text-tertiary);
+  cursor: pointer;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease), color var(--dur) var(--ease), background var(--dur) var(--ease);
+  z-index: 2;
+}
+/* For textarea (multiline), pin the clear button to top-right */
+.input-wrapper textarea + .btn-clear-field {
+  top: 8px;
+  transform: none;
+}
+/* Show clear button on hover/focus of the input wrapper */
+.input-wrapper:hover .btn-clear-field,
+.input-wrapper:focus-within .btn-clear-field {
+  opacity: 1;
+}
+.btn-clear-field:hover {
+  color: var(--ui-text);
+  background: var(--ui-surface-hover);
+}
+
 /* Divider */
 .cc-root hr {
   border: 0;

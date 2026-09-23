@@ -106,7 +106,17 @@ export default function Home() {
         <aside className="editor-sidebar collapsed" id="editorSidebar">
           <div className="sidebar-fixed-header">
 
-          {/* 1. Формат */}
+          {/* 1. Дизайн — combined accordion for all design settings (format, theme,
+              gradient angle, list style, progress bar). Closed by default so
+              the card editor below is raised to the top and immediately visible. */}
+          <div className="sidebar-accordion" data-sidebar-accordion>
+            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle>
+              <span>Дизайн</span>
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div className="sidebar-accordion-body">
+
+          {/* 1a. Формат */}
           <div className="sidebar-accordion" data-sidebar-accordion>
             <button className="sidebar-accordion-header" type="button" data-sidebar-toggle>
               <span>Формат</span>
@@ -135,7 +145,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* 2. Тема оформления */}
+          {/* 1b. Тема оформления */}
           <div className="sidebar-accordion" data-sidebar-accordion>
             <button className="sidebar-accordion-header" type="button" data-sidebar-toggle>
               <span>Тема оформления</span>
@@ -189,7 +199,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* 3. Угол градиента */}
+          {/* 1c. Угол градиента */}
           <div className="sidebar-accordion" data-sidebar-accordion>
             <button className="sidebar-accordion-header" type="button" data-sidebar-toggle>
               <span>Угол градиента</span>
@@ -212,7 +222,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* 4. Стиль списков (включая нумерацию карточек) */}
+          {/* 1d. Стиль списков (включая нумерацию карточек) */}
           <div className="sidebar-accordion" data-sidebar-accordion>
             <button className="sidebar-accordion-header" type="button" data-sidebar-toggle>
               <span>Стиль списков</span>
@@ -241,7 +251,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* 5. Шкала прогресса (стиль + переключатель) */}
+          {/* 1e. Шкала прогресса (стиль + переключатель) */}
           <div className="sidebar-accordion" data-sidebar-accordion>
             <button className="sidebar-accordion-header" type="button" data-sidebar-toggle>
               <span>Шкала прогресса</span>
@@ -268,6 +278,9 @@ export default function Home() {
             </div>
             </div>
           </div>
+
+            </div>{/* /sidebar-accordion-body for Дизайн */}
+          </div>{/* /Дизайн sidebar-accordion */}
 
           </div>
 
