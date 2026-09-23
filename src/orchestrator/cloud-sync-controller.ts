@@ -24,7 +24,7 @@
  */
 
 import { supabase } from '@/lib/supabase/client';
-import type { Session, User } from '@supabase/supabase-js';
+import type { Session, User, RealtimeChannel } from '@supabase/supabase-js';
 import {
   getDefaultProject,
   insertDefaultProject,
@@ -39,6 +39,9 @@ import { createLogger } from '@/lib/logger';
 const log = createLogger('CloudSync');
 
 const CLOUD_PUSH_DEBOUNCE_MS = 3000;
+// Debounce for applying remote updates — coalesces rapid broadcasts (e.g. when
+// the other device pushes multiple times in quick succession) into one apply.
+const REMOTE_APPLY_DEBOUNCE_MS = 200;
 
 export interface SyncStatus {
   enabled: boolean;        // user is logged in + supabase configured
@@ -60,13 +63,18 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
   const { stateManager, storage } = ctx;
 
   let pushTimer: ReturnType<typeof setTimeout> | null = null;
+  let remoteApplyTimer: ReturnType<typeof setTimeout> | null = null;
   let authSubscription: { subscription: { unsubscribe: () => void } } | null = null;
+  let realtimeChannel: RealtimeChannel | null = null;
   let currentUser: User | null = null;
   let cachedProject: Project | null = null; // cache of the default project (id + version)
   let syncing = false;
   let lastSyncedAt: Date | null = null;
   let lastError: string | null = null;
   let initialPullDone = false;
+  // Guard flag: when applying remote state to local, we don't want to trigger
+  // a cloud push back (which would echo our own change). Set true during apply.
+  let isApplyingRemote = false;
 
   function getEnabled(): boolean {
     return supabase !== null && currentUser !== null;
@@ -106,28 +114,49 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
 
   /**
    * Apply cloud state to the local app (replaces cards + settings).
-   * Called after a successful pull.
+   * Called after a successful pull OR after a Realtime broadcast.
+   * Sets isApplyingRemote=true during the apply so the storage-controller's
+   * cloud-push hook is a no-op (prevents echo: remote → apply → push → broadcast).
    */
   function applyCloudState(payload: SavedState): void {
-    if (payload.cards && Array.isArray(payload.cards) && payload.cards.length) {
-      stateManager.setCards(payload.cards);
+    isApplyingRemote = true;
+    try {
+      if (payload.cards && Array.isArray(payload.cards) && payload.cards.length) {
+        stateManager.setCards(payload.cards);
+      }
+      if (payload.theme) stateManager.dispatch({ type: 'SET_GLOBAL_THEME', payload: { theme: payload.theme } });
+      if (payload.format) stateManager.dispatch({ type: 'SET_FORMAT', payload: { format: payload.format } });
+      if (payload.showCardNumbers !== undefined)
+        stateManager.dispatch({ type: 'SET_SHOW_CARD_NUMBERS', payload: { show: payload.showCardNumbers } });
+      if (payload.showProgressBar !== undefined)
+        stateManager.dispatch({ type: 'SET_SHOW_PROGRESS_BAR', payload: { show: payload.showProgressBar } });
+      if (payload.progressBarStyle)
+        stateManager.dispatch({ type: 'SET_PROGRESS_BAR_STYLE', payload: { style: payload.progressBarStyle } });
+      if (payload.listStyleType)
+        stateManager.dispatch({ type: 'SET_LIST_STYLE', payload: { style: payload.listStyleType } });
+      if (payload.gradientAngle !== undefined)
+        stateManager.dispatch({ type: 'SET_GRADIENT_ANGLE', payload: { angle: payload.gradientAngle } });
+      if (payload.charLimitEnabled !== undefined)
+        stateManager.dispatch({ type: 'SET_CHAR_LIMIT', payload: { enabled: payload.charLimitEnabled } });
+      // Persist to local storage so it survives reloads even without re-pulling
+      storage.saveCardsToLocalStorage({ silent: true });
+      // Re-render the cards in UI — stateManager.setCards updates state, but
+      // the preview/editor renderers are NOT subscribed to state changes
+      // (they're called explicitly by controllers). Without these calls the
+      // state is correct but the UI shows stale cards.
+      try {
+        ctx.uiAppliers.renderEditor();
+        ctx.uiAppliers.renderPreview();
+      } catch (renderErr) {
+        log.error('Failed to re-render after cloud apply', {
+          error: renderErr instanceof Error ? renderErr.message : String(renderErr),
+        });
+      }
+    } finally {
+      // Reset on next tick — local dispatches happen synchronously, so by the
+      // time any push would fire, the apply is complete and the guard can drop.
+      setTimeout(() => { isApplyingRemote = false; }, 0);
     }
-    if (payload.theme) stateManager.dispatch({ type: 'SET_GLOBAL_THEME', payload: { theme: payload.theme } });
-    if (payload.format) stateManager.dispatch({ type: 'SET_FORMAT', payload: { format: payload.format } });
-    if (payload.showCardNumbers !== undefined)
-      stateManager.dispatch({ type: 'SET_SHOW_CARD_NUMBERS', payload: { show: payload.showCardNumbers } });
-    if (payload.showProgressBar !== undefined)
-      stateManager.dispatch({ type: 'SET_SHOW_PROGRESS_BAR', payload: { show: payload.showProgressBar } });
-    if (payload.progressBarStyle)
-      stateManager.dispatch({ type: 'SET_PROGRESS_BAR_STYLE', payload: { style: payload.progressBarStyle } });
-    if (payload.listStyleType)
-      stateManager.dispatch({ type: 'SET_LIST_STYLE', payload: { style: payload.listStyleType } });
-    if (payload.gradientAngle !== undefined)
-      stateManager.dispatch({ type: 'SET_GRADIENT_ANGLE', payload: { angle: payload.gradientAngle } });
-    if (payload.charLimitEnabled !== undefined)
-      stateManager.dispatch({ type: 'SET_CHAR_LIMIT', payload: { enabled: payload.charLimitEnabled } });
-    // Persist to local storage so it survives reloads even without re-pulling
-    storage.saveCardsToLocalStorage({ silent: true });
   }
 
   /**
@@ -214,6 +243,7 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
   /** Debounced cloud push — called by storage-controller after a local save. */
   function scheduleCloudPush(): void {
     if (!getEnabled()) return; // no-op when not logged in
+    if (isApplyingRemote) return; // skip: we're applying a remote update, push would echo
     if (pushTimer) clearTimeout(pushTimer);
     pushTimer = setTimeout(() => {
       void pushToCloud(false);
@@ -221,10 +251,116 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
   }
 
   /**
+   * Subscribe to Supabase Realtime for changes to the user's default project.
+   * On UPDATE events where new.version > cachedProject.version, fetch the
+   * latest state and apply it locally (without pushing back). This enables
+   * cross-device sync without page reloads: edit on phone → appears on desktop.
+   *
+   * Filter: user_id=eq.<userId> — RLS also enforces this, so even without the
+   * filter the user would only see their own rows.
+   */
+  function subscribeToRealtime(userId: string): void {
+    if (!supabase) return;
+    // Unsubscribe any previous channel (e.g. from a stale session)
+    if (realtimeChannel) {
+      try {
+        supabase.removeChannel(realtimeChannel);
+      } catch {
+        // ignore — channel may already be removed
+      }
+      realtimeChannel = null;
+    }
+
+    log.info('Subscribing to realtime updates', { userId });
+    realtimeChannel = supabase
+      .channel(`projects:user_id=eq.${userId}`, {
+        config: { broadcast: { self: false } }, // don't receive our own broadcasts
+      })
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'projects',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          try {
+            const eventType = payload.eventType;
+            const newRecord = payload.new as Project | undefined;
+            const oldRecord = payload.old as Project | undefined;
+            log.debug('Realtime event received', { eventType, newVersion: newRecord?.version });
+
+            // Only care about our 'default' project
+            if (newRecord && newRecord.name !== DEFAULT_PROJECT_NAME && oldRecord?.name !== DEFAULT_PROJECT_NAME) {
+              return;
+            }
+
+            if (eventType === 'DELETE') {
+              log.info('Default project deleted remotely — keeping local state');
+              cachedProject = null;
+              return;
+            }
+
+            // UPDATE or INSERT — apply if version is newer than what we have
+            if (newRecord && (!cachedProject || newRecord.version > (cachedProject.version ?? 0))) {
+              // Debounce apply — coalesces rapid broadcasts
+              if (remoteApplyTimer) clearTimeout(remoteApplyTimer);
+              remoteApplyTimer = setTimeout(() => {
+                void applyRemoteUpdate();
+              }, REMOTE_APPLY_DEBOUNCE_MS);
+            }
+          } catch (e) {
+            log.error('Realtime event handler failed', { error: e instanceof Error ? e.message : String(e) });
+          }
+        },
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          log.info('Realtime channel subscribed');
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          log.warn('Realtime channel error', { status });
+        }
+      });
+  }
+
+  /**
+   * Apply a remote update: fetch fresh state from cloud (authoritative) and
+   * apply it locally without pushing back. This is called from the realtime
+   * subscription handler when another device pushed new data.
+   */
+  async function applyRemoteUpdate(): Promise<void> {
+    if (!supabase || !currentUser) return;
+    // Fetch fresh to get the latest committed state (the realtime payload may
+    // be slightly stale if multiple updates were coalesced on the server)
+    try {
+      const fresh = await getDefaultProject(currentUser.id);
+      if (!fresh) {
+        log.warn('Realtime event but project no longer exists in cloud');
+        return;
+      }
+      cachedProject = fresh;
+      const payload = fresh.data as SavedState;
+      if (!payload || typeof payload !== 'object') {
+        log.warn('Realtime pull returned malformed payload');
+        return;
+      }
+      applyCloudState(payload);
+      lastSyncedAt = new Date(fresh.updated_at);
+      log.info('Applied remote update', { version: fresh.version, updatedAt: fresh.updated_at });
+      storage.showToast('Карточки обновлены с другого устройства', 2000);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      lastError = msg;
+      log.error('Apply remote update failed', { error: msg });
+    }
+  }
+
+  /**
    * Auth state change handler.
-   * - INITIAL_SESSION: if logged in, do the initial pull (once).
-   * - SIGNED_IN: pull from cloud.
-   * - SIGNED_OUT: clear cached project, stop syncing, keep local state.
+   * - INITIAL_SESSION: if logged in, do the initial pull (once) + start realtime.
+   * - SIGNED_IN: pull from cloud + start realtime.
+   * - SIGNED_OUT: clear cached project, stop realtime, stop syncing, keep local state.
    */
   function handleAuthChange(event: string, session: Session | null): void {
     if (event === 'SIGNED_OUT' || !session?.user) {
@@ -236,6 +372,19 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
         clearTimeout(pushTimer);
         pushTimer = null;
       }
+      if (remoteApplyTimer) {
+        clearTimeout(remoteApplyTimer);
+        remoteApplyTimer = null;
+      }
+      // Unsubscribe from realtime
+      if (realtimeChannel && supabase) {
+        try {
+          supabase.removeChannel(realtimeChannel);
+        } catch {
+          // ignore
+        }
+        realtimeChannel = null;
+      }
       return;
     }
     if (session.user.id !== currentUser?.id) {
@@ -243,6 +392,8 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
       cachedProject = null; // reset cache for new user
       log.info('User signed in', { userId: currentUser.id, email: currentUser.email });
     }
+    // Start realtime subscription for this user (idempotent — unsubscribes previous)
+    subscribeToRealtime(currentUser.id);
     // Do the initial pull once per session
     if (!initialPullDone && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
       initialPullDone = true;
@@ -280,9 +431,19 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
     destroy() {
       if (pushTimer) clearTimeout(pushTimer);
       pushTimer = null;
+      if (remoteApplyTimer) clearTimeout(remoteApplyTimer);
+      remoteApplyTimer = null;
       if (authSubscription) {
         authSubscription.subscription.unsubscribe();
         authSubscription = null;
+      }
+      if (realtimeChannel && supabase) {
+        try {
+          supabase.removeChannel(realtimeChannel);
+        } catch {
+          // ignore
+        }
+        realtimeChannel = null;
       }
       currentUser = null;
       cachedProject = null;
