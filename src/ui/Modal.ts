@@ -83,12 +83,15 @@ export class Modal {
     }
 
     // Focus management
-    requestAnimationFrame(() => {
+    // P4-FIX: use setTimeout(0) instead of requestAnimationFrame — rAF may
+    // not fire reliably in headless Chromium test environments (Playwright).
+    // setTimeout(0) is equivalent for deferring focus to after DOM update.
+    setTimeout(() => {
       const focusTarget = this.initialFocusSelector
         ? this.modal.querySelector<HTMLElement>(this.initialFocusSelector)
         : this.getFirstFocusable();
       focusTarget?.focus();
-    });
+    }, 0);
 
     this.openHandlers.forEach((fn) => fn());
   }

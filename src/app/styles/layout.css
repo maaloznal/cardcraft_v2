@@ -28,7 +28,7 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  height: 56px;
+  height: var(--top-bar-height);
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: saturate(180%) blur(12px);
   -webkit-backdrop-filter: saturate(180%) blur(12px);
@@ -100,7 +100,7 @@
 .app-layout {
   display: flex;
   flex: 1;
-  min-height: calc(100vh - 56px);
+  min-height: calc(100vh - var(--top-bar-height));
   align-items: stretch;
 }
 

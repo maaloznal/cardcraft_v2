@@ -103,56 +103,74 @@
 }
 
 /* ─── Touch targets: 44×44px via ::before hit area ────────────────
-   Visual icon stays small (16-20px) for aesthetics, but the clickable
-   area extends to 44×44px via an absolutely-positioned ::before pseudo-
-   element with negative inset. Applied to all small interactive buttons. */
+   P1-TOUCH-V2: extended to ALL interactive elements, not just top-bar buttons.
+   Visual icon stays small (16-20px) for aesthetics, but min-width/min-height
+   ensures 44×44px touch target. No ::before overlap — using min-size approach. */
 
-/* Sidebar toggle (#toggleSidebarBtn) — 36px default, extend to 44px */
 @media (max-width: 1023px) {
+  /* P1-TOUCH-V2: comprehensive list of all interactive elements that need
+     44×44px touch target on mobile/tablet. Using min-width/min-height
+     instead of ::before hit area extension to avoid overlap issues
+     between adjacent buttons. */
   .sidebar-toggle,
   .btn-icon.top-bar-btn,
   .btn-icon,
   .btn-delete,
   .modal-close,
   .btn-reset-single,
-  .btn-clear-field {
-    position: relative;
-    /* Slightly larger visual on touch devices */
+  .btn-clear-field,
+  .btn-card-action,
+  .btn-card-editor-palette,
+  .sidebar-accordion-header,
+  .modal-accordion-header,
+  .theme-dropdown-trigger,
+  .theme-group-header,
+  .theme-item,
+  .btn-add,
+  .btn-secondary,
+  .btn-delete-mass,
+  .btn-primary,
+  .format-btn,
+  .color-swatch,
+  .switch,
+  .mobile-mode-tab,
+  .mobile-sidebar-close,
+  .card-collapse-toggle,
+  /* Login/register controls */
+  .cc-root .btn-icon,
+  #closeModalBtn,
+  #applyColorsBtn,
+  #closeShortcutsBtn,
+  #restartOnboardingBtn,
+  #closeOnboardingBtn,
+  #onboardingStartBtn,
+  #onboardingSkipBtn {
     min-width: 44px;
     min-height: 44px;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
-  /* ::before hit area — extends 4px beyond the button on all sides.
-     For 36px buttons this gives ~44px hit area without changing
-     the visible button size. */
-  .sidebar-toggle::before,
-  .btn-icon.top-bar-btn::before,
-  .btn-icon::before,
-  .btn-delete::before,
-  .modal-close::before {
-    content: '';
-    position: absolute;
-    inset: -4px;
-    z-index: -1;
-    border-radius: inherit;
+
+  /* For buttons that contain only an icon (no text), ensure the button
+     itself is 44×44 — don't use ::before to avoid overlap with neighbors. */
+  .sidebar-toggle,
+  .btn-icon.top-bar-btn,
+  .btn-icon,
+  .btn-delete,
+  .modal-close,
+  .btn-reset-single,
+  .btn-clear-field,
+  .btn-card-action,
+  .card-collapse-toggle,
+  .mobile-sidebar-close,
+  #closeModalBtn,
+  #closeShortcutsBtn,
+  #closeOnboardingBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
-  /* btn-clear-field is smaller (18px) — extend more aggressively */
-  .btn-clear-field::before {
-    content: '';
-    position: absolute;
-    inset: -13px;
-    z-index: -1;
-    border-radius: inherit;
-  }
-  /* btn-reset-single (22px) — extend 11px each side → 44px hit area */
-  .btn-reset-single::before {
-    content: '';
-    position: absolute;
-    inset: -11px;
-    z-index: -1;
-    border-radius: inherit;
-  }
+
   /* Switch slider thumbs need bigger touch area too */
   .switch {
     min-width: 44px;
@@ -160,6 +178,26 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+  }
+
+  /* Color swatches — ensure 44×44 touch target */
+  .color-swatch {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Accordion headers — ensure 44px height */
+  .sidebar-accordion-header,
+  .modal-accordion-header,
+  .theme-dropdown-trigger,
+  .theme-group-header {
+    min-height: 44px;
+  }
+
+  /* Card actions under preview (download/copy/delete) — 44×44 */
+  .card-actions .btn-card-action {
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 
@@ -230,22 +268,51 @@
 
 /* ─── Phone (< 600px) — mobile mode switcher visible ────────────── */
 @media (max-width: 599px) {
-  /* Show the mobile mode switcher as a sticky bar between top-bar and app-layout */
+  /* P0-LAYOUT-V2: override --top-bar-height to the mobile value (52px).
+     All calc() that reference --top-bar-height now get 52px on phone. */
+  :root {
+    --top-bar-height: var(--top-bar-height-mobile);
+  }
+
+  /* P6-SAFE-AREA-V2: top bar height includes safe-area top.
+     height = base mobile height + safe-area-top.
+     This ensures the top bar content is NOT compressed by the notch —
+     the notch area is added on top, not subtracted from content. */
+  .top-bar {
+    height: calc(var(--top-bar-height) + var(--safe-area-top, 0px));
+    padding-top: var(--safe-area-top, 0px);
+  }
+
+  /* P0-LAYOUT-V2: app-layout height must account for BOTH top-bar AND
+     mobile-mode-switcher on phone. Without this, the layout exceeds
+     viewport height and creates unwanted vertical scroll.
+     top-bar (52 + safe-area-top) + switcher (44) of chrome above app-layout. */
+  .app-layout {
+    min-height: calc(100dvh - var(--top-bar-height) - var(--safe-area-top, 0px) - var(--mobile-switcher-height));
+  }
+
+  /* Show the mobile mode switcher as a sticky bar between top-bar and app-layout.
+     P0-LAYOUT-V2: top = --top-bar-height (52px on phone via override above).
+     No magic number 52 — it's the variable.
+     P0-LAYOUT-V2: switcher height MUST match --mobile-switcher-height exactly
+     so app-layout calc() is accurate. Set explicit height + use box-sizing. */
   .mobile-mode-switcher {
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 6px 8px;
+    /* P0-LAYOUT-V2: exact height = --mobile-switcher-height (44px). No padding
+       top/bottom — use align-items:center for vertical centering instead.
+       This ensures the switcher doesn't exceed the variable value. */
+    height: var(--mobile-switcher-height);
+    padding: 0 8px;
     border-bottom: 1px solid var(--ui-border, #e4e4e7);
     background: var(--ui-bg, #fafafa);
     position: sticky;
-    top: var(--top-bar-height, 52px);
-    /* z-index higher than sidebar (1000) so the switcher stays clickable
-       even when the sidebar is open underneath it. */
+    top: calc(var(--top-bar-height) + var(--safe-area-top, 0px));
     z-index: 1001;
-    /* Respect safe-area on left/right for landscape phone */
-    padding-left: max(8px, env(safe-area-inset-left, 0px));
-    padding-right: max(8px, env(safe-area-inset-right, 0px));
+    padding-left: max(8px, var(--safe-area-left, 0px));
+    padding-right: max(8px, var(--safe-area-right, 0px));
+    box-sizing: border-box;
   }
   /* Inner tabs container (role="tablist") — flex row of tab buttons */
   .mobile-mode-tabs {
@@ -254,9 +321,6 @@
     gap: 4px;
     flex: 1;
   }
-
-  /* When sidebar is open on phone, it slides in from the left.
-     The mobile-mode-switcher stays sticky on top, so it remains visible. */
 
   /* data-mobile-mode="preview" → hide the sidebar (slide it out) */
   .cc-root[data-mobile-mode="preview"] .editor-sidebar {
@@ -269,10 +333,28 @@
     width: 100%;
   }
 
+  /* P1-A11Y-V2: when editor mode is active on phone, the preview workspace
+     is hidden behind the sidebar drawer. Mark it aria-hidden so screen
+     readers skip it and it's removed from tab order. */
+  .cc-root[data-mobile-mode="editor"] .preview-workspace {
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .cc-root[data-mobile-mode="preview"] .editor-sidebar {
+    /* Sidebar hidden in preview mode — also remove from a11y tree */
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .cc-root[data-mobile-mode="editor"] .editor-sidebar,
+  .cc-root[data-mobile-mode="preview"] .preview-workspace {
+    visibility: visible;
+    pointer-events: auto;
+  }
+
   /* Top bar — slim on phone, preserve undo/redo + account */
   .top-bar {
     padding: 0 8px;
-    height: 52px;
+    height: var(--top-bar-height);
   }
   .brand-name {
     font-size: 14px;
@@ -284,12 +366,13 @@
     }
   }
 
-  /* Editor sidebar fixed below the mobile-mode-switcher.
-     Top-bar is 52px, switcher is ~44px tall → sidebar top at 96px. */
+  /* P0-LAYOUT-V2: Editor sidebar fixed below the mobile-mode-switcher.
+     top = top-bar-height (52px) + mobile-switcher-height (44px) = 96px.
+     No magic number — computed from CSS variables. */
   .editor-sidebar {
-    top: 96px;
+    top: calc(var(--top-bar-height) + var(--safe-area-top, 0px) + var(--mobile-switcher-height));
     /* On phone use svh for the sidebar height (excludes dynamic toolbar). */
-    height: calc(100svh - 96px);
+    height: calc(100svh - var(--top-bar-height) - var(--safe-area-top, 0px) - var(--mobile-switcher-height));
   }
 
   /* Cards full width on phone */
@@ -314,28 +397,32 @@
   }
 }
 
-/* ─── Tablet (600-1023px) — split-view ───────────────────────────── */
+/* ─── Tablet (600-1023px) — split-view ─────────────────────────────
+   P0-TABLET-V2: adaptive sidebar width — narrower on small tablets
+   so preview has enough room. Card width adapts to available space.
+   Use !important only for position/transform to override sidebar.css
+   @media(max-width:1023px) which sets position:fixed (overlay drawer).
+   Width/max-width/margin-left don't need !important (no conflict). */
 @media (min-width: 600px) and (max-width: 1023px) {
-  /* Tablet has enough width for split-view: sidebar (340px) + preview.
-     Use !important to override the sidebar.css @media(max-width:1023px)
-     rules that set position:fixed + width:300px (overlay drawer behavior).
-     On tablet we want a clean split-view, not an overlay. */
+  /* P0-TABLET-V2: sidebar width adapts to viewport — 280px on 600px
+     screens (leaves 320px for preview + divider), up to 340px on
+     larger tablets. calc() with clamp() ensures smooth scaling. */
   .editor-sidebar {
-    width: 340px !important;
-    max-width: 340px !important;
+    width: clamp(280px, 38vw, 340px);
+    /* Reset mobile drawer styles — on tablet sidebar is a normal flex item.
+       !important needed to override sidebar.css @media(max-width:1023px)
+       position:fixed + transform:translateX. */
     position: sticky !important;
-    top: var(--top-bar-height, 56px) !important;
-    height: calc(100dvh - var(--top-bar-height, 56px)) !important;
+    top: var(--top-bar-height) !important;
+    height: calc(100dvh - var(--top-bar-height)) !important;
     transform: none !important;
     box-shadow: none !important;
   }
-  /* Collapsed = use negative margin to shift it out of view (same pattern as desktop).
-     This releases the horizontal space so preview workspace can expand to full width. */
   .editor-sidebar.collapsed {
-    margin-left: -340px !important;
+    margin-left: calc(-1 * clamp(280px, 38vw, 340px));
     transform: none !important;
   }
-  /* No backdrop on tablet split-view */
+  /* No backdrop on tablet split-view — !important to override sidebar-open */
   .sidebar-backdrop {
     display: none !important;
   }
@@ -347,15 +434,36 @@
   .preview-workspace {
     flex: 1;
     min-width: 0;
+    overflow-x: hidden;
   }
-  /* Resize divider visible — user can resize sidebar 260-400px */
+  /* Resize divider visible */
   .resize-divider-v {
     display: block;
   }
-  /* Allow resize 260-400px on tablet */
-  .editor-sidebar {
-    min-width: 260px;
-    max-width: 400px;
+  /* Card width adapts — never wider than preview workspace */
+  .cc-root .card {
+    width: 100%;
+    max-width: 380px;
+  }
+}
+
+/* ─── Login page touch targets (mobile) ──────────────────────────
+   P3-LOGIN-V2: login page uses Tailwind classes (not card-constructor.css),
+   so touch target rules from mobile.css don't apply. Add explicit rules
+   for login buttons and inputs on mobile. */
+@media (max-width: 1023px) {
+  /* Login page buttons — ensure 40px min height (44px ideal, 40px acceptable
+     for text buttons with padding) */
+  .min-h-screen button[type="submit"],
+  .min-h-screen button[type="button"] {
+    min-height: 40px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  /* Login inputs — 16px font-size (prevents iOS auto-zoom) */
+  .min-h-screen input[type="email"],
+  .min-h-screen input[type="password"] {
+    font-size: 16px;
   }
 }
 

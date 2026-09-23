@@ -64,30 +64,32 @@ test.describe('Accessibility — mobile (390×844)', () => {
   });
 
   test('E4: keyboard — Tab can focus mobile mode tabs', async ({ page }) => {
-    // Tab through until we reach the mode tabs
-    // The tabs are inside the sidebar, which is visible on phone via the switcher
-    // at the top of the sidebar header. Since sidebar is collapsed initially,
-    // the switcher may not be focusable. Let's first check the switcher is visible.
+    // P1-A11Y-V2: tabs use roving tabindex — the active tab has tabindex="0",
+    // the inactive has tabindex="-1". Initially preview mode is active, so
+    // #modePreviewTab has tabindex="0" and #modeEditorTab has tabindex="-1".
+    // Focus the active tab (preview) first, then ArrowLeft to editor.
     await expect(page.locator('#mobileModeSwitcher')).toBeVisible();
 
-    // Focus the editor tab directly
-    await page.locator('#modeEditorTab').focus();
-    await expect(page.locator('#modeEditorTab')).toBeFocused();
-
-    // Press Enter to activate it
-    await page.keyboard.press('Enter');
-    await expect(page.locator('.cc-root')).toHaveAttribute('data-mobile-mode', 'editor');
-
-    // Focus the preview tab and activate
+    // Focus the preview tab (it has tabindex="0" initially)
     await page.locator('#modePreviewTab').focus();
     await expect(page.locator('#modePreviewTab')).toBeFocused();
-    await page.keyboard.press('Enter');
+
+    // ArrowLeft should move focus to editor tab + activate editor mode
+    await page.keyboard.press('ArrowLeft');
+    await expect(page.locator('#modeEditorTab')).toBeFocused();
+    await expect(page.locator('.cc-root')).toHaveAttribute('data-mobile-mode', 'editor');
+
+    // ArrowRight should move back to preview tab + activate preview mode
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('#modePreviewTab')).toBeFocused();
     await expect(page.locator('.cc-root')).toHaveAttribute('data-mobile-mode', 'preview');
   });
 
   test('E5: keyboard — close button is focusable and activated via Enter', async ({ page }) => {
     // Switch to editor mode first
     await switchToEditorMode(page);
+    // Wait for close button to become visible (CSS visibility transition)
+    await expect(page.locator('#closeSidebarBtn')).toBeVisible({ timeout: 5000 });
 
     // Focus the close button
     await page.locator('#closeSidebarBtn').focus();

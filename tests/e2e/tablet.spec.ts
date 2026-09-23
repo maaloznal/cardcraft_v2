@@ -26,28 +26,26 @@ test.describe('Tablet portrait (iPad gen 7, ~834×1194 / split-view)', () => {
   });
 
   test('C1: editor sidebar and preview are both visible (split-view)', async ({ page }) => {
-    // P-MOBILE: on tablet (≥600px) sidebar is open by default (split-view)
-    // — orchestrator's CardCraftApp.ts sets sidebar open when innerWidth >= 600.
-    // Verify sidebar is NOT collapsed.
+    // P0-SYNC-V2: wait for sidebar to be open (class removed) AND for the
+    // margin-left transition to complete (margin-left: 0px). The sidebar
+    // has transition: margin-left 300ms — querying boundingBox during
+    // transition shows intermediate position causing false overlap.
     await expect(page.locator('#editorSidebar')).not.toHaveClass(/\bcollapsed\b/);
-
-    // Both sidebar and preview should be visible simultaneously
+    // Wait for transition to complete: margin-left must be 0px
+    await expect.poll(async () => {
+      const ml = await page.evaluate(() => {
+        return getComputedStyle(document.getElementById('editorSidebar')!).marginLeft;
+      });
+      return ml;
+    }, { timeout: 5000, intervals: [100] }).toBe('0px');
+    // Now both should be in final position
     await expect(page.locator('#editorSidebar')).toBeVisible();
     await expect(page.locator('#previewWorkspace')).toBeVisible();
-
-    // Get bounding boxes — they should NOT overlap horizontally.
-    // On CI, the iPad gen 7 viewport is 810px (not 834), and the sidebar
-    // width may vary slightly between local and CI due to CSS cascade timing.
-    // We use a generous tolerance (50px) to avoid false failures while still
-    // catching real overlaps (sidebar covering >50% of preview).
     const sidebarBox = await page.locator('#editorSidebar').boundingBox();
     const previewBox = await page.locator('#previewWorkspace').boundingBox();
     expect(sidebarBox).not.toBeNull();
     expect(previewBox).not.toBeNull();
-
-    // Sidebar on the left, preview on the right — they shouldn't overlap
-    // (beyond a 50px tolerance for rendering differences between environments).
-    expect(sidebarBox!.x + sidebarBox!.width).toBeLessThanOrEqual(previewBox!.x + 50);
+    expect(sidebarBox!.x + sidebarBox!.width).toBeLessThanOrEqual(previewBox!.x + 5);
   });
 
   test('C2: editor can be collapsed and expanded', async ({ page }) => {

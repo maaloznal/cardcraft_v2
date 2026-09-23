@@ -1,28 +1,31 @@
 /**
- * mobile-mode-controller.ts — phone mode switching (Editor / Preview).
+ * mobile-mode-controller.ts — single source of truth for sidebar/mode state.
  *
- * On screens < 600px the layout doesn't have room for both editor and
- * preview simultaneously. This controller wires the .mobile-mode-tab
- * buttons to switch the visible area via data-mobile-mode on .cc-root.
+ * P0-SYNC-V2: This controller is the ONLY place that changes sidebar state.
+ * It keeps all of these in sync:
+ *   - data-mobile-mode on .cc-root ("editor" | "preview")
+ *   - .collapsed on #editorSidebar
+ *   - .sidebar-open on .cc-root
+ *   - aria-expanded on #toggleSidebarBtn
+ *   - aria-selected on #modeEditorTab / #modePreviewTab
  *
- * Behavior:
- *   - Click "Редактор" tab → data-mobile-mode="editor" + open sidebar
- *   - Click "Просмотр" tab → data-mobile-mode="preview" + close sidebar
- *   - Click "×" close button → close sidebar + switch to preview
- *   - When sidebar opens via #toggleSidebarBtn on phone, auto-switch to
- *     editor mode (so opening the sidebar shows the editor, not preview)
+ * On phone (< 600px):
+ *   - "editor" mode → sidebar open (drawer slides in)
+ *   - "preview" mode → sidebar closed (drawer slides out)
  *
- * On desktop / tablet (≥ 600px), the switcher is hidden via CSS and this
- * controller's clicks are no-ops (the elements aren't visible/clickable).
+ * On tablet/desktop (≥ 600px):
+ *   - sidebar is part of split-view layout, mode concept doesn't apply
+ *   - sidebar can still be toggled open/closed independently
+ *   - data-mobile-mode is set to "preview" but has no visual effect (CSS
+ *     hides the switcher and ignores the attribute)
  *
- * State persistence: the active mode is NOT persisted to localStorage —
- * on every page load the app starts in preview mode (matches the default
- * sidebar.collapsed state). The user's in-progress card content is always
- * preserved (it lives in StateManager + StorageManager, independent of mode).
+ * Breakpoint sync: on orientation/resize crossing 600px boundary, state
+ * is reconciled via matchMedia listener.
  *
  * Public API:
- *   setMobileMode(mode: 'editor' | 'preview')
- *   getMobileMode(): 'editor' | 'preview'
+ *   setMobileMode(mode)
+ *   toggleSidebar()
+ *   getMobileMode()
  *   destroy()
  */
 
@@ -33,42 +36,142 @@ const log = createLogger('MobileMode');
 
 export type MobileMode = 'editor' | 'preview';
 
+const PHONE_BREAKPOINT = 600; // px — below = phone, above = tablet/desktop
+
 export interface MobileModeController {
   setMobileMode(mode: MobileMode): void;
+  toggleSidebar(): void;
   getMobileMode(): MobileMode;
   destroy(): void;
 }
 
 export function createMobileModeController(ctx: OrchestratorContext): MobileModeController {
-  const { root, sidebar } = ctx;
+  const { root, refs } = ctx;
 
   let currentMode: MobileMode = 'preview';
+  let isPhone = false;
+  let lastFocusedBeforeEditor: HTMLElement | null = null;
+  let matchMediaListener: ((e: MediaQueryListEvent) => void) | null = null;
+  let mql: MediaQueryList | null = null;
 
-  function setMobileMode(mode: MobileMode): void {
-    if (mode === currentMode) return;
+  /** Check if current viewport is phone (< 600px). */
+  function checkIsPhone(): boolean {
+    return typeof window !== 'undefined' && window.innerWidth < PHONE_BREAKPOINT;
+  }
+
+  /**
+   * THE single source of truth — syncs ALL state attributes/classes to match
+   * the given mode. Called whenever mode or sidebar open state changes.
+   */
+  function syncState(mode: MobileMode, sidebarOpen: boolean): void {
     currentMode = mode;
-    root.setAttribute('data-mobile-mode', mode);
-    log.debug('Mode set', { mode });
+    isPhone = checkIsPhone();
 
-    // Sync sidebar open state with mode:
-    // - editor mode → sidebar must be open (so user sees the editor)
-    // - preview mode → sidebar closes (so user sees the preview)
-    if (mode === 'editor') {
-      sidebar.setSidebarOpen(true);
+    // 1. data-mobile-mode on .cc-root
+    root.setAttribute('data-mobile-mode', mode);
+
+    // 2. .sidebar-open on .cc-root (controls backdrop visibility on phone).
+    // P0-SYNC-V2: only set .sidebar-open on phone — on tablet/desktop the
+    // backdrop is hidden via CSS and .sidebar-open would wrongly show it.
+    if (isPhone) {
+      root.classList.toggle('sidebar-open', sidebarOpen);
     } else {
-      sidebar.setSidebarOpen(false);
+      root.classList.remove('sidebar-open');
     }
 
-    // Update aria-selected on tabs (role="tab" supports aria-selected, not aria-pressed)
+    // 3. .collapsed on #editor-sidebar (controls drawer slide)
+    if (refs.editorSidebar) {
+      if (sidebarOpen) {
+        refs.editorSidebar.classList.remove('collapsed');
+      } else {
+        refs.editorSidebar.classList.add('collapsed');
+      }
+    }
+
+    // 4. aria-expanded on #toggleSidebarBtn
+    const toggleBtn = document.getElementById('toggleSidebarBtn');
+    if (toggleBtn) {
+      toggleBtn.setAttribute('aria-expanded', String(sidebarOpen));
+    }
+
+    // 5. aria-selected on mode tabs (only relevant on phone)
     const editorTab = document.getElementById('modeEditorTab');
     const previewTab = document.getElementById('modePreviewTab');
     if (editorTab) {
       editorTab.setAttribute('aria-selected', mode === 'editor' ? 'true' : 'false');
       editorTab.classList.toggle('active', mode === 'editor');
+      // Roving tabindex: only the active tab is in tab order
+      editorTab.setAttribute('tabindex', mode === 'editor' ? '0' : '-1');
     }
     if (previewTab) {
       previewTab.setAttribute('aria-selected', mode === 'preview' ? 'true' : 'false');
       previewTab.classList.toggle('active', mode === 'preview');
+      previewTab.setAttribute('tabindex', mode === 'preview' ? '0' : '-1');
+    }
+
+    log.debug('syncState', { mode, sidebarOpen, isPhone });
+  }
+
+  /**
+   * Switch to a specific mobile mode. Only effective on phone — on
+   * tablet/desktop this is a no-op (mode concept doesn't apply).
+   */
+  function setMobileMode(mode: MobileMode): void {
+    if (!checkIsPhone()) {
+      // On tablet/desktop, mode doesn't apply — but still sync sidebar state
+      // (sidebar can be open/closed independently of "mode")
+      return;
+    }
+    const sidebarOpen = mode === 'editor';
+    syncState(mode, sidebarOpen);
+
+    // Focus management: when opening editor, save current focus + focus editor
+    // When closing (preview), restore focus to opener
+    if (mode === 'editor') {
+      const active = document.activeElement as HTMLElement | null;
+      // P2-UX-V2: always save the opener (even if it's the mode tab itself),
+      // so closing restores focus to the tab the user clicked.
+      if (active && active !== document.body) {
+        lastFocusedBeforeEditor = active;
+      }
+      // Focus first input in editor (after a tick so DOM is ready)
+      setTimeout(() => {
+        const firstInput = document.querySelector<HTMLElement>(
+          '#editorCardsList input[data-field="title"], #editorCardsList textarea[data-field="text"]',
+        );
+        if (firstInput && document.activeElement !== firstInput) {
+          firstInput.focus();
+        }
+      }, 50);
+    } else {
+      // Closing editor — restore focus to opener
+      if (lastFocusedBeforeEditor) {
+        setTimeout(() => {
+          try {
+            lastFocusedBeforeEditor?.focus();
+          } catch {
+            // ignore
+          }
+        }, 50);
+      }
+    }
+  }
+
+  /**
+   * Toggle sidebar open/closed. Called by #toggleSidebarBtn click handler
+   * (events.ts delegates here) and by backdrop click.
+   *
+   * On phone: toggles between editor/preview modes.
+   * On tablet/desktop: toggles .collapsed (sidebar open/close).
+   */
+  function toggleSidebar(): void {
+    const willBeOpen = refs.editorSidebar?.classList.contains('collapsed') ?? false;
+    if (checkIsPhone()) {
+      // Phone: mode-driven
+      setMobileMode(willBeOpen ? 'editor' : 'preview');
+    } else {
+      // Tablet/desktop: just toggle .collapsed, keep mode as 'preview'
+      syncState('preview', willBeOpen);
     }
   }
 
@@ -76,10 +179,9 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
     return currentMode;
   }
 
-  // Wire up event listeners on the tabs + close button
-  // Use event delegation on the switcher container so we don't need to
-  // re-bind when DOM changes.
-  function handleClick(e: Event): void {
+  // ─── Event handlers ──────────────────────────────────────────────
+
+  function handleSwitcherClick(e: Event): void {
     const target = e.target as HTMLElement;
     const tab = target.closest<HTMLElement>('.mobile-mode-tab');
     const closeBtn = target.closest<HTMLElement>('#closeSidebarBtn');
@@ -91,40 +193,100 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
       }
       return;
     }
-
     if (closeBtn) {
-      // Close button: switch to preview (which closes sidebar via setMobileMode)
       setMobileMode('preview');
       return;
     }
   }
 
-  // Listen on the switcher container
-  const switcher = document.getElementById('mobileModeSwitcher');
-  if (switcher) {
-    switcher.addEventListener('click', handleClick);
+  function handleToggleKeydown(e: KeyboardEvent): void {
+    // Arrow keys on mode tabs → roving tabindex
+    const target = e.target as HTMLElement;
+    if (!target.matches('.mobile-mode-tab')) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const editorTab = document.getElementById('modeEditorTab');
+      const previewTab = document.getElementById('modePreviewTab');
+      const isEditor = target.id === 'modeEditorTab';
+      const otherTab = isEditor ? previewTab : editorTab;
+      if (otherTab) {
+        // Move focus + activate the other tab
+        otherTab.focus();
+        const newMode = otherTab.dataset.mode as MobileMode;
+        if (newMode) setMobileMode(newMode);
+      }
+    }
   }
 
-  // NOTE: We deliberately do NOT add a click listener on #toggleSidebarBtn
-  // here — events.ts already has one that toggles .collapsed on the sidebar.
-  // Adding another listener here would race with the events.ts one:
-  //   1. mobile-mode-controller reads collapsed=true, calls setMobileMode('editor')
-  //      → setSidebarOpen(true) removes .collapsed
-  //   2. events.ts listener reads collapsed (now false), calls setSidebarOpen(false)
-  //      → adds .collapsed back
-  // The sidebar would appear stuck. The switcher tabs alone are sufficient
-  // for mode switching — the sidebar toggle button handles open/close.
+  /**
+   * Breakpoint change handler — reconciles state when crossing 600px.
+   * - Phone→tablet: if editor mode was active, keep sidebar open (split-view)
+   * - Tablet→phone: if sidebar was open, switch to editor mode; else preview
+   */
+  function handleBreakpointChange(e: MediaQueryListEvent): void {
+    const wasPhone = isPhone;
+    const nowPhone = !e.matches; // matches = ≥600px, so !matches = phone
+    if (wasPhone === nowPhone) return; // no change
 
-  // Initialize: start in preview mode (matches sidebar.collapsed default)
-  root.setAttribute('data-mobile-mode', 'preview');
+    log.info('Breakpoint crossed', { wasPhone, nowPhone });
+    if (nowPhone) {
+      // Tablet→phone: if sidebar currently open, switch to editor mode
+      const sidebarOpen = !refs.editorSidebar?.classList.contains('collapsed');
+      if (sidebarOpen) {
+        syncState('editor', true);
+      } else {
+        syncState('preview', false);
+      }
+    } else {
+      // Phone→tablet: keep sidebar state as-is, but mode becomes 'preview'
+      const sidebarOpen = !refs.editorSidebar?.classList.contains('collapsed');
+      syncState('preview', sidebarOpen);
+    }
+  }
 
-  // Cleanup function stored for destroy()
+  // ─── Wire up ─────────────────────────────────────────────────────
+
+  const switcher = document.getElementById('mobileModeSwitcher');
+  if (switcher) {
+    switcher.addEventListener('click', handleSwitcherClick);
+    switcher.addEventListener('keydown', handleToggleKeydown);
+  }
+
+  // matchMedia for breakpoint sync (orientation/resize)
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    mql = window.matchMedia(`(min-width: ${PHONE_BREAKPOINT}px)`);
+    matchMediaListener = handleBreakpointChange;
+    // Modern API (Safari 14+)
+    if (mql.addEventListener) {
+      mql.addEventListener('change', matchMediaListener);
+    } else if (mql.addListener) {
+      // Legacy API (older Safari)
+      mql.addListener(matchMediaListener);
+    }
+  }
+
+  // Initialize state: start in preview mode with sidebar collapsed (phone)
+  // or sidebar open (tablet/desktop — set by CardCraftApp after this controller)
+  isPhone = checkIsPhone();
+  syncState('preview', false);
+
   const cleanup = (): void => {
-    if (switcher) switcher.removeEventListener('click', handleClick);
+    if (switcher) {
+      switcher.removeEventListener('click', handleSwitcherClick);
+      switcher.removeEventListener('keydown', handleToggleKeydown);
+    }
+    if (mql && matchMediaListener) {
+      if (mql.removeEventListener) {
+        mql.removeEventListener('change', matchMediaListener);
+      } else if (mql.removeListener) {
+        mql.removeListener(matchMediaListener);
+      }
+    }
   };
 
   return {
     setMobileMode,
+    toggleSidebar,
     getMobileMode,
     destroy() {
       cleanup();

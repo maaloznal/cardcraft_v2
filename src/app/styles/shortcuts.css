@@ -12,12 +12,15 @@
   z-index: 2100;
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--dur-slow) var(--ease);
+  visibility: hidden;
+  transition: opacity var(--dur-slow) var(--ease), visibility 0s var(--dur-slow);
 }
 
 .shortcuts-overlay.active {
   opacity: 1;
   pointer-events: auto;
+  visibility: visible;
+  transition: opacity var(--dur-slow) var(--ease), visibility 0s;
 }
 
 .shortcuts-panel {

@@ -11,9 +11,9 @@
   overflow: hidden;
   transition: margin-left var(--dur-slow) var(--ease);
   position: relative;
-  height: calc(100vh - 56px);
+  height: calc(100vh - var(--top-bar-height));
   position: sticky;
-  top: 56px;
+  top: var(--top-bar-height);
 }
 .editor-sidebar.collapsed {
   margin-left: -300px;
@@ -377,7 +377,7 @@
 @media (max-width: 1023px) {
   .editor-sidebar {
     position: fixed;
-    top: 56px;
+    top: var(--top-bar-height-mobile);
     left: 0;
     bottom: 0;
     width: 300px;

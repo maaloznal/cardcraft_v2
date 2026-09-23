@@ -158,7 +158,7 @@ export function bindTopbarEvents(ctx: OrchestratorContext): void {
  * trap (Tab cycles between Cancel + Delete) + Escape-to-close.
  */
 export function bindSidebarEvents(ctx: OrchestratorContext): void {
-  const { refs, stateManager, uiAppliers, history, sidebar, cardOps, exporter, storage } = ctx;
+  const { refs, stateManager, uiAppliers, history, cardOps, exporter, storage } = ctx;
 
   // Sidebar buttons
   ctx.listeners.addEl(refs.addCardBtn, 'click', () => cardOps.addCard());
@@ -272,12 +272,16 @@ export function bindSidebarEvents(ctx: OrchestratorContext): void {
     requestAnimationFrame(() => onboardingOverlay.classList.add('active'));
   }
 
-  // Sidebar toggle
+  // Sidebar toggle — delegates to mobileMode controller (single source of truth).
+  // P0-SYNC-V2: mobileMode.toggleSidebar() keeps data-mobile-mode, .collapsed,
+  // .sidebar-open, aria-expanded, aria-selected all in sync.
   ctx.listeners.addEl(refs.toggleSidebarBtn, 'click', () => {
-    const open = refs.editorSidebar?.classList.contains('collapsed');
-    sidebar.setSidebarOpen(!!open);
+    ctx.mobileMode.toggleSidebar();
   });
-  ctx.listeners.addEl(refs.sidebarBackdrop, 'click', () => sidebar.setSidebarOpen(false));
+  // Backdrop click → close sidebar (also goes through mobileMode for sync)
+  ctx.listeners.addEl(refs.sidebarBackdrop, 'click', () => {
+    ctx.mobileMode.toggleSidebar();
+  });
 
   // Save on unload (synchronous, no debounce)
   window.addEventListener('beforeunload', storage.saveOnUnload);

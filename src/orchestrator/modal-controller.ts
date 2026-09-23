@@ -45,7 +45,10 @@ export function createModalController(ctx: OrchestratorContext): ModalController
         ? stateManager.getCard(uiState.activeCardIndexForColors)?.colors?.[field]
         : undefined;
     root.querySelectorAll<HTMLElement>('.color-swatch').forEach((sw) => {
-      sw.classList.toggle('active', !!(activeColor && sw.dataset.preset === activeColor));
+      const isActive = !!(activeColor && sw.dataset.preset === activeColor);
+      sw.classList.toggle('active', isActive);
+      // P4-A11Y-V2: update aria-pressed to reflect selection state for screen readers
+      sw.setAttribute('aria-pressed', String(isActive));
     });
   }
 

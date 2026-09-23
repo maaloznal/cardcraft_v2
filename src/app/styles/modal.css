@@ -16,11 +16,17 @@
   z-index: 2000;
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--dur-slow) var(--ease);
+  /* P1-A11Y-V2: visibility:hidden removes the modal from the accessibility
+     tree and tab order when inactive. opacity:0 + pointer-events:none alone
+     is insufficient — elements remain focusable and visible to screen readers.
+     P4-FIX: no transition on visibility — transition delay causes child elements
+     (like #closeModalBtn) to inherit hidden state even after parent becomes visible. */
+  visibility: hidden;
 }
 .modal-overlay.active {
   opacity: 1;
   pointer-events: auto;
+  visibility: visible;
 }
 .modal-overlay.active .modal-card {
   transform: translateX(0);
@@ -397,10 +403,13 @@ input[type="color"].color-picker-input::-moz-color-swatch {
   z-index: 6000;
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--dur-slow) var(--ease);
+  visibility: hidden;
+  /* P4-FIX: no transition on visibility — same fix as .modal-overlay */
 }
 .confirm-overlay.active {
   opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
   pointer-events: auto;
 }
 .confirm-dialog {

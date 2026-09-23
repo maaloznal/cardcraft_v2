@@ -48,6 +48,20 @@
   --ui-danger-bg: #fef2f2;
   --ui-danger-border: #fecaca;
   --ui-focus: #18181b;
+  /* P0-LAYOUT-V2: Layout height variables — single source of truth for
+     top-bar and mobile-mode-switcher heights. Eliminates magic numbers
+     52, 56, 96 scattered across CSS files. All calc() use these vars.
+     P6-SAFE-AREA-V2: safe-area variables are overridable for testing.
+     In tests, set --safe-area-top: 20px to simulate notch. */
+  --top-bar-height: 56px;
+  --top-bar-height-mobile: 52px;
+  --mobile-switcher-height: 44px;
+  /* Safe-area insets — overridable via JS for testing.
+     env() with fallback to 0px ensures 0 when not in viewport-fit=cover. */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
   /* Радиусы */
   --r-sm: 6px;
   --r-md: 8px;

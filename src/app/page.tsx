@@ -77,6 +77,8 @@ export default function Home() {
             className="sidebar-toggle"
             id="toggleSidebarBtn"
             aria-label="Показать/скрыть редактор"
+            aria-controls="editorSidebar"
+            aria-expanded="false"
             title="Редактор"
             type="button"
           >
@@ -370,7 +372,18 @@ export default function Home() {
         </aside>
 
         {/* Горизонтальный разделитель между sidebar и workspace */}
-        <div className="resize-divider resize-divider-v" id="resizeDividerV" title="Потяните для изменения ширины" />
+        <div
+          className="resize-divider resize-divider-v"
+          id="resizeDividerV"
+          title="Потяните для изменения ширины"
+          role="separator"
+          tabIndex={0}
+          aria-label="Изменить ширину панели редактора"
+          aria-orientation="vertical"
+          aria-valuemin={260}
+          aria-valuemax={400}
+          aria-valuenow={300}
+        />
 
         <div className="sidebar-backdrop" id="sidebarBackdrop" />
 
@@ -431,12 +444,15 @@ export default function Home() {
             </div>
             <div className="palette-swatches">
               {PRESETS.map((c) => (
-                <div
+                <button
                   key={c}
                   className="color-swatch"
                   data-preset={c}
                   style={{ background: c }}
                   title={c}
+                  aria-label={`Цвет: ${c}`}
+                  aria-pressed="false"
+                  type="button"
                 />
               ))}
             </div>

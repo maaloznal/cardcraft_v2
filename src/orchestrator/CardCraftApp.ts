@@ -222,10 +222,10 @@ export function initCardCraftApp(root: HTMLElement): () => void {
   // Initial history snapshot
   historyManager.init(stateManager.snapshot());
   ctx.history.updateUndoRedoButtons();
-  // Sidebar: open on desktop + tablet (split-view), closed on phone.
-  // P-MOBILE: changed threshold from 1024 to 600 — tablet (600-1023px) uses
-  // split-view where sidebar is always visible alongside preview. Only phone
-  // (<600px) starts with sidebar closed (user opens it via mode switcher).
+  // Sidebar initial state: open on desktop+tablet (split-view), closed on phone.
+  // P0-SYNC-V2: use ctx.sidebar.setSidebarOpen directly (mobileMode.syncState
+  // will be called by events.ts handlers when user interacts). On phone the
+  // mobileMode controller initializes to 'preview' mode with sidebar closed.
   if (typeof window !== 'undefined' && window.innerWidth >= 600) {
     ctx.sidebar.setSidebarOpen(true);
   } else {
