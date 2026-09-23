@@ -28,4 +28,7 @@
 @import './styles/export.css';
 @import './styles/shortcuts.css';
 @import './styles/onboarding.css';
+/* P-MOBILE: responsive adaptations — loaded last so its media queries
+   can override earlier rules without needing higher specificity. */
+@import './styles/mobile.css';
 

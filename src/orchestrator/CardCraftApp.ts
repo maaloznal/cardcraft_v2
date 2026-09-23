@@ -67,6 +67,7 @@ import { createHistoryController } from './history-controller';
 import { createCardOpsController } from './card-ops';
 import { createSidebarController } from './sidebar-controller';
 import { createCloudSyncController } from './cloud-sync-controller';
+import { createMobileModeController } from './mobile-mode-controller';
 import { createStateSubscriber } from './state-subscriber';
 import { wireRendererCallbacks } from './callbacks';
 import { bindAll } from './events';
@@ -196,6 +197,10 @@ export function initCardCraftApp(root: HTMLElement): () => void {
   // part of the boot flow). The initial pull is async and happens after the
   // first paint, so the UI shows local state first, then updates from cloud.
   ctx.cloudSync = createCloudSyncController(ctx);
+  // P-MOBILE: mobile mode controller — wires the mobile-mode-tab buttons
+  // (Editor/Preview switcher visible on phone). Must be created AFTER sidebar
+  // (it calls ctx.sidebar.setSidebarOpen()).
+  ctx.mobileMode = createMobileModeController(ctx);
 
   /* ---------- 7. Wire renderer callbacks (composition root) ---------- */
   // Routes PreviewRenderer/EditorRenderer/WordEditorManager action
@@ -217,8 +222,11 @@ export function initCardCraftApp(root: HTMLElement): () => void {
   // Initial history snapshot
   historyManager.init(stateManager.snapshot());
   ctx.history.updateUndoRedoButtons();
-  // Sidebar: open on desktop, closed on mobile
-  if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+  // Sidebar: open on desktop + tablet (split-view), closed on phone.
+  // P-MOBILE: changed threshold from 1024 to 600 — tablet (600-1023px) uses
+  // split-view where sidebar is always visible alongside preview. Only phone
+  // (<600px) starts with sidebar closed (user opens it via mode switcher).
+  if (typeof window !== 'undefined' && window.innerWidth >= 600) {
     ctx.sidebar.setSidebarOpen(true);
   } else {
     ctx.sidebar.setSidebarOpen(false);
@@ -242,6 +250,7 @@ export function initCardCraftApp(root: HTMLElement): () => void {
     ctx.cardOps.destroy();
     ctx.sidebar.destroy();
     ctx.cloudSync.destroy();
+    ctx.mobileMode.destroy();
     // Destroy UI primitives
     sidebarAccordion.destroy();
     modalAccordion.destroy();

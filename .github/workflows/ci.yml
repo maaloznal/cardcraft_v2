@@ -26,6 +26,16 @@ jobs:
         with:
           bun-version: latest
 
+      # P-MOBILE: cache bun's global cache across runs
+      - name: Cache Bun
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun-install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
@@ -42,13 +52,16 @@ jobs:
         run: bun run test:perf
 
   # ─── E2E tests (Playwright) ────────────────────────────────
-  # 44 E2E tests (28 functional + 5 visual + 3 axe + 7 XSS + 1 skipped)
-  # CI is slower than local (~2-3x) due to shared runners + browser install.
-  # Local: ~70s. CI: ~5-8 min. Timeout set to 20 min for safety margin.
+  # E2E suite: desktop chromium + P-MOBILE mobile + tablet projects.
+  # - ~50 desktop tests (functional, visual, axe, xss, onboarding, shortcuts, cards, etc.)
+  # - ~20 mobile tests (mobile.spec.ts, narrow.spec.ts, mobile-accessibility.spec.ts)
+  # - ~10 tablet tests (tablet.spec.ts + accessibility on tablet)
+  # CI is ~2-3x slower than local due to shared runners + browser install.
+  # Local: ~90s. CI: ~10-15 min. Timeout set to 30 min for mobile projects overhead.
   e2e:
     name: E2E tests (Playwright)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -58,13 +71,45 @@ jobs:
         with:
           bun-version: latest
 
+      # P-MOBILE: cache bun's global cache + playwright browser binaries
+      # across runs to speed up CI (~30s savings per run after first).
+      - name: Cache Bun
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun-install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: |
+            ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('bun.lock') }}
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
       - name: Install Playwright browsers
+        # P-MOBILE: only chromium is needed — mobile-chrome and tablet-chrome
+        # projects use channel:'chromium' (not Safari/webkit) because CI sandbox
+        # may not be able to install webkit system deps without sudo.
+        # Chromium-based device emulation provides the same viewport/touch/UA
+        # fidelity needed for our responsive tests.
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: bunx playwright install --with-deps chromium
 
+      - name: Install Playwright system deps (cache hit)
+        # If browsers are cached, still need system libs (which aren't cached)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: bunx playwright install-deps chromium
+
       - name: Run E2E tests
+        # P-MOBILE: runs all projects (chromium, mobile-chrome, tablet-chrome)
+        # via playwright.config.ts. Each project has its own viewport/device preset.
         run: bun run test:e2e
 
       - name: Upload test results on failure
@@ -90,6 +135,16 @@ jobs:
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
+
+      # P-MOBILE: cache bun's global cache across runs
+      - name: Cache Bun
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun-install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
 
       - name: Install dependencies
         run: bun install --frozen-lockfile

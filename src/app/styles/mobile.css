@@ -1,0 +1,376 @@
+/* =====================================================================
+   mobile.css — responsive adaptations for phones and tablets.
+   Loaded after all other styles via card-constructor.css.
+   ---------------------------------------------------------------------
+   Breakpoints:
+   - max-width: 1023px (tablet portrait / small desktop)
+   - max-width: 768px  (tablet portrait)
+   - max-width: 600px   (phone landscape / small tablet portrait)
+   - max-width: 480px   (phone portrait)
+   - max-width: 360px   (narrow phone — iPhone SE 1st gen, foldables)
+   ---------------------------------------------------------------------
+   Strategies:
+   - Use dvh/svh instead of vh (iOS Safari dynamic toolbar support).
+   - Font-size 16px on inputs (prevents iOS auto-zoom).
+   - 44×44px touch targets via padding + ::before hit area extensions.
+   - env(safe-area-inset-*) on fixed/sticky elements (notch / home-indicator).
+   - Mobile mode tabs (Editor / Preview) — exclusive view on narrow screens.
+   - Tablet split-view — sidebar + preview visible simultaneously.
+   ===================================================================== */
+
+/* ─── Viewport unit fallbacks ────────────────────────────────────────
+   Use 100dvh where supported (Safari 16.4+, Chrome 108+, Firefox 101+).
+   Fallback to 100vh for older browsers — declared via @supports so
+   older browsers without dvh still get vh. */
+@supports not (height: 100dvh) {
+  .cc-root { min-height: 100vh; }
+  .app-layout { min-height: calc(100vh - var(--top-bar-height, 56px)); }
+  .editor-sidebar { height: calc(100vh - var(--top-bar-height, 56px)); }
+  .modal-card { max-height: 100vh; }
+}
+@supports (height: 100dvh) {
+  .cc-root { min-height: 100dvh; }
+  .app-layout { min-height: calc(100dvh - var(--top-bar-height, 56px)); }
+  .editor-sidebar { height: calc(100dvh - var(--top-bar-height, 56px)); }
+  .modal-card { max-height: 100dvh; }
+  /* On mobile (where sidebar becomes a fixed drawer) use svh — the small
+     viewport height excludes the dynamic toolbar so the sidebar fits the
+     visible area at the moment it opens, even if the user just scrolled. */
+  @media (max-width: 1023px) {
+    .editor-sidebar { height: calc(100svh - var(--top-bar-height, 52px)); }
+    .modal-card { max-height: 100dvh; }
+  }
+}
+
+/* ─── Mobile mode switcher (visible only < 600px) ──────────────────
+   The switcher is a sticky bar BELOW the top-bar and ABOVE the app-layout.
+   It is OUTSIDE the sidebar so it remains accessible even when the sidebar
+   is collapsed (translateX(-100%)). This lets the user switch to Editor
+   mode without first opening the sidebar via #toggleSidebarBtn.
+
+   The × close button is hidden when the sidebar is collapsed (no point
+   showing "close" when there's nothing to close). It only appears when
+   the sidebar is open (sidebar-open class on .cc-root). */
+.mobile-mode-switcher {
+  display: none; /* hidden by default, shown via media query */
+}
+.mobile-mode-tab,
+.mobile-sidebar-close {
+  font-family: inherit;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--ui-text-secondary, #71717a);
+  padding: 8px 12px;
+  border-radius: var(--r-md, 6px);
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background var(--dur, 150ms) var(--ease, ease),
+              color var(--dur, 150ms) var(--ease, ease);
+  min-height: 44px;
+  min-width: 44px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.mobile-mode-tab:hover,
+.mobile-sidebar-close:hover {
+  background: var(--ui-surface-hover, rgba(0,0,0,0.04));
+  color: var(--ui-text, #18181b);
+}
+.mobile-mode-tab:focus-visible,
+.mobile-sidebar-close:focus-visible {
+  outline: 2px solid var(--ui-accent, #2563eb);
+  outline-offset: 2px;
+}
+.mobile-mode-tab.active {
+  background: var(--ui-text, #18181b);
+  color: var(--ui-accent-fg, #ffffff);
+}
+.mobile-sidebar-close {
+  margin-left: auto;
+  padding: 8px;
+  /* Hidden by default; shown only when sidebar is open (sidebar-open on .cc-root) */
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s, opacity var(--dur, 150ms) var(--ease, ease);
+}
+.cc-root.sidebar-open .mobile-sidebar-close {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* ─── Touch targets: 44×44px via ::before hit area ────────────────
+   Visual icon stays small (16-20px) for aesthetics, but the clickable
+   area extends to 44×44px via an absolutely-positioned ::before pseudo-
+   element with negative inset. Applied to all small interactive buttons. */
+
+/* Sidebar toggle (#toggleSidebarBtn) — 36px default, extend to 44px */
+@media (max-width: 1023px) {
+  .sidebar-toggle,
+  .btn-icon.top-bar-btn,
+  .btn-icon,
+  .btn-delete,
+  .modal-close,
+  .btn-reset-single,
+  .btn-clear-field {
+    position: relative;
+    /* Slightly larger visual on touch devices */
+    min-width: 44px;
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  /* ::before hit area — extends 4px beyond the button on all sides.
+     For 36px buttons this gives ~44px hit area without changing
+     the visible button size. */
+  .sidebar-toggle::before,
+  .btn-icon.top-bar-btn::before,
+  .btn-icon::before,
+  .btn-delete::before,
+  .modal-close::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    z-index: -1;
+    border-radius: inherit;
+  }
+  /* btn-clear-field is smaller (18px) — extend more aggressively */
+  .btn-clear-field::before {
+    content: '';
+    position: absolute;
+    inset: -13px;
+    z-index: -1;
+    border-radius: inherit;
+  }
+  /* btn-reset-single (22px) — extend 11px each side → 44px hit area */
+  .btn-reset-single::before {
+    content: '';
+    position: absolute;
+    inset: -11px;
+    z-index: -1;
+    border-radius: inherit;
+  }
+  /* Switch slider thumbs need bigger touch area too */
+  .switch {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* ─── Input font-size: 16px on mobile (prevents iOS auto-zoom) ──── */
+@media (max-width: 1023px) {
+  .cc-root input[type="text"],
+  .cc-root input[type="email"],
+  .cc-root input[type="password"],
+  .cc-root textarea,
+  .cc-root select {
+    font-size: 16px;
+  }
+  /* Selects with custom dropdown UI (theme) stay 16px too */
+  .cc-root select[data-action="card-theme"],
+  .cc-root .theme-dropdown-trigger {
+    font-size: 16px;
+  }
+}
+
+/* ─── Safe-area insets (notch / home-indicator) ─────────────────── */
+@media (max-width: 1023px) {
+  /* Top bar: respect status bar / notch */
+  .top-bar {
+    padding-top: env(safe-area-inset-top, 0px);
+    /* height should include the safe-area top — compensate by reducing padding-bottom */
+  }
+  /* Sidebar drawer (mobile): extends to bottom — respect home indicator */
+  .editor-sidebar {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  /* Sidebar mass-actions section — must clear home indicator */
+  .sidebar-mass-actions {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  /* Backdrop covers full screen including notch */
+  .sidebar-backdrop {
+    top: env(safe-area-inset-top, 0px);
+  }
+  /* Toast notifications: lift above home indicator */
+  .toast {
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+  /* Modal: respect notch on top, home indicator on bottom */
+  .modal-card {
+    padding-top: calc(20px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+  /* Onboarding overlay: full screen, content padded from notch */
+  .onboarding-overlay {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+  /* Shortcuts overlay: same treatment */
+  .shortcuts-overlay {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+  /* Confirm dialog (delete confirmation) — center on visible area */
+  .confirm-overlay {
+    padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+             env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  }
+}
+
+/* ─── Phone (< 600px) — mobile mode switcher visible ────────────── */
+@media (max-width: 599px) {
+  /* Show the mobile mode switcher as a sticky bar between top-bar and app-layout */
+  .mobile-mode-switcher {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--ui-border, #e4e4e7);
+    background: var(--ui-bg, #fafafa);
+    position: sticky;
+    top: var(--top-bar-height, 52px);
+    /* z-index higher than sidebar (1000) so the switcher stays clickable
+       even when the sidebar is open underneath it. */
+    z-index: 1001;
+    /* Respect safe-area on left/right for landscape phone */
+    padding-left: max(8px, env(safe-area-inset-left, 0px));
+    padding-right: max(8px, env(safe-area-inset-right, 0px));
+  }
+  /* Inner tabs container (role="tablist") — flex row of tab buttons */
+  .mobile-mode-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+  }
+
+  /* When sidebar is open on phone, it slides in from the left.
+     The mobile-mode-switcher stays sticky on top, so it remains visible. */
+
+  /* data-mobile-mode="preview" → hide the sidebar (slide it out) */
+  .cc-root[data-mobile-mode="preview"] .editor-sidebar {
+    transform: translateX(-100%);
+  }
+  .cc-root[data-mobile-mode="preview"] .sidebar-backdrop {
+    display: none !important;
+  }
+  .preview-workspace {
+    width: 100%;
+  }
+
+  /* Top bar — slim on phone, preserve undo/redo + account */
+  .top-bar {
+    padding: 0 8px;
+    height: 52px;
+  }
+  .brand-name {
+    font-size: 14px;
+  }
+  /* Card count badge — hide on very narrow screens (<360px) to save space */
+  @media (max-width: 360px) {
+    .card-count-badge {
+      display: none;
+    }
+  }
+
+  /* Editor sidebar fixed below the mobile-mode-switcher.
+     Top-bar is 52px, switcher is ~44px tall → sidebar top at 96px. */
+  .editor-sidebar {
+    top: 96px;
+    /* On phone use svh for the sidebar height (excludes dynamic toolbar). */
+    height: calc(100svh - 96px);
+  }
+
+  /* Cards full width on phone */
+  .cc-root .card {
+    width: 100%;
+    padding: 20px;
+  }
+
+  /* Resize divider — hidden on phone (no split view possible) */
+  .resize-divider-v {
+    display: none;
+  }
+
+  /* "Удалить все" — visually separated from "Скачать все" on phone */
+  .sidebar-destructive-actions {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--ui-border, #e4e4e7);
+  }
+  .sidebar-destructive-actions .btn-delete-mass {
+    width: 100%;
+  }
+}
+
+/* ─── Tablet (600-1023px) — split-view ───────────────────────────── */
+@media (min-width: 600px) and (max-width: 1023px) {
+  /* Tablet has enough width for split-view: sidebar (340px) + preview */
+  .editor-sidebar {
+    width: 340px;
+    max-width: 340px;
+    /* On tablet, sidebar is a normal flex item (same as desktop but narrower).
+       NO position:fixed, NO transform, NO box-shadow — clean split-view. */
+    position: sticky;
+    top: var(--top-bar-height, 56px);
+    height: calc(100dvh - var(--top-bar-height, 56px));
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  /* Collapsed = use negative margin to shift it out of view (same pattern as desktop).
+     This releases the horizontal space so preview workspace can expand to full width. */
+  .editor-sidebar.collapsed {
+    margin-left: -340px;
+  }
+  /* No backdrop on tablet split-view */
+  .sidebar-backdrop {
+    display: none !important;
+  }
+  /* Hide mobile mode switcher on tablet (not needed in split-view) */
+  .mobile-mode-switcher {
+    display: none !important;
+  }
+  /* Preview workspace takes remaining width */
+  .preview-workspace {
+    flex: 1;
+    min-width: 0;
+  }
+  /* Resize divider visible — user can resize sidebar 260-400px */
+  .resize-divider-v {
+    display: block;
+  }
+  /* Allow resize 260-400px on tablet */
+  .editor-sidebar {
+    min-width: 260px;
+    max-width: 400px;
+  }
+}
+
+/* ─── Landscape tablet (1024×768) — desktop layout kicks in ──────
+   At ≥1024px the desktop layout applies (existing CSS).
+   No additional rules needed here — desktop is the default. */
+
+/* ─── Reduce motion preference ───────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  /* Disable the slide-in/out transitions on mobile sidebar to respect
+     users who prefer reduced motion. The sidebar still opens/closes
+     instantly via transform: none. */
+  .editor-sidebar {
+    transition: none !important;
+  }
+  .mobile-mode-tab,
+  .mobile-sidebar-close {
+    transition: none !important;
+  }
+}

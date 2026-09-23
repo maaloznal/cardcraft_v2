@@ -100,6 +100,56 @@ export default function Home() {
         </div>
       </header>
 
+      {/* P-MOBILE: mobile mode switcher — lives OUTSIDE the sidebar so it's
+          always visible/accessible even when the sidebar is collapsed.
+          Visible only on phone (<600px) via CSS. Allows the user to switch
+          between Editor and Preview modes without first opening the sidebar.
+          The × close button is also here so the user can dismiss the sidebar
+          from within view (not just by tapping the backdrop).
+
+          Note: the role="tablist" only wraps the two tab buttons — the close
+          button is a sibling (not a tab) because axe-core's aria-required-children
+          rule requires tablist to contain only role="tab" elements. */}
+      <div className="mobile-mode-switcher" id="mobileModeSwitcher">
+        <div className="mobile-mode-tabs" role="tablist" aria-label="Режим просмотра">
+          <button
+            className="mobile-mode-tab"
+            role="tab"
+            id="modeEditorTab"
+            aria-selected="false"
+            aria-controls="editorSidebar"
+            data-mode="editor"
+            type="button"
+            title="Режим редактора"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            <span>Редактор</span>
+          </button>
+          <button
+            className="mobile-mode-tab"
+            role="tab"
+            id="modePreviewTab"
+            aria-selected="true"
+            aria-controls="previewWorkspace"
+            data-mode="preview"
+            type="button"
+            title="Режим предпросмотра"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>Просмотр</span>
+          </button>
+        </div>
+        <button
+          className="mobile-sidebar-close"
+          id="closeSidebarBtn"
+          aria-label="Закрыть редактор"
+          title="Закрыть"
+          type="button"
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
       {/* ================= APP LAYOUT ================= */}
       <div className="app-layout">
         {/* Sidebar */}
@@ -296,11 +346,21 @@ export default function Home() {
             </button>
           </div>
 
-          <div className="sidebar-mass-actions">
+          {/* P-MOBILE: primary mass action — "Скачать все" stays close to the
+              card editor (within easy reach on mobile). The destructive
+              "Удалить все" is moved to a separate section below with extra
+              spacing and a visual divider, so a fat-finger tap can't
+              accidentally hit delete when aiming for download. */}
+          <div className="sidebar-mass-actions sidebar-primary-actions">
             <button className="btn-secondary" id="saveAll" title="Скачать все карточки как PNG" type="button">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Скачать все
             </button>
+          </div>
+
+          {/* Destructive actions — separated, visually distinct, behind
+              confirm dialog (handled by orchestrator/confirm-dialog flow). */}
+          <div className="sidebar-mass-actions sidebar-destructive-actions">
             <button className="btn-delete-mass" id="deleteAllBtn" title="Удалить все карточки" type="button">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
               Удалить все

@@ -38,10 +38,14 @@ test.describe('App launch', () => {
     await gotoApp(page);
     // Add a card
     await page.locator('#addCardBtn').click();
+    // P-MOBILE: addCard() now collapses previous cards and opens the new one.
+    // Target the LAST (newly added, open) card instead of .first() (which is
+    // now collapsed). The test verifies "no console errors during interaction" —
+    // the specific card index doesn't matter.
     // Type in title
-    await page.locator('#editorCardsList .card-editor-block').first().locator('[data-field="title"]').fill('Test');
+    await page.locator('#editorCardsList .card-editor-block').last().locator('[data-field="title"]').fill('Test');
     // Open color modal
-    await page.locator('#editorCardsList .card-editor-block').first().locator('[data-action="palette"]').click();
+    await page.locator('#editorCardsList .card-editor-block').last().locator('[data-action="palette"]').click();
     // Close modal
     await page.keyboard.press('Escape');
 

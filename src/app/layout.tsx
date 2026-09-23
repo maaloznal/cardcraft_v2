@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@fontsource/golos-text";
 import "@fontsource/lora";
@@ -36,6 +36,24 @@ export const metadata: Metadata = {
   icons: {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
   },
+};
+
+// P-MOBILE: viewport export (Next.js 16 metadata API).
+// - viewportFit: 'cover' enables env(safe-area-inset-*) on iOS Safari, so
+//   fixed elements (sidebar, toast, modal) don't overlap the notch / home indicator.
+// - maximumScale: 5 keeps the page zoomable for accessibility (WCAG 1.4.4),
+//   but initial-scale=1 prevents accidental zoom-in on load.
+// - themeColor is picked up by mobile browsers (Android Chrome toolbar, iOS Safari status bar).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
+  ],
 };
 
 export default function RootLayout({
