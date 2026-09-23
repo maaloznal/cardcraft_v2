@@ -316,22 +316,24 @@
 
 /* ─── Tablet (600-1023px) — split-view ───────────────────────────── */
 @media (min-width: 600px) and (max-width: 1023px) {
-  /* Tablet has enough width for split-view: sidebar (340px) + preview */
+  /* Tablet has enough width for split-view: sidebar (340px) + preview.
+     Use !important to override the sidebar.css @media(max-width:1023px)
+     rules that set position:fixed + width:300px (overlay drawer behavior).
+     On tablet we want a clean split-view, not an overlay. */
   .editor-sidebar {
-    width: 340px;
-    max-width: 340px;
-    /* On tablet, sidebar is a normal flex item (same as desktop but narrower).
-       NO position:fixed, NO transform, NO box-shadow — clean split-view. */
-    position: sticky;
-    top: var(--top-bar-height, 56px);
-    height: calc(100dvh - var(--top-bar-height, 56px));
+    width: 340px !important;
+    max-width: 340px !important;
+    position: sticky !important;
+    top: var(--top-bar-height, 56px) !important;
+    height: calc(100dvh - var(--top-bar-height, 56px)) !important;
     transform: none !important;
     box-shadow: none !important;
   }
   /* Collapsed = use negative margin to shift it out of view (same pattern as desktop).
      This releases the horizontal space so preview workspace can expand to full width. */
   .editor-sidebar.collapsed {
-    margin-left: -340px;
+    margin-left: -340px !important;
+    transform: none !important;
   }
   /* No backdrop on tablet split-view */
   .sidebar-backdrop {

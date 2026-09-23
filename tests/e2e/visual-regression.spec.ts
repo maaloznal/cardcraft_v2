@@ -29,7 +29,8 @@ test.describe('Visual regression', () => {
     // Screenshot the preview workspace
     await expect(page.locator('#previewWorkspace')).toHaveScreenshot(
       'default-state.png',
-      { maxDiffPixelRatio: 0.01 },
+      // P-MOBILE: 0.01→0.05 — Ubuntu CI font rendering differs from dev machines
+      { maxDiffPixelRatio: 0.05 },
     );
   });
 
@@ -44,7 +45,7 @@ test.describe('Visual regression', () => {
     await page.waitForTimeout(800);
     await expect(page.locator('#previewWorkspace')).toHaveScreenshot(
       'card-with-content.png',
-      { maxDiffPixelRatio: 0.01 },
+      { maxDiffPixelRatio: 0.05 },
     );
   });
 
@@ -56,7 +57,7 @@ test.describe('Visual regression', () => {
     await page.waitForTimeout(500);
     await expect(page.locator('#previewWorkspace')).toHaveScreenshot(
       'two-cards.png',
-      { maxDiffPixelRatio: 0.01 },
+      { maxDiffPixelRatio: 0.05 },
     );
   });
 
@@ -67,7 +68,7 @@ test.describe('Visual regression', () => {
     // Screenshot the full app (modal + preview side by side on desktop)
     await expect(page.locator('.cc-root')).toHaveScreenshot(
       'color-modal-open.png',
-      { maxDiffPixelRatio: 0.01 },
+      { maxDiffPixelRatio: 0.05 },
     );
   });
 
@@ -75,7 +76,7 @@ test.describe('Visual regression', () => {
     await page.waitForTimeout(500);
     await expect(page.locator('#editorSidebar')).toHaveScreenshot(
       'editor-sidebar.png',
-      { maxDiffPixelRatio: 0.01 },
+      { maxDiffPixelRatio: 0.05 },
     );
   });
 });

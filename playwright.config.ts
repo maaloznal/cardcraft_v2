@@ -54,7 +54,6 @@ export default defineConfig({
       name: 'mobile-chrome',
       use: {
         ...devices['iPhone 14'],
-        channel: 'chromium',
         browserName: 'chromium',
       },
       testMatch: /.*\/(mobile|narrow)\.spec\.ts/,
@@ -65,7 +64,6 @@ export default defineConfig({
       name: 'tablet-chrome',
       use: {
         ...devices['iPad (gen 7)'],
-        channel: 'chromium',
         browserName: 'chromium',
       },
       testMatch: /.*\/tablet\.spec\.ts/,
