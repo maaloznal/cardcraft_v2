@@ -33,6 +33,7 @@ import {
   type Project,
 } from '@/lib/sync/cloudSync';
 import type { SavedState } from '@/storage/StorageManager';
+import * as Storage from '@/storage/StorageManager';
 import type { OrchestratorContext } from './types';
 import { createLogger } from '@/lib/logger';
 
@@ -360,11 +361,17 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
    * Auth state change handler.
    * - INITIAL_SESSION: if logged in, do the initial pull (once) + start realtime.
    * - SIGNED_IN: pull from cloud + start realtime.
-   * - SIGNED_OUT: clear cached project, stop realtime, stop syncing, keep local state.
+   * - SIGNED_OUT: clear local state (cards + localStorage) to prevent card leakage
+   *   between accounts on shared devices, stop realtime + sync.
+   *
+   * Why clear on sign-out: previously, cards stayed in localStorage after
+   * logout. The next user to log in on the same device would see those cards
+   * (and they could even get auto-pushed to the new account's cloud — a
+   * privacy leak). Clearing on sign-out ensures each account starts clean.
    */
   function handleAuthChange(event: string, session: Session | null): void {
     if (event === 'SIGNED_OUT' || !session?.user) {
-      log.info('User signed out — stopping cloud sync');
+      log.info('User signed out — stopping cloud sync + clearing local state');
       currentUser = null;
       cachedProject = null;
       initialPullDone = false;
@@ -385,6 +392,12 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
         }
         realtimeChannel = null;
       }
+      // Clear local state — prevents card leakage between accounts on shared
+      // devices. Without this, the next user to log in would see the previous
+      // user's cards in localStorage (and they could get pushed to the new
+      // account's cloud project — a privacy violation).
+      clearLocalState();
+      storage.showToast('Вы вышли из аккаунта. Локальные карточки очищены.', 3000);
       return;
     }
     if (session.user.id !== currentUser?.id) {
@@ -403,6 +416,34 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
         } else if (reason === 'cloud was empty, pushed local instead') {
           storage.showToast('Локальные карточки сохранены в облако', 2500);
         }
+      });
+    }
+  }
+
+  /**
+   * Clear local state — cards (in-memory + localStorage) + settings.
+   * Called on SIGNED_OUT to prevent card leakage between accounts on shared
+   * devices. Also resets to a single empty card so the editor is ready for
+   * the next user.
+   */
+  function clearLocalState(): void {
+    try {
+      // 1. Clear in-memory state — replace cards with a single empty card
+      stateManager.dispatch({ type: 'CLEAR_ALL' });
+      // 2. Clear localStorage (cards + all settings)
+      Storage.clear();
+      // 3. Re-render editor + preview to show the cleared state
+      try {
+        ctx.uiAppliers.renderEditor();
+        ctx.uiAppliers.renderPreview();
+      } catch (renderErr) {
+        log.error('Failed to re-render after clearLocalState', {
+          error: renderErr instanceof Error ? renderErr.message : String(renderErr),
+        });
+      }
+    } catch (e) {
+      log.error('Failed to clear local state', {
+        error: e instanceof Error ? e.message : String(e),
       });
     }
   }

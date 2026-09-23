@@ -117,6 +117,9 @@
   background: var(--ui-border);
   transition: background var(--dur) var(--ease);
   z-index: 10;
+  /* Prevent browser touch gestures (scroll, pull-to-refresh) from hijacking
+     pointer events on the divider. Critical for mobile drag-to-resize. */
+  touch-action: none;
 }
 .resize-divider:hover,
 .resize-divider.dragging {
@@ -125,10 +128,23 @@
 
 /* Вертикальный разделитель (меняет высоту верхней/нижней области) */
 .resize-divider-h {
+  /* Visual height is 4px, but we add a larger invisible hit area via
+     ::before for easier touch targeting on mobile (min 24px touch target). */
   height: 4px;
   cursor: row-resize;
   width: 100%;
   margin: 0;
+}
+/* Invisible enlarged hit area for touch — extends 10px above and below
+   the visible 4px divider, so total touch target is ~24px (WCAG min). */
+.resize-divider-h::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -10px;
+  bottom: -10px;
+  z-index: 9;
 }
 .resize-divider-h::after {
   content: '';
@@ -152,6 +168,16 @@
   width: 4px;
   cursor: col-resize;
   align-self: stretch;
+}
+/* Invisible enlarged hit area for touch — extends 10px left and right */
+.resize-divider-v::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -10px;
+  right: -10px;
+  z-index: 9;
 }
 .resize-divider-v::after {
   content: '';

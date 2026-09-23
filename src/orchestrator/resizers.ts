@@ -47,13 +47,14 @@ export class VerticalResize {
       fixedHeader.style.flex = 'none';
     };
 
-    const onPointerUp = (): void => {
+    const endDrag = (): void => {
       isDragging = false;
       divider.classList.remove('dragging');
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
       document.removeEventListener('pointermove', onPointerMove);
-      document.removeEventListener('pointerup', onPointerUp);
+      document.removeEventListener('pointerup', endDrag);
+      document.removeEventListener('pointercancel', endDrag);
       try {
         localStorage.setItem(
           'flashcard-header-height',
@@ -71,9 +72,16 @@ export class VerticalResize {
       divider.classList.add('dragging');
       document.body.style.cursor = 'row-resize';
       document.body.style.userSelect = 'none';
+      // Prevent the touch from also scrolling the page (touch-action: none
+      // on the divider handles the divider element itself, but once the pointer
+      // is captured by document, we also need preventDefault on the move events).
       e.preventDefault();
-      document.addEventListener('pointermove', onPointerMove);
-      document.addEventListener('pointerup', onPointerUp);
+      document.addEventListener('pointermove', onPointerMove, { passive: false });
+      document.addEventListener('pointerup', endDrag);
+      // pointercancel fires on mobile when the OS interrupts the gesture
+      // (incoming notification, screen rotation, multi-touch, etc.). Without
+      // this, the drag would "stick" — divider stays in dragging state.
+      document.addEventListener('pointercancel', endDrag);
     };
 
     // Restore saved height
@@ -94,7 +102,8 @@ export class VerticalResize {
     this.cleanup = (): void => {
       divider.removeEventListener('pointerdown', onPointerDown);
       document.removeEventListener('pointermove', onPointerMove);
-      document.removeEventListener('pointerup', onPointerUp);
+      document.removeEventListener('pointerup', endDrag);
+      document.removeEventListener('pointercancel', endDrag);
     };
   }
 
@@ -120,14 +129,15 @@ export class HorizontalResize {
       sidebar.style.transition = 'none';
     };
 
-    const onPointerUp = (): void => {
+    const endDrag = (): void => {
       isDragging = false;
       divider.classList.remove('dragging');
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
       sidebar.style.transition = '';
       document.removeEventListener('pointermove', onPointerMove);
-      document.removeEventListener('pointerup', onPointerUp);
+      document.removeEventListener('pointerup', endDrag);
+      document.removeEventListener('pointercancel', endDrag);
       try {
         localStorage.setItem(
           'flashcard-sidebar-width',
@@ -147,8 +157,9 @@ export class HorizontalResize {
       document.body.style.cursor = 'col-resize';
       document.body.style.userSelect = 'none';
       e.preventDefault();
-      document.addEventListener('pointermove', onPointerMove);
-      document.addEventListener('pointerup', onPointerUp);
+      document.addEventListener('pointermove', onPointerMove, { passive: false });
+      document.addEventListener('pointerup', endDrag);
+      document.addEventListener('pointercancel', endDrag);
     };
 
     // Restore saved width
@@ -168,7 +179,8 @@ export class HorizontalResize {
     this.cleanup = (): void => {
       divider.removeEventListener('pointerdown', onPointerDown);
       document.removeEventListener('pointermove', onPointerMove);
-      document.removeEventListener('pointerup', onPointerUp);
+      document.removeEventListener('pointerup', endDrag);
+      document.removeEventListener('pointercancel', endDrag);
     };
   }
 

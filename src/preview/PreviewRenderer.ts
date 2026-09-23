@@ -262,24 +262,27 @@ export class PreviewRenderer {
       ? `<div class="card-empty-hint">Карточка пуста — заполните поля в редакторе</div>`
       : '';
 
+    // Build top content (progress + tag + title + subtitle + text + list).
+    // Only render the wrapper div if it has any children — avoids empty
+    // flex items that take up gap space (16px) for no reason.
+    const topContentInner = `${progressHtml}${tagHtml}${emptyHint}${card.title ? `<h2 class="card-title" ${titleStyle} data-field="title" data-card-id="${safeCardId}">${applyWordStylesToText(card.title, card.wordStyles, 'title')}</h2>` : ''}${card.subtitle ? `<p class="card-subtitle" ${subtitleStyle} data-field="subtitle" data-card-id="${safeCardId}">${applyWordStylesToText(card.subtitle, card.wordStyles, 'subtitle').replace(/\n/g, '<br>')}</p>` : ''}${card.text ? `<p class="card-text" ${textStyle} data-field="text" data-card-id="${safeCardId}">${applyWordStylesToText(card.text, card.wordStyles, 'text').replace(/\n/g, '<br>')}</p>` : ''}${listHtml}`;
+    const topContent = topContentInner.trim()
+      ? `<div class="card-top-content" style="display:flex;flex-direction:column;gap:16px;">${topContentInner}</div>`
+      : '';
+
+    // Build bottom content (footer + cta). Only render if at least one is present.
+    const bottomContentInner = `${card.footer ? `<div class="card-footer-text" ${footerStyle} data-field="footer" data-card-id="${safeCardId}">${applyWordStylesToText(card.footer, card.wordStyles, 'footer')}</div>` : ''}${card.cta ? `<div class="accent-btn" ${ctaStyle} data-field="cta" data-card-id="${safeCardId}">${applyWordStylesToText(card.cta, card.wordStyles, 'cta')}</div>` : ''}`;
+    const bottomContent = bottomContentInner.trim()
+      ? `<div class="card-bottom-content" style="display:flex;flex-direction:column;gap:16px;">${bottomContentInner}</div>`
+      : '';
+
     const wrapper = document.createElement('div');
     wrapper.className = 'card-wrapper';
     wrapper.dataset.cardId = safeCardId;
     wrapper.innerHTML = `
       <div class="card" id="card-node-${safeCardId}" ${themeAttr} ${formatAttr}>
-        <div class="card-top-content" style="display:flex;flex-direction:column;gap:16px;">
-          ${progressHtml}
-          ${tagHtml}
-          ${emptyHint}
-          ${card.title ? `<h2 class="card-title" ${titleStyle} data-field="title" data-card-id="${safeCardId}">${applyWordStylesToText(card.title, card.wordStyles, 'title')}</h2>` : ''}
-          ${card.subtitle ? `<p class="card-subtitle" ${subtitleStyle} data-field="subtitle" data-card-id="${safeCardId}">${applyWordStylesToText(card.subtitle, card.wordStyles, 'subtitle').replace(/\n/g, '<br>')}</p>` : ''}
-          ${card.text ? `<p class="card-text" ${textStyle} data-field="text" data-card-id="${safeCardId}">${applyWordStylesToText(card.text, card.wordStyles, 'text').replace(/\n/g, '<br>')}</p>` : ''}
-          ${listHtml}
-        </div>
-        <div class="card-bottom-content" style="display:flex;flex-direction:column;gap:16px;">
-          ${card.footer ? `<div class="card-footer-text" ${footerStyle} data-field="footer" data-card-id="${safeCardId}">${applyWordStylesToText(card.footer, card.wordStyles, 'footer')}</div>` : ''}
-          ${card.cta ? `<div class="accent-btn" ${ctaStyle} data-field="cta" data-card-id="${safeCardId}">${applyWordStylesToText(card.cta, card.wordStyles, 'cta')}</div>` : ''}
-        </div>
+        ${topContent}
+        ${bottomContent}
       </div>
       <div class="card-actions">
         <button class="btn-card-action" data-action="download" data-card-id="card-node-${safeCardId}" data-filename="card-${index + 1}.png" title="Скачать" aria-label="Скачать"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
