@@ -252,6 +252,7 @@ export class EditorRenderer {
     const summary = this.getCardSummary(card);
     const startsCollapsed =
       typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
       window.matchMedia('(max-width: 767px)').matches &&
       summary.length > 0;
     block.className = `card-editor-block${startsCollapsed ? ' collapsed' : ''}`;
