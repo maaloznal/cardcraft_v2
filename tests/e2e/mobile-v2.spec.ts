@@ -181,6 +181,58 @@ test.describe('P0-layout: mobile layout integrity', () => {
     expect(hasVars.topBarHeight.length).toBeGreaterThan(0);
     expect(hasVars.mobileSwitcherHeight.length).toBeGreaterThan(0);
   });
+
+  test('layout-5: expanded Design remains scrollable and can be closed on a narrow phone', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await gotoApp(page);
+    await switchToEditorMode(page);
+
+    const design = page.locator('.sidebar-fixed-header > .sidebar-accordion').first();
+    const designToggle = design.locator(':scope > [data-sidebar-toggle]');
+    await designToggle.tap();
+    await expect(design).toHaveClass(/\bexpanded\b/);
+
+    const scrollState = await page.locator('#editorSidebar').evaluate(async (sidebar) => {
+      const designSection = sidebar.querySelector<HTMLElement>(
+        '.sidebar-fixed-header > .sidebar-accordion',
+      );
+      if (!designSection) throw new Error('Design section not found');
+      // Scroll to the end of Design (not past it into the card editor).
+      sidebar.scrollTop = Math.max(
+        1,
+        designSection.offsetTop + designSection.scrollHeight - sidebar.clientHeight,
+      );
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      const toggle = sidebar.querySelector<HTMLElement>(
+        '.sidebar-fixed-header > .sidebar-accordion > [data-sidebar-toggle]',
+      );
+      const sidebarRect = sidebar.getBoundingClientRect();
+      const toggleRect = toggle?.getBoundingClientRect();
+      return {
+        overflowY: getComputedStyle(sidebar).overflowY,
+        scrollable: sidebar.scrollHeight > sidebar.clientHeight,
+        scrollTop: sidebar.scrollTop,
+        toggleInsideViewport: Boolean(
+          toggleRect &&
+          toggleRect.top >= sidebarRect.top - 1 &&
+          toggleRect.bottom <= sidebarRect.bottom + 1
+        ),
+      };
+    });
+
+    expect(scrollState.overflowY).toBe('auto');
+    expect(scrollState.scrollable).toBe(true);
+    expect(scrollState.scrollTop).toBeGreaterThan(0);
+    expect(scrollState.toggleInsideViewport).toBe(true);
+    await expect(designToggle).toBeVisible();
+
+    await designToggle.tap();
+    await expect(design).not.toHaveClass(/\bexpanded\b/);
+
+    await page.locator('#closeSidebarBtn').tap();
+    await expect(page.locator('.cc-root')).toHaveAttribute('data-mobile-mode', 'preview');
+    await expect(page.locator('#editorSidebar')).toHaveClass(/\bcollapsed\b/);
+  });
 });
 
 /* ═══════════════════════════════════════════════════════════════════

@@ -373,6 +373,36 @@
     top: calc(var(--top-bar-height) + var(--safe-area-top, 0px) + var(--mobile-switcher-height));
     /* On phone use svh for the sidebar height (excludes dynamic toolbar). */
     height: calc(100svh - var(--top-bar-height) - var(--safe-area-top, 0px) - var(--mobile-switcher-height));
+    /* The phone editor is one continuous scroll surface. Keeping the desktop
+       split panes here lets an expanded Design section grow beyond the drawer
+       while the sidebar itself clips it with overflow:hidden. */
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Desktop lets the user resize the Design/cards split. On a phone that
+     persisted inline height must not constrain either section: both become
+     normal children of the sidebar's single scroll container. */
+  .sidebar-fixed-header {
+    flex: none !important;
+    height: auto !important;
+    min-height: 0;
+    overflow: visible;
+  }
+  .sidebar-scroll-area {
+    flex: none;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  /* Keep the outer Design toggle reachable while its long contents scroll. */
+  .sidebar-fixed-header > .sidebar-accordion > .sidebar-accordion-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--ui-surface);
   }
 
   /* Cards full width on phone */
@@ -382,6 +412,7 @@
   }
 
   /* Resize divider — hidden on phone (no split view possible) */
+  .resize-divider-h,
   .resize-divider-v {
     display: none;
   }
