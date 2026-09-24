@@ -9,7 +9,7 @@
  * P1-3: UI state (formerly 5 shadow `let` vars in orchestrator) lives here.
  */
 
-import type { Card, Snapshot, Action, UIState, SectionStyle } from '../core/types';
+import type { Card, Snapshot, Action, UIState, SectionStyle, ExportQuality } from '../core/types';
 import { generateId, deepClone } from '../core/utils';
 import {
   DEFAULT_THEME,
@@ -17,6 +17,7 @@ import {
   DEFAULT_GRADIENT_ANGLE,
   DEFAULT_LIST_STYLE,
   DEFAULT_PROGRESS_STYLE,
+  DEFAULT_EXPORT_QUALITY,
 } from '../core/constants';
 
 // ─── Sub-state interfaces ──────────────────────────────────────
@@ -34,6 +35,7 @@ export interface SettingsState {
   progressBarStyle: string;
   listStyleType: string;
   charLimitEnabled: boolean;
+  exportQuality: ExportQuality;
 }
 
 export interface AppState {
@@ -71,6 +73,7 @@ function createDefaultState(): AppState {
       progressBarStyle: DEFAULT_PROGRESS_STYLE,
       listStyleType: DEFAULT_LIST_STYLE,
       charLimitEnabled: false,
+      exportQuality: DEFAULT_EXPORT_QUALITY,
     },
     ui: createDefaultUIState(),
   };
@@ -123,6 +126,11 @@ export class StateManager {
   /** Get current format */
   getFormat(): string {
     return this.state.settings.format;
+  }
+
+  /** Get current PNG export quality ('x2' | 'x3' | 'x4') */
+  getExportQuality(): ExportQuality {
+    return this.state.settings.exportQuality;
   }
 
   /** Get gradient angle */
@@ -185,6 +193,7 @@ export class StateManager {
         progressBarStyle: snapshot.progressBarStyle,
         listStyleType: snapshot.listStyleType,
         charLimitEnabled: snapshot.charLimitEnabled,
+        exportQuality: snapshot.exportQuality,
       },
     };
     this.listeners.forEach((fn) => fn(this.state));
@@ -203,6 +212,7 @@ export class StateManager {
       progressBarStyle: s.progressBarStyle,
       listStyleType: s.listStyleType,
       charLimitEnabled: s.charLimitEnabled,
+      exportQuality: s.exportQuality,
     };
   }
 
@@ -380,6 +390,7 @@ export class StateManager {
             progressBarStyle: snap.progressBarStyle,
             listStyleType: snap.listStyleType,
             charLimitEnabled: snap.charLimitEnabled,
+            exportQuality: snap.exportQuality,
           },
         };
       }
@@ -414,6 +425,11 @@ export class StateManager {
         return {
           ...state,
           settings: { ...state.settings, charLimitEnabled: action.payload.enabled },
+        };
+      case 'SET_EXPORT_QUALITY':
+        return {
+          ...state,
+          settings: { ...state.settings, exportQuality: action.payload.quality },
         };
 
       // ── UI state (P1-3) ──

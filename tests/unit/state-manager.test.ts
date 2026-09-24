@@ -254,6 +254,31 @@ describe('StateManager', () => {
     });
   });
 
+  // ─── Export quality (P-EXPORT-Q) ────────────────────────────
+  describe('export quality', () => {
+    it('defaults to ×3', () => {
+      expect(sm.getExportQuality()).toBe('x3');
+      expect(sm.getSettings().exportQuality).toBe('x3');
+    });
+
+    it('SET_EXPORT_QUALITY updates the setting', () => {
+      sm.dispatch({ type: 'SET_EXPORT_QUALITY', payload: { quality: 'x2' } });
+      expect(sm.getExportQuality()).toBe('x2');
+      sm.dispatch({ type: 'SET_EXPORT_QUALITY', payload: { quality: 'x4' } });
+      expect(sm.getExportQuality()).toBe('x4');
+    });
+
+    it('snapshot/restore round-trips the export quality', () => {
+      sm.dispatch({ type: 'SET_EXPORT_QUALITY', payload: { quality: 'x4' } });
+      const snap = sm.snapshot();
+      expect(snap.exportQuality).toBe('x4');
+      // Change it, then restore — must come back to x4
+      sm.dispatch({ type: 'SET_EXPORT_QUALITY', payload: { quality: 'x2' } });
+      sm.dispatch({ type: 'RESTORE_SNAPSHOT', payload: { snapshot: snap } });
+      expect(sm.getExportQuality()).toBe('x4');
+    });
+  });
+
   // ─── SET_PROGRESS_CONFIG (composite: show + style) ──────────
   describe('progress config (show + style combined)', () => {
     it('can be read as a single object', () => {

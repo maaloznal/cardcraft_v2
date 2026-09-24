@@ -3,6 +3,22 @@
  * All modules import from here — single source of truth for data shapes.
  */
 
+// ─── Export quality ─────────────────────────────────────────────
+/** PNG export quality multiplier. Stored in SettingsState + localStorage. */
+export type ExportQuality = 'x2' | 'x3' | 'x4';
+
+/** Metadata for one export-quality level (scale, output width, labels). */
+export interface ExportQualityLevel {
+  /** Multiplier applied to EXPORT_CARD_WIDTH → output pixel width */
+  scale: number;
+  /** Resulting PNG width in device pixels (== EXPORT_CARD_WIDTH × scale) */
+  outputWidth: number;
+  /** Short Russian label for the <select> option */
+  label: string;
+  /** One-line Russian description of size/purpose */
+  description: string;
+}
+
 /** Individual word style (bold, italic, color, etc.) */
 export interface WordStyle {
   fontWeight?: string;
@@ -54,6 +70,7 @@ export interface Snapshot {
   progressBarStyle: string;
   listStyleType: string;
   charLimitEnabled: boolean;
+  exportQuality: ExportQuality;
 }
 
 /** Theme group structure for dropdown rendering */
@@ -173,6 +190,7 @@ export type Action =
   | { type: 'SET_PROGRESS_BAR_STYLE'; payload: { style: string } }
   | { type: 'SET_LIST_STYLE'; payload: { style: string } }
   | { type: 'SET_CHAR_LIMIT'; payload: { enabled: boolean } }
+  | { type: 'SET_EXPORT_QUALITY'; payload: { quality: ExportQuality } }
 
   // ── Snapshot / clear ──
   | { type: 'RESTORE_SNAPSHOT'; payload: { snapshot: Snapshot } }

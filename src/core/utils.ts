@@ -3,6 +3,8 @@
  * Every function here can be unit-tested in isolation.
  */
 
+import type { ExportQuality } from './types';
+
 /** Escape HTML special characters to prevent XSS */
 export function escapeHtml(str: string): string {
   return (str || '')
@@ -105,4 +107,15 @@ export function isValidTheme(theme: unknown, allowedThemes: readonly string[]): 
 export function isValidFormat(format: unknown, allowedFormats: readonly string[]): boolean {
   if (typeof format !== 'string') return false;
   return allowedFormats.includes(format);
+}
+
+/** Validate export-quality against the whitelist. Used by StorageManager on
+ *  load (sanitize-on-write) so a corrupted/garbage localStorage value falls
+ *  back to the default (x3) instead of crashing html-to-image or producing a
+ *  wrong-resolution PNG. */
+export function isValidExportQuality(
+  quality: unknown,
+  allowed: readonly string[],
+): quality is ExportQuality {
+  return typeof quality === 'string' && allowed.includes(quality);
 }

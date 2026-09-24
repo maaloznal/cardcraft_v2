@@ -108,6 +108,13 @@ export function createStateSubscriber(ctx: OrchestratorContext): () => void {
       if (refs.listStyleSelect && refs.listStyleSelect.value !== state.settings.listStyleType) {
         refs.listStyleSelect.value = state.settings.listStyleType;
       }
+      // P-EXPORT-Q: sync the quality <select> from state (load/undo/redo/cloud)
+      if (
+        refs.exportQualitySelect &&
+        refs.exportQualitySelect.value !== state.settings.exportQuality
+      ) {
+        refs.exportQualitySelect.value = state.settings.exportQuality;
+      }
       if (refs.charLimitToggle && refs.charLimitToggle.checked !== state.settings.charLimitEnabled) {
         refs.charLimitToggle.checked = state.settings.charLimitEnabled;
       }

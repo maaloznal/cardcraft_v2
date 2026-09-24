@@ -338,6 +338,36 @@ export default function Home() {
             </div>
           </div>
 
+          {/* 1f. Качество экспорта PNG — detaches PNG resolution from the
+              on-screen card size so output is identical on phone/tablet/desktop.
+              Default ×3 (1140 px). Persisted via SettingsState.exportQuality. */}
+          <div className="sidebar-accordion" data-sidebar-accordion>
+            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle aria-expanded="false">
+              <span>Качество экспорта</span>
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div className="sidebar-accordion-body">
+            <div className="sidebar-section export-quality-section">
+              <label className="export-quality-label" htmlFor="exportQualitySelect">
+                Разрешение PNG
+              </label>
+              <select
+                id="exportQualitySelect"
+                className="export-quality-select"
+                defaultValue="x3"
+                aria-describedby="exportQualityDesc"
+              >
+                <option value="x2">Стандартное ×2 — 760 px</option>
+                <option value="x3">Высокое ×3 — 1140 px</option>
+                <option value="x4">Максимальное ×4 — 1520 px</option>
+              </select>
+              <p className="export-quality-desc" id="exportQualityDesc">
+                Применяется к скачиванию, копированию в буфер и пакетному экспорту. Результат одинаков на всех устройствах.
+              </p>
+            </div>
+            </div>
+          </div>
+
             </div>{/* /sidebar-accordion-body for Дизайн */}
           </div>{/* /Дизайн sidebar-accordion */}
 

@@ -34,6 +34,7 @@
  */
 
 import { MODAL_FIELDS } from '@/core/constants';
+import type { ExportQuality } from '@/core/types';
 import type { OrchestratorContext } from './types';
 
 /* ─── bindTopbarEvents ───────────────────────────────────────── */
@@ -144,6 +145,16 @@ export function bindTopbarEvents(ctx: OrchestratorContext): void {
       type: 'SET_LIST_STYLE',
       payload: { style: (e.target as HTMLSelectElement).value },
     });
+    storage.scheduleSave({ silent: true });
+    history.pushHistory();
+  });
+
+  // Export quality select — controls PNG resolution (×2/×3/×4). Detached from
+  // the on-screen card size, so output is identical across phone/tablet/desktop.
+  // Persisted via StorageManager; pushed to history so undo restores it.
+  ctx.listeners.addEl(refs.exportQualitySelect, 'change', (e) => {
+    const value = (e.target as HTMLSelectElement).value;
+    stateManager.dispatch({ type: 'SET_EXPORT_QUALITY', payload: { quality: value as ExportQuality } });
     storage.scheduleSave({ silent: true });
     history.pushHistory();
   });

@@ -5,7 +5,6 @@
 export const CONFIG = {
   SAVE_DEBOUNCE_MS: 400,
   HISTORY_DEBOUNCE_MS: 700,
-  EXPORT_PIXEL_RATIO: 2,
   MAX_HISTORY: 50,
 } as const;
 
@@ -13,6 +12,46 @@ export const CARD_WIDTH = 380;
 export const CARD_MIN_HEIGHT = 400;
 export const CARD_PADDING = 32;
 export const CARD_PADDING_MOBILE = 24;
+
+// ─── Export quality ─────────────────────────────────────────────
+// The card is rendered to PNG at a FIXED logical width (EXPORT_CARD_WIDTH,
+// == CARD_WIDTH == 380 CSS px) regardless of the on-screen viewport, so the
+// output resolution is deterministic. html-to-image applies this width to its
+// internal clone (not the visible node) — no UI jumps. The output pixel
+// width = EXPORT_CARD_WIDTH × quality.scale.
+//
+//   x2 → 760 px  (Standard, fast, small files)
+//   x3 → 1140 px (High, default — best size/quality balance)
+//   x4 → 1520 px (Maximum, memory-heavy on mobile — may fail on low-end devices)
+//
+// devicePixelRatio is intentionally NOT used as a quality source — the result
+// must be identical across phones, tablets, and desktops.
+export const EXPORT_CARD_WIDTH = CARD_WIDTH;
+
+export const EXPORT_QUALITY_LEVELS: Record<ExportQuality, ExportQualityLevel> = {
+  x2: {
+    scale: 2,
+    outputWidth: 760,
+    label: 'Стандартное ×2',
+    description: '760 px — быстро и компактно',
+  },
+  x3: {
+    scale: 3,
+    outputWidth: 1140,
+    label: 'Высокое ×3',
+    description: '1140 px — оптимальный размер и качество',
+  },
+  x4: {
+    scale: 4,
+    outputWidth: 1520,
+    label: 'Максимальное ×4',
+    description: '1520 px — максимальная чёткость, большой файл',
+  },
+};
+
+export const EXPORT_QUALITY_VALUES = Object.keys(EXPORT_QUALITY_LEVELS) as ExportQuality[];
+
+export const DEFAULT_EXPORT_QUALITY: ExportQuality = 'x3';
 
 export const SIDEBAR_WIDTH = 300;
 export const SIDEBAR_MIN_WIDTH = 260;
@@ -118,4 +157,4 @@ export const MODAL_GROUPS = [
 ];
 
 // Re-export types for convenience
-import type { EditorField, ModalField, FieldConfig } from './types';
+import type { EditorField, ModalField, FieldConfig, ExportQuality, ExportQualityLevel } from './types';

@@ -59,6 +59,7 @@ export function createStorageController(ctx: OrchestratorContext): StorageContro
       listStyleType: state.settings.listStyleType,
       gradientAngle: state.settings.gradientAngle,
       charLimitEnabled: state.settings.charLimitEnabled,
+      exportQuality: state.settings.exportQuality,
     };
     try {
       Storage.save(stateToSave);
@@ -122,6 +123,8 @@ export function createStorageController(ctx: OrchestratorContext): StorageContro
       stateManager.dispatch({ type: 'SET_GRADIENT_ANGLE', payload: { angle: saved.gradientAngle } });
     if (saved.charLimitEnabled !== undefined)
       stateManager.dispatch({ type: 'SET_CHAR_LIMIT', payload: { enabled: saved.charLimitEnabled } });
+    if (saved.exportQuality !== undefined)
+      stateManager.dispatch({ type: 'SET_EXPORT_QUALITY', payload: { quality: saved.exportQuality } });
   }
 
   /** Synchronous silent save used by the beforeunload handler — no toast, no debounce. */

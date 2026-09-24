@@ -108,6 +108,7 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
       listStyleType: state.settings.listStyleType,
       gradientAngle: state.settings.gradientAngle,
       charLimitEnabled: state.settings.charLimitEnabled,
+      exportQuality: state.settings.exportQuality,
       sidebarWidth: null,
       headerHeight: null,
     };
@@ -139,6 +140,8 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
         stateManager.dispatch({ type: 'SET_GRADIENT_ANGLE', payload: { angle: payload.gradientAngle } });
       if (payload.charLimitEnabled !== undefined)
         stateManager.dispatch({ type: 'SET_CHAR_LIMIT', payload: { enabled: payload.charLimitEnabled } });
+      if (payload.exportQuality !== undefined)
+        stateManager.dispatch({ type: 'SET_EXPORT_QUALITY', payload: { quality: payload.exportQuality } });
       // Persist to local storage so it survives reloads even without re-pulling
       storage.saveCardsToLocalStorage({ silent: true });
       // Re-render the cards in UI — stateManager.setCards updates state, but

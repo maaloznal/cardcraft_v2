@@ -1,20 +1,26 @@
 /**
- * withExportMode — helper that adds .exporting class to root, awaits
- * document.fonts.ready, runs the export function, and removes the class.
+ * withExportMode — toggles the `.exporting` class on root around an export
+ * operation. This is the SINGLE place that manages the `.exporting` class —
+ * ExportManager no longer touches it (prevents the previous double add/remove).
  *
- * The .exporting class triggers CSS rules that hide UI chrome (.card-empty-hint,
- * .cc-styled-word markers) so they don't appear in the exported PNG.
+ * Why the class matters: html-to-image clones the card node and copies the
+ * COMPUTED styles of every descendant. The `.cc-root.exporting` CSS rules
+ * hide the empty-card placeholder (`.card-empty-hint`) and strip the
+ * `.cc-styled-word` dashed-underline markers. For the clone to inherit these
+ * overrides, `.exporting` MUST be on the root at clone time — i.e. before the
+ * wrapped fn runs. `document.fonts.ready` is awaited inside ExportManager's
+ * prepareForExport (single responsibility — fonts belong to the export primitive).
+ *
+ * The class is removed in `finally` so it never persists across success,
+ * error, or AbortError.
  */
-
 export async function withExportMode<T>(
   root: HTMLElement,
-  node: HTMLElement,
-  fn: (node: HTMLElement) => Promise<T>,
+  fn: () => Promise<T>,
 ): Promise<T> {
   root.classList.add('exporting');
   try {
-    await document.fonts.ready;
-    return await fn(node);
+    return await fn();
   } finally {
     root.classList.remove('exporting');
   }

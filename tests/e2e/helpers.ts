@@ -1,4 +1,6 @@
 import { expect, type Page } from '@playwright/test';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 /**
  * Helper: navigate to the app with cleared storage.
@@ -209,5 +211,86 @@ export async function getFontSize(page: Page, selector: string): Promise<number>
     if (!el) throw new Error(`Element ${sel} not found`);
     return parseFloat(getComputedStyle(el).fontSize);
   }, selector);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * PNG export-quality helpers (P-EXPORT-Q)
+ *
+ * The PNG IHDR chunk starts at byte 8 (after the 8-byte signature) and
+ * contains, in order: 4-byte length (== 13), 4-byte type ("IHDR"), then the
+ * 13-byte payload: 4-byte width, 4-byte height (both big-endian), bit depth,
+ * color type, compression, filter, interlace. So width is at bytes 16-19 and
+ * height at bytes 20-23. No external library needed — plain Buffer reads.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+export interface PngDimensions {
+  width: number;
+  height: number;
+}
+
+/** Read width/height from a PNG file's IHDR chunk. Throws on non-PNG data. */
+export function readPngDimensions(filePath: string): PngDimensions {
+  const buf = fs.readFileSync(filePath);
+  // PNG signature: 89 50 4E 47 0D 0A 1A 0A
+  const SIG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  if (buf.length < 24 || buf.subarray(0, 8).equals(SIG) === false) {
+    throw new Error(`Not a PNG file: ${filePath}`);
+  }
+  // IHDR type is at bytes 12-15 ("IHDR"); width at 16-19, height at 20-23 (BE).
+  const width = buf.readUInt32BE(16);
+  const height = buf.readUInt32BE(20);
+  return { width, height };
+}
+
+/**
+ * Trigger a card download and save the resulting PNG to a temp file, then
+ * return its dimensions. Uses Playwright's download event so the real
+ * browser download path is exercised (no mocking). The file is read once and
+ * left in the OS temp dir; the test runner cleans up its tmp dir per run.
+ */
+export async function downloadPngAndReadDimensions(
+  page: Page,
+  trigger: () => Promise<void>,
+  suggestedNamePrefix = 'card',
+): Promise<PngDimensions> {
+  const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
+  await trigger();
+  const download = await downloadPromise;
+  const suggested = download.suggestedFilename();
+  expect(suggested, 'downloaded file must be a PNG').toMatch(/\.png$/);
+  const tmpDir = process.env.TMPDIR || '/tmp';
+  const savePath = path.join(tmpDir, `${suggestedNamePrefix}-${Date.now()}.png`);
+  await download.saveAs(savePath);
+  const dims = readPngDimensions(savePath);
+  // Clean up the temp file so we never hold many large PNGs (memory safety
+  // requirement applies to tests too — don't accumulate ×4 blobs).
+  try {
+    fs.unlinkSync(savePath);
+  } catch {
+    /* best-effort */
+  }
+  return dims;
+}
+
+/** Set the export quality via the real <select> (selects the option by value). */
+export async function setExportQuality(page: Page, quality: 'x2' | 'x3' | 'x4'): Promise<void> {
+  // Open the Дизайн accordion first so the quality subsection is reachable.
+  // (On phone the sidebar may be collapsed; callers should switchToEditorMode
+  // first. On desktop the Дизайн accordion itself may be collapsed.)
+  const designToggle = page.locator('.sidebar-fixed-header > .sidebar-accordion > .sidebar-accordion-header');
+  const expanded = await designToggle.getAttribute('aria-expanded');
+  if (expanded === 'false') {
+    await designToggle.click();
+    await page.waitForTimeout(200);
+  }
+  // Open the "Качество экспорта" subsection so the <select> is visible.
+  const qualityToggle = page.locator('.sidebar-accordion-body > .sidebar-accordion', { hasText: 'Качество экспорта' }).locator('.sidebar-accordion-header');
+  const qExpanded = await qualityToggle.getAttribute('aria-expanded');
+  if (qExpanded === 'false') {
+    await qualityToggle.click();
+    await page.waitForTimeout(200);
+  }
+  await page.locator('#exportQualitySelect').selectOption(quality);
+  await page.waitForTimeout(150);
 }
 

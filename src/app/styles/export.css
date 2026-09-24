@@ -24,3 +24,59 @@
 .cc-root.exporting .cc-styled-word {
   text-decoration: none;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+ * Export-quality control (×2 / ×3 / ×4)
+ * Lives inside the Дизайн accordion. The <select> is a native control so
+ * it's keyboard-accessible and screen-reader-friendly out of the box. The
+ * label is explicitly associated via htmlFor. On touch devices the select
+ * must meet the 44px minimum touch target — the base select padding
+ * (~29px tall) is too small, so we enlarge it on ≤768px viewports.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+.export-quality-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.export-quality-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ui-text);
+  /* The <label htmlFor> points at the select — clicking the label opens it */
+}
+
+.export-quality-select {
+  width: 100%;
+  /* Desktop: comfortable height; the base select is ~29px which is too short
+     for touch. Use 38px so it's comfortably clickable with a mouse while not
+     bloating the sidebar on small desktops. Mobile overrides below raise it
+     to the 44px touch minimum. */
+  min-height: 38px;
+}
+
+.export-quality-desc {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ui-text-secondary);
+}
+
+/* Touch devices (phones + small tablets, ≤768px): enforce the 44px minimum
+   touch target so a finger tap reliably hits the control. Also bump the
+   font-size to 16px to prevent iOS Safari from zooming the page on focus
+   (Safari zooms when a focused input has font-size < 16px). */
+@media (max-width: 768px) {
+  .cc-root .export-quality-select {
+    min-height: 44px;
+    font-size: 16px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  /* Keep the description readable on narrow screens */
+  .export-quality-desc {
+    font-size: 12px;
+  }
+}
+

@@ -9,12 +9,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { save, load, clear, type SavedState } from '@/storage/StorageManager';
 import type { Card } from '@/core/types';
-import { ALLOWED_THEMES, ALLOWED_FORMATS } from '@/core/constants';
+import { ALLOWED_THEMES, ALLOWED_FORMATS, DEFAULT_EXPORT_QUALITY } from '@/core/constants';
 
 const STORAGE_KEYS = {
   CARDS: 'flashcard-cards',
   THEME: 'flashcard-theme',
   FORMAT: 'flashcard-format',
+  EXPORT_QUALITY: 'flashcard-export-quality',
 };
 
 const VALID_ID_REGEX = /^[a-zA-Z0-9_-]{1,64}$/;
@@ -322,6 +323,56 @@ describe('StorageManager', () => {
         const loaded = load();
         expect(loaded.format).toBe(fmt);
       }
+    });
+  });
+
+  // ─── Export quality ────────────────────────────────────────
+  describe('export quality', () => {
+    it('defaults to ×3 when nothing is stored (new user)', () => {
+      const loaded = load();
+      expect(loaded.exportQuality).toBe(DEFAULT_EXPORT_QUALITY);
+      expect(loaded.exportQuality).toBe('x3');
+    });
+
+    it('survives a save → load round-trip for each allowed value', () => {
+      for (const q of ['x2', 'x3', 'x4'] as const) {
+        localStorage.clear();
+        save({ exportQuality: q });
+        const loaded = load();
+        expect(loaded.exportQuality).toBe(q);
+      }
+    });
+
+    it('an invalid stored value falls back to ×3 (sanitize-on-load)', () => {
+      localStorage.setItem(STORAGE_KEYS.EXPORT_QUALITY, 'x5');
+      expect(load().exportQuality).toBe('x3');
+
+      localStorage.setItem(STORAGE_KEYS.EXPORT_QUALITY, 'standard');
+      expect(load().exportQuality).toBe('x3');
+
+      localStorage.setItem(STORAGE_KEYS.EXPORT_QUALITY, '');
+      expect(load().exportQuality).toBe('x3');
+    });
+
+    it('a corrupted (non-string) value falls back to ×3', () => {
+      // localStorage only stores strings, but a stray 'null'/'undefined'/
+      // '3' value (e.g. from an old buggy build) must not crash or produce
+      // a wrong-resolution PNG.
+      localStorage.setItem(STORAGE_KEYS.EXPORT_QUALITY, 'null');
+      expect(load().exportQuality).toBe('x3');
+
+      localStorage.setItem(STORAGE_KEYS.EXPORT_QUALITY, '3');
+      expect(load().exportQuality).toBe('x3');
+
+      localStorage.setItem(STORAGE_KEYS.EXPORT_QUALITY, 'true');
+      expect(load().exportQuality).toBe('x3');
+    });
+
+    it('clear() removes the export-quality key', () => {
+      save({ exportQuality: 'x4' });
+      expect(localStorage.getItem(STORAGE_KEYS.EXPORT_QUALITY)).toBe('x4');
+      clear();
+      expect(localStorage.getItem(STORAGE_KEYS.EXPORT_QUALITY)).toBeNull();
     });
   });
 

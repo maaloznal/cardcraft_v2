@@ -40,6 +40,7 @@ export interface DOMRefs {
   charCounterText: HTMLElement | null;
   listNumSizeSlider: HTMLInputElement | null;
   listNumSizeValue: HTMLElement | null;
+  exportQualitySelect: HTMLSelectElement | null;
 
   // ── Resize dividers ──
   resizeDividerH: HTMLElement | null;
@@ -107,6 +108,7 @@ export function collectDOMRefs(root: HTMLElement): DOMRefs {
     charCounterText: $<HTMLElement>('#charCounterText'),
     listNumSizeSlider: $<HTMLInputElement>('#listNumSizeSlider'),
     listNumSizeValue: $<HTMLElement>('#listNumSizeValue'),
+    exportQualitySelect: $<HTMLSelectElement>('#exportQualitySelect'),
 
     resizeDividerH: $<HTMLElement>('#resizeDividerH'),
     resizeDividerV: $<HTMLElement>('#resizeDividerV'),

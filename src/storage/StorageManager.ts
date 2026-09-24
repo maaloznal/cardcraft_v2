@@ -3,9 +3,9 @@
  * No other code in the project should call localStorage directly.
  */
 
-import type { Card } from '../core/types';
-import { sanitizeCardId, isValidHexColor, clampFontSize, isValidTheme, isValidFormat } from '../core/utils';
-import { ALLOWED_THEMES, ALLOWED_FORMATS } from '../core/constants';
+import type { Card, ExportQuality } from '../core/types';
+import { sanitizeCardId, isValidHexColor, clampFontSize, isValidTheme, isValidFormat, isValidExportQuality } from '../core/utils';
+import { ALLOWED_THEMES, ALLOWED_FORMATS, EXPORT_QUALITY_VALUES, DEFAULT_EXPORT_QUALITY } from '../core/constants';
 
 const KEYS = {
   CARDS: 'flashcard-cards',
@@ -19,6 +19,7 @@ const KEYS = {
   CHAR_LIMIT: 'flashcard-char-limit',
   SIDEBAR_WIDTH: 'flashcard-sidebar-width',
   HEADER_HEIGHT: 'flashcard-header-height',
+  EXPORT_QUALITY: 'flashcard-export-quality',
 } as const;
 
 export interface SavedState {
@@ -33,6 +34,7 @@ export interface SavedState {
   charLimitEnabled: boolean;
   sidebarWidth: number | null;
   headerHeight: number | null;
+  exportQuality: ExportQuality;
 }
 
 /**
@@ -65,6 +67,7 @@ export function save(state: Partial<SavedState>): void {
     if (state.charLimitEnabled !== undefined) localStorage.setItem(KEYS.CHAR_LIMIT, String(state.charLimitEnabled));
     if (state.sidebarWidth !== undefined && state.sidebarWidth !== null) localStorage.setItem(KEYS.SIDEBAR_WIDTH, String(state.sidebarWidth));
     if (state.headerHeight !== undefined && state.headerHeight !== null) localStorage.setItem(KEYS.HEADER_HEIGHT, String(state.headerHeight));
+    if (state.exportQuality !== undefined) localStorage.setItem(KEYS.EXPORT_QUALITY, state.exportQuality);
   } catch (e) {
     const err = e as Error;
     if (err.name === 'QuotaExceededError') {
@@ -132,6 +135,16 @@ export function load(): Partial<SavedState> {
 
   const headerHeight = localStorage.getItem(KEYS.HEADER_HEIGHT);
   if (headerHeight) result.headerHeight = Number(headerHeight);
+
+  const exportQuality = localStorage.getItem(KEYS.EXPORT_QUALITY);
+  // P-EXPORT-Q: sanitize-on-load — a corrupted/garbage value falls back to the
+  // default (x3) instead of producing a wrong-resolution PNG. Existing users
+  // without the key get the default too (no migration breakage).
+  if (isValidExportQuality(exportQuality, EXPORT_QUALITY_VALUES)) {
+    result.exportQuality = exportQuality;
+  } else {
+    result.exportQuality = DEFAULT_EXPORT_QUALITY;
+  }
 
   return result;
 }
