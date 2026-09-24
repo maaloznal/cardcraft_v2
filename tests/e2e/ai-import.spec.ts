@@ -45,6 +45,8 @@ test.describe('AI text import dialog', () => {
     await page.locator('#aiSourceText').fill('Тестовый текст. '.repeat(80));
     await expect(page.locator('#aiCardEstimate')).toContainText('Ориентировочно');
     await page.locator('#aiTargetChars').fill('100');
+    await page.locator('#aiTargetChars').blur();
+    await expect(page.locator('#aiImportError')).toContainText('от 180 до 2 200');
     await page.locator('#aiGenerateBtn').click();
     await expect(page.locator('#aiImportError')).toContainText('от 180 до 2 200');
   });
