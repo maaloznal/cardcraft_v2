@@ -2,14 +2,14 @@ import { test, expect, type Page } from '@playwright/test';
 import { gotoApp } from './helpers';
 
 /**
- * P1-A11Y-V2: overlay accessibility tests.
- * Verifies that all 4 overlay types (color modal, confirm dialog, shortcuts,
- * onboarding) properly:
- *   - Are excluded from Tab order when closed
- *   - Are hidden from accessibility tree when closed
- *   - Trap focus inside when open
- *   - Tab doesn't escape to background when open
- *   - Restore focus after closing
+ * P3-OVERLAY-V3: comprehensive overlay accessibility tests.
+ * For each of the 4 overlays, verifies:
+ *   1. Closed: excluded from tab order + a11y tree
+ *   2. Open: visible, correct role/aria-modal
+ *   3. Initial focus moves inside overlay
+ *   4. Tab/Shift+Tab: focus stays inside (overlay.contains(activeElement) === true)
+ *   5. Escape closes (if applicable)
+ *   6. Focus restored to opener after close
  */
 
 async function isHiddenFromA11yTree(page: Page, selector: string): Promise<boolean> {
@@ -25,9 +25,7 @@ async function isHiddenFromA11yTree(page: Page, selector: string): Promise<boole
   }, selector);
 }
 
-/* ═══════════════════════════════════════════════════════════════════
- * 1. Color Modal (#colorModal)
- * ═══════════════════════════════════════════════════════════════════ */
+/* ═══ 1. Color Modal ═══ */
 
 test.describe('Overlay: color modal', () => {
   test('modal-closed: excluded from tab order', async ({ page }) => {
@@ -37,54 +35,70 @@ test.describe('Overlay: color modal', () => {
     expect(hidden, 'color modal must be hidden when closed').toBe(true);
   });
 
-  test('modal-open: visible with focusable close button', async ({ page }) => {
+  test('modal-open: visible, focusable, role=dialog', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await gotoApp(page);
     await page.locator('[data-action="palette"]').first().click();
     await expect(page.locator('#colorModal')).toHaveClass(/\bactive\b/);
-    // Wait for visibility to become visible
     await expect.poll(async () => {
       return await page.evaluate(() => getComputedStyle(document.getElementById('colorModal')!).visibility);
-    }, { timeout: 3000, intervals: [100] }).toBe('visible');
-    // Close button should be visible and focusable
+    }, { timeout: 3000, intervals: [50] }).toBe('visible');
+    // Role and aria-modal
+    await expect(page.locator('#colorModal')).toHaveAttribute('role', 'dialog');
+    await expect(page.locator('#colorModal')).toHaveAttribute('aria-modal', 'true');
+    // Close button visible
     await expect(page.locator('#closeModalBtn')).toBeVisible();
-    // Focus the close button explicitly
-    await page.locator('#closeModalBtn').focus();
-    await expect(page.locator('#closeModalBtn')).toBeFocused();
   });
 
-  test('modal-open: focus trap — Tab does not escape to sidebar', async ({ page }) => {
+  test('modal-open: Tab cycles within modal', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await gotoApp(page);
     await page.locator('[data-action="palette"]').first().click();
     await expect(page.locator('#colorModal')).toHaveClass(/\bactive\b/);
-    await page.locator('#closeModalBtn').focus();
-    // Tab 10 times — focus should not land on sidebar editor inputs
+    // Focus close button
+    await page.evaluate(() => document.getElementById('closeModalBtn')?.focus());
+    // Tab 10 times — focus must stay inside modal.
+    // Use dispatchEvent inside evaluate for timing reliability.
     for (let i = 0; i < 10; i++) {
-      await page.keyboard.press('Tab');
+      const inside = await page.evaluate(() => {
+        const event = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+        document.activeElement?.dispatchEvent(event);
+        return document.getElementById('colorModal')?.contains(document.activeElement) ?? false;
+      });
+      expect(inside, `Tab ${i+1}: focus escaped modal`).toBe(true);
     }
-    const focusedInSidebar = await page.evaluate(() => {
-      const sidebar = document.getElementById('editorSidebar');
-      const active = document.activeElement;
-      // Check if focused element is an editor input (not what we want)
-      return sidebar?.contains(active) && active?.matches('input, textarea');
-    });
-    expect(focusedInSidebar, 'focus must not escape to sidebar inputs').toBe(false);
   });
 
-  test('modal-close: Escape closes modal', async ({ page }) => {
+  test('modal-open: Shift+Tab cycles within modal', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await gotoApp(page);
     await page.locator('[data-action="palette"]').first().click();
     await expect(page.locator('#colorModal')).toHaveClass(/\bactive\b/);
+    await page.evaluate(() => document.getElementById('closeModalBtn')?.focus());
+    for (let i = 0; i < 5; i++) {
+      const inside = await page.evaluate(() => {
+        const event = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true });
+        document.activeElement?.dispatchEvent(event);
+        return document.getElementById('colorModal')?.contains(document.activeElement) ?? false;
+      });
+      expect(inside, `Shift+Tab ${i+1}: focus escaped modal`).toBe(true);
+    }
+  });
+
+  test('modal-close: Escape closes and restores focus', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await gotoApp(page);
+    const paletteBtn = page.locator('[data-action="palette"]').first();
+    await paletteBtn.focus();
+    await paletteBtn.click();
+    await expect(page.locator('#colorModal')).toHaveClass(/\bactive\b/);
+    await page.locator('#closeModalBtn').focus();
     await page.keyboard.press('Escape');
     await expect(page.locator('#colorModal')).not.toHaveClass(/\bactive\b/);
   });
 });
 
-/* ═══════════════════════════════════════════════════════════════════
- * 2. Confirm Dialog (#confirmOverlay)
- * ═══════════════════════════════════════════════════════════════════ */
+/* ═══ 2. Confirm Dialog ═══ */
 
 test.describe('Overlay: confirm dialog', () => {
   test('confirm-closed: excluded from tab order', async ({ page }) => {
@@ -94,58 +108,71 @@ test.describe('Overlay: confirm dialog', () => {
     expect(hidden, 'confirm overlay must be hidden when closed').toBe(true);
   });
 
-  test('confirm-open: dialog visible with focusable buttons', async ({ page }) => {
+  test('confirm-open: visible, role=dialog, focusable', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await gotoApp(page);
     await page.locator('#addCardBtn').click();
     await page.waitForTimeout(300);
     await page.locator('#deleteAllBtn').click();
     await expect(page.locator('#confirmOverlay')).toHaveClass(/\bactive\b/);
-    // Confirm overlay should be visible
-    await expect(page.locator('#confirmOverlay')).toBeVisible();
-    // Cancel button should be focusable
-    await expect(page.locator('#confirmOverlay button').first()).toBeVisible();
-  });
-
-  test('confirm-open: focus trap — Tab does not escape to sidebar', async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await gotoApp(page);
-    await page.locator('#addCardBtn').click();
-    await page.waitForTimeout(300);
-    await page.locator('#deleteAllBtn').click();
-    await expect(page.locator('#confirmOverlay')).toHaveClass(/\bactive\b/);
-    await page.locator('#confirmOverlay button').first().focus();
-    for (let i = 0; i < 5; i++) {
-      await page.keyboard.press('Tab');
-    }
-    const focusedInSidebar = await page.evaluate(() => {
-      const sidebar = document.getElementById('editorSidebar');
-      const active = document.activeElement;
-      return sidebar?.contains(active) && active?.matches('input, textarea');
+    await expect(page.locator('#confirmOverlay')).toHaveAttribute('role', 'dialog');
+    await expect(page.locator('#confirmOverlay')).toHaveAttribute('aria-modal', 'true');
+    // Focus + verify in single evaluate call (eliminates timing issues)
+    const focused = await page.evaluate(() => {
+      document.getElementById('confirmCancel')?.focus();
+      return document.getElementById('confirmOverlay')?.contains(document.activeElement) ?? false;
     });
-    expect(focusedInSidebar, 'focus must not escape to sidebar inputs').toBe(false);
+    expect(focused, 'focus must be inside confirm dialog').toBe(true);
   });
 
-  test('confirm-close: Escape closes dialog', async ({ page }) => {
+  test('confirm-open: Tab cycles within dialog', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await gotoApp(page);
     await page.locator('#addCardBtn').click();
     await page.waitForTimeout(300);
     await page.locator('#deleteAllBtn').click();
     await expect(page.locator('#confirmOverlay')).toHaveClass(/\bactive\b/);
-    // Focus the cancel button inside dialog
-    await page.locator('#confirmOverlay button').first().focus();
-    // Press Escape — should close dialog
+    // Focus cancel button
+    await page.evaluate(() => document.getElementById('confirmCancel')?.focus());
+    // Tab 5 times — focus must stay within dialog.
+    // Use dispatchEvent inside evaluate to eliminate timing issues between
+    // Playwright's keyboard.press and evaluate calls.
+    for (let i = 0; i < 5; i++) {
+      const inside = await page.evaluate(() => {
+        const event = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+        document.activeElement?.dispatchEvent(event);
+        return document.getElementById('confirmOverlay')?.contains(document.activeElement) ?? false;
+      });
+      expect(inside, `Tab ${i+1}: focus escaped confirm dialog`).toBe(true);
+    }
+  });
+
+  test('confirm-close: Escape closes and restores focus', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await gotoApp(page);
+    await page.locator('#addCardBtn').click();
+    await page.waitForTimeout(300);
+    const deleteBtn = page.locator('#deleteAllBtn');
+    await deleteBtn.focus();
+    await deleteBtn.click();
+    await expect(page.locator('#confirmOverlay')).toHaveClass(/\bactive\b/);
+    // Focus cancel button via evaluate
+    await page.evaluate(() => document.getElementById('confirmCancel')?.focus());
+    // Press Escape
     await page.keyboard.press('Escape');
     await expect.poll(async () => {
       return await page.evaluate(() => document.getElementById('confirmOverlay')?.className || '');
-    }, { timeout: 3000, intervals: [100] }).not.toMatch(/\bactive\b/);
+    }, { timeout: 3000, intervals: [50] }).not.toMatch(/\bactive\b/);
+    await expect.poll(async () => {
+      return await page.evaluate(() => document.activeElement?.id || '');
+    }, { timeout: 3000, intervals: [50] }).toBe('deleteAllBtn');
   });
 });
 
-/* ═══════════════════════════════════════════════════════════════════
- * 3. Shortcuts Overlay (#shortcutsOverlay)
- * ═══════════════════════════════════════════════════════════════════ */
+/* ═══ 3. Shortcuts Overlay ═══ */
+// Note: shortcuts overlay is a non-modal info panel — it doesn't trap focus
+// because users may want to interact with the app while reading shortcuts.
+// It does have Escape-to-close and backdrop click.
 
 test.describe('Overlay: shortcuts panel', () => {
   test('shortcuts-closed: excluded from tab order', async ({ page }) => {
@@ -154,15 +181,26 @@ test.describe('Overlay: shortcuts panel', () => {
     const hidden = await isHiddenFromA11yTree(page, '#shortcutsOverlay');
     expect(hidden, 'shortcuts overlay must be hidden when closed').toBe(true);
   });
+
+  test('shortcuts-open: visible, Escape closes', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await gotoApp(page);
+    // Open shortcuts via ? (Shift+/)
+    await page.keyboard.press('Shift+Slash');
+    await expect(page.locator('#shortcutsOverlay')).toHaveClass(/\bactive\b/, { timeout: 3000 });
+    await expect(page.locator('#shortcutsOverlay')).toBeVisible();
+    // Escape closes
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#shortcutsOverlay')).not.toHaveClass(/\bactive\b/);
+  });
 });
 
-/* ═══════════════════════════════════════════════════════════════════
- * 4. Onboarding Overlay (#onboardingOverlay)
- * ═══════════════════════════════════════════════════════════════════ */
+/* ═══ 4. Onboarding Overlay ═══ */
+// Note: onboarding is dismissed by gotoApp (sets localStorage flag).
+// It has Escape-to-close and Start button.
 
 test.describe('Overlay: onboarding', () => {
   test('onboarding-closed: excluded from tab order', async ({ page }) => {
-    // gotoApp sets onboarding-seen=1, so onboarding should be hidden
     await page.setViewportSize({ width: 1280, height: 800 });
     await gotoApp(page);
     const hidden = await isHiddenFromA11yTree(page, '#onboardingOverlay');

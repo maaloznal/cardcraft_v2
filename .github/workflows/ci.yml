@@ -110,7 +110,9 @@ jobs:
       - name: Run E2E tests
         # P-MOBILE: runs all projects (chromium, mobile-chrome, tablet-chrome)
         # via playwright.config.ts. Each project has its own viewport/device preset.
-        run: bun run test:e2e
+        # --fail-on-flaky-tests: ensures retries don't mask flaky tests —
+        # if a test passes only after retry, CI still fails.
+        run: bunx playwright test --fail-on-flaky-tests
 
       - name: Upload test results on failure
         if: failure()

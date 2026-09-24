@@ -78,20 +78,19 @@ export class Modal {
     this.modal.setAttribute('aria-hidden', 'false');
     this.modal.style.display = '';
 
-    if (this.closeOnEscape) {
-      document.addEventListener('keydown', this.keydownHandler);
-    }
+    // P3-FIX: always attach keydown handler for focus trap (Tab cycling).
+    // Escape handling is conditional on closeOnEscape, but focus trap must
+    // always be active when modal is open.
+    document.addEventListener('keydown', this.keydownHandler);
 
     // Focus management
-    // P4-FIX: use setTimeout(0) instead of requestAnimationFrame — rAF may
-    // not fire reliably in headless Chromium test environments (Playwright).
-    // setTimeout(0) is equivalent for deferring focus to after DOM update.
-    setTimeout(() => {
-      const focusTarget = this.initialFocusSelector
-        ? this.modal.querySelector<HTMLElement>(this.initialFocusSelector)
-        : this.getFirstFocusable();
-      focusTarget?.focus();
-    }, 0);
+    // P3-FIX: force style recalculation via getComputedStyle.
+    // This ensures visibility:visible is applied before focus().
+    void getComputedStyle(this.modal).visibility;
+    const focusTarget = this.initialFocusSelector
+      ? this.modal.querySelector<HTMLElement>(this.initialFocusSelector)
+      : this.getFirstFocusable();
+    focusTarget?.focus();
 
     this.openHandlers.forEach((fn) => fn());
   }
@@ -155,22 +154,25 @@ export class Modal {
   }
 
   private handleKeydown(e: KeyboardEvent): void {
-    if (e.key === 'Escape') {
+    // P3-FIX: Escape only closes if closeOnEscape is true
+    if (e.key === 'Escape' && this.closeOnEscape) {
       e.preventDefault();
       this.close();
+      return;
     }
-    // Basic focus trap: Tab cycles within modal
+    // Focus trap: Tab cycles within modal (always active when modal is open)
+    // P3-FIX: always preventDefault to ensure focus stays within modal
     if (e.key === 'Tab') {
       const focusables = this.getFocusables();
       if (focusables.length === 0) return;
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
+      e.preventDefault();
+      const currentIndex = focusables.findIndex((el) => el === document.activeElement);
+      if (e.shiftKey) {
+        const prevIndex = currentIndex <= 0 ? focusables.length - 1 : currentIndex - 1;
+        focusables[prevIndex].focus();
+      } else {
+        const nextIndex = currentIndex >= focusables.length - 1 ? 0 : currentIndex + 1;
+        focusables[nextIndex].focus();
       }
     }
   }
@@ -190,7 +192,16 @@ export class Modal {
       '[tabindex]:not([tabindex="-1"])',
     ].join(',');
     return Array.from(this.modal.querySelectorAll<HTMLElement>(selector)).filter(
-      (el) => el.offsetParent !== null || el.getClientRects().length > 0,
+      // P3-FIX: don't use offsetParent — it returns null for children of
+      // position:fixed elements, which is what modal-overlay is.
+      // Instead check computed visibility and display directly.
+      (el) => {
+        const style = getComputedStyle(el);
+        if (style.display === 'none') return false;
+        if (style.visibility === 'hidden') return false;
+        const rect = el.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      },
     );
   }
 }

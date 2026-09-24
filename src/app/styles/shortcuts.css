@@ -6,21 +6,14 @@
   background: rgba(9, 9, 11, 0.4);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   z-index: 2100;
-  opacity: 0;
-  pointer-events: none;
-  visibility: hidden;
-  transition: opacity var(--dur-slow) var(--ease), visibility 0s var(--dur-slow);
 }
 
 .shortcuts-overlay.active {
-  opacity: 1;
-  pointer-events: auto;
-  visibility: visible;
-  transition: opacity var(--dur-slow) var(--ease), visibility 0s;
+  display: flex;
 }
 
 .shortcuts-panel {

@@ -469,25 +469,30 @@ test.describe('P2-ux: mobile UX polish', () => {
     expect(overflow).toBe(0);
   });
 
-  test('ux-5: login page at 320px — no overflow, touch targets', async ({ page }) => {
+  test('ux-5: login page at 320px — no overflow, accessible', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
     await page.goto('/login/');
     await expect(page.locator('body')).not.toContainText('Проверка авторизации', { timeout: 15000 });
-    // On CI without env vars, Supabase is not configured → "Авторизация отключена"
-    // On local/dev with env vars, login form is shown. Either is acceptable.
+    // Either login form (Supabase configured) or "disabled" message (no env)
     const hasForm = await page.locator('#email').count();
     const hasDisabled = await page.locator('text=Авторизация отключена').count();
     expect(hasForm + hasDisabled).toBeGreaterThan(0);
-    // No horizontal overflow regardless of state
+    // No horizontal overflow
     const overflow = await getHorizontalOverflow(page);
     expect(overflow).toBe(0);
+    // If form present, verify font-size and touch targets
     if (hasForm > 0) {
       const emailFontSize = await getFontSize(page, '#email');
       expect(emailFontSize).toBeGreaterThanOrEqual(16);
+      const submitBtn = page.locator('button[type="submit"]').first();
+      if (await submitBtn.count() > 0) {
+        const btnBox = await submitBtn.boundingBox();
+        expect(btnBox!.height).toBeGreaterThanOrEqual(40);
+      }
     }
   });
 
-  test('ux-6: login page at 390px — no overflow, touch targets', async ({ page }) => {
+  test('ux-6: login page at 390px — no overflow, accessible', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/login/');
     await expect(page.locator('body')).not.toContainText('Проверка авторизации', { timeout: 15000 });

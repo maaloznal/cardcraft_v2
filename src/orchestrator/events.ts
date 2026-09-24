@@ -171,8 +171,14 @@ export function bindSidebarEvents(ctx: OrchestratorContext): void {
     confirmPreviouslyFocused = document.activeElement as HTMLElement | null;
     refs.confirmOverlay?.classList.add('active');
     stateManager.setUI({ confirmDialogOpen: true });
-    // Focus the cancel button (safer default than delete)
-    requestAnimationFrame(() => refs.confirmCancel?.focus());
+    // P3-FIX: force style recalculation by reading getComputedStyle.
+    // This synchronously applies the .active class (visibility: visible)
+    // before we try to focus the cancel button. Without this, focus() is a
+    // no-op because the element is still visibility:hidden.
+    if (refs.confirmOverlay) {
+      void getComputedStyle(refs.confirmOverlay).visibility;
+    }
+    refs.confirmCancel?.focus();
   }
   function closeConfirm(): void {
     refs.confirmOverlay?.classList.remove('active');
@@ -192,7 +198,11 @@ export function bindSidebarEvents(ctx: OrchestratorContext): void {
     if (e.target === refs.confirmOverlay) closeConfirm();
   });
   // P5: focus trap inside confirm dialog (Tab cycles between Cancel + Delete)
-  ctx.listeners.addEl(refs.confirmOverlay, 'keydown', (e) => {
+  // P3-FIX: attach on document (not overlay) so it fires regardless of which
+  // element has focus. Overlay-level listener only fires if focus is inside
+  // the overlay, which may not be the case if focus hasn't moved yet.
+  const onConfirmKeydown = (e: KeyboardEvent): void => {
+    if (!refs.confirmOverlay?.classList.contains('active')) return;
     if (e.key === 'Escape') {
       e.preventDefault();
       closeConfirm();
@@ -207,16 +217,18 @@ export function bindSidebarEvents(ctx: OrchestratorContext): void {
       focusables.push(refs.confirmOk);
     }
     if (focusables.length === 0) return;
-    const first = focusables[0];
-    const last = focusables[focusables.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
+    // P3-FIX: always preventDefault to ensure focus stays within dialog
+    e.preventDefault();
+    const currentIndex = focusables.findIndex((el) => el === document.activeElement);
+    if (e.shiftKey) {
+      const prevIndex = currentIndex <= 0 ? focusables.length - 1 : currentIndex - 1;
+      focusables[prevIndex].focus();
+    } else {
+      const nextIndex = currentIndex >= focusables.length - 1 ? 0 : currentIndex + 1;
+      focusables[nextIndex].focus();
     }
-  });
+  };
+  ctx.listeners.addEl(document, 'keydown', onConfirmKeydown);
   ctx.listeners.addEl(refs.confirmOk, 'click', () => {
     closeConfirm();
     stateManager.dispatch({ type: 'CLEAR_ALL' });
