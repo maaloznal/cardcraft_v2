@@ -1,19 +1,29 @@
 import { supabase } from '@/lib/supabase/client';
 import {
   AI_TEXT_MAX_LENGTH,
+  normalizeAiTargetChars,
+  isAiRole,
   isAiTextMode,
   parseAiCardsResponse,
   type AiCardsResponse,
   type AiTextMode,
+  type AiRole,
 } from './text-to-cards-contract';
+
+export interface AiTextRequestOptions {
+  mode: AiTextMode;
+  role: AiRole;
+  targetChars: number;
+}
 
 export async function requestTextCards(
   text: string,
-  mode: AiTextMode,
+  options: AiTextRequestOptions,
   signal?: AbortSignal,
 ): Promise<AiCardsResponse> {
   const normalized = text.trim();
-  if (!normalized || normalized.length > AI_TEXT_MAX_LENGTH || !isAiTextMode(mode)) {
+  const targetChars = normalizeAiTargetChars(options.targetChars);
+  if (!normalized || normalized.length > AI_TEXT_MAX_LENGTH || !isAiTextMode(options.mode) || !isAiRole(options.role) || !targetChars) {
     throw new Error(`Введите текст длиной от 1 до ${AI_TEXT_MAX_LENGTH} символов.`);
   }
   if (!supabase) throw new Error('ИИ-функция недоступна: Supabase не настроен.');
@@ -34,7 +44,9 @@ export async function requestTextCards(
     },
     body: JSON.stringify({
       text: normalized,
-      mode,
+      mode: options.mode,
+      role: options.role,
+      targetChars,
       requestId: crypto.randomUUID(),
     }),
   });

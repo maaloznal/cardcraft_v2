@@ -26,7 +26,7 @@ import { aiDraftToCard, type AiCardDraft } from '@/ai/text-to-cards-contract';
 
 export interface CardOpsController {
   addCard(): void;
-  addCards(cards: AiCardDraft[]): void;
+  addCards(cards: AiCardDraft[], theme?: string): void;
   deleteCard(idx: number): void;
   duplicateCard(idx: number): void;
   moveCard(idx: number, dir: number): void;
@@ -93,9 +93,9 @@ export function createCardOpsController(ctx: OrchestratorContext): CardOpsContro
   }
 
   /** Append AI-prepared cards as one atomic history operation. */
-  function addCards(drafts: AiCardDraft[]): void {
+  function addCards(drafts: AiCardDraft[], theme?: string): void {
     if (drafts.length === 0) return;
-    const cards = drafts.map(aiDraftToCard);
+    const cards = drafts.map((draft) => aiDraftToCard(draft, theme));
     stateManager.dispatch({ type: 'ADD_CARDS', payload: { cards } });
     uiAppliers.renderEditor();
     uiAppliers.renderPreview();

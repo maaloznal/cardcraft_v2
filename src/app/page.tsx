@@ -3,6 +3,12 @@
 import { useLayoutEffect, useRef } from 'react';
 import { initCardCraftApp, THEME_GROUPS } from '@/orchestrator/CardCraftApp';
 import { AuthButton } from '@/auth/AuthButton';
+import {
+  AI_DEFAULT_TARGET_CHARS,
+  AI_MAX_TARGET_CHARS,
+  AI_MIN_TARGET_CHARS,
+  AI_ROLE_OPTIONS,
+} from '@/ai/text-to-cards-contract';
 import './card-constructor.css';
 
 const initCardConstructor = initCardCraftApp;
@@ -201,6 +207,13 @@ export default function Home() {
                 <span className="switch-slider" />
               </label>
             </div>
+            <label className="char-limit-config" htmlFor="charLimitInput">
+              <span>На одну карточку</span>
+              <span className="char-limit-input-wrap">
+                <input id="charLimitInput" type="number" min={100} max={2200} step={10} defaultValue={350} inputMode="numeric" />
+                <span>симв.</span>
+              </span>
+            </label>
             <div className="char-counter" id="charCounter" style={{ display: 'none' }}>
               <span id="charCounterText">0 / 0</span>
             </div>
@@ -610,7 +623,35 @@ export default function Home() {
             <button className="modal-close" type="button" data-ai-close aria-label="Закрыть">×</button>
           </div>
           <div className="ai-import-body">
-            <label htmlFor="aiSourceText">Исходный текст</label>
+            <div className="ai-source-heading">
+              <label htmlFor="aiSourceText">Исходный текст</label>
+              <div className="ai-import-toolbar">
+                <details className="ai-role-picker" id="aiRolePicker">
+                  <summary><span>Роль</span><strong id="aiRoleLabel">Контент-стратег</strong></summary>
+                  <div className="ai-role-menu" role="radiogroup" aria-label="Роль ИИ">
+                    {AI_ROLE_OPTIONS.map((role, index) => (
+                      <label key={role.value}>
+                        <input type="radio" name="aiRole" value={role.value} defaultChecked={index === 0} />
+                        <span><strong>{role.label}</strong><small>{role.description}</small></span>
+                      </label>
+                    ))}
+                  </div>
+                </details>
+                <label className="ai-theme-picker" htmlFor="aiThemeSelect">
+                  <span>Тема</span>
+                  <select id="aiThemeSelect" defaultValue="">
+                    <option value="">Текущая тема</option>
+                    {THEME_GROUPS.map((group) => (
+                      <optgroup key={group.label} label={group.label}>
+                        {group.themes.map((theme) => (
+                          <option key={theme.value} value={theme.value}>{theme.label}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </div>
             <textarea
               id="aiSourceText"
               maxLength={10000}
@@ -621,6 +662,25 @@ export default function Home() {
             <div className="ai-import-meta">
               <span id="aiPrivacyNote">Текст будет отправлен выбранному ИИ-провайдеру.</span>
               <output id="aiCharCount" htmlFor="aiSourceText">0 / 10 000</output>
+            </div>
+            <div className="ai-length-control">
+              <label htmlFor="aiTargetChars">
+                <span>Максимум на карточку</span>
+                <small>Для сторис рекомендуем 250–450 символов</small>
+              </label>
+              <div>
+                <input
+                  id="aiTargetChars"
+                  type="number"
+                  min={AI_MIN_TARGET_CHARS}
+                  max={AI_MAX_TARGET_CHARS}
+                  step={10}
+                  defaultValue={AI_DEFAULT_TARGET_CHARS}
+                  inputMode="numeric"
+                />
+                <span>симв.</span>
+              </div>
+              <output id="aiCardEstimate" htmlFor="aiSourceText aiTargetChars">Добавьте текст для оценки</output>
             </div>
             <fieldset className="ai-mode-picker">
               <legend>Режим обработки</legend>

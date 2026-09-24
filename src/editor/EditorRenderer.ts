@@ -311,6 +311,7 @@ export class EditorRenderer {
           index: Number(el.dataset.index || 0),
           field: el.dataset.field || '',
           value: el.value,
+          element: el,
         });
       }
     };
@@ -346,6 +347,7 @@ export class EditorRenderer {
         index: Number(el.dataset.index || 0),
         field,
         value: el.value,
+        element: el,
       });
     };
     this.container.addEventListener('paste', this.pasteHandler);

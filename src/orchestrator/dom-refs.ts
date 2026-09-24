@@ -36,6 +36,7 @@ export interface DOMRefs {
   progressBarStyleSelect: HTMLSelectElement | null;
   listStyleSelect: HTMLSelectElement | null;
   charLimitToggle: HTMLInputElement | null;
+  charLimitInput: HTMLInputElement | null;
   charCounter: HTMLElement | null;
   charCounterText: HTMLElement | null;
   listNumSizeSlider: HTMLInputElement | null;
@@ -81,6 +82,11 @@ export interface DOMRefs {
   aiPreview: HTMLElement | null;
   aiAddCardsBtn: HTMLButtonElement | null;
   aiImportError: HTMLElement | null;
+  aiRolePicker: HTMLDetailsElement | null;
+  aiRoleLabel: HTMLElement | null;
+  aiThemeSelect: HTMLSelectElement | null;
+  aiTargetChars: HTMLInputElement | null;
+  aiCardEstimate: HTMLElement | null;
 }
 
 /**
@@ -115,6 +121,7 @@ export function collectDOMRefs(root: HTMLElement): DOMRefs {
     progressBarStyleSelect: $<HTMLSelectElement>('#progressBarStyleSelect'),
     listStyleSelect: $<HTMLSelectElement>('#listStyleSelect'),
     charLimitToggle: $<HTMLInputElement>('#charLimitToggle'),
+    charLimitInput: $<HTMLInputElement>('#charLimitInput'),
     charCounter: $<HTMLElement>('#charCounter'),
     charCounterText: $<HTMLElement>('#charCounterText'),
     listNumSizeSlider: $<HTMLInputElement>('#listNumSizeSlider'),
@@ -154,5 +161,10 @@ export function collectDOMRefs(root: HTMLElement): DOMRefs {
     aiPreview: $<HTMLElement>('#aiPreview'),
     aiAddCardsBtn: $<HTMLButtonElement>('#aiAddCardsBtn'),
     aiImportError: $<HTMLElement>('#aiImportError'),
+    aiRolePicker: $<HTMLDetailsElement>('#aiRolePicker'),
+    aiRoleLabel: $<HTMLElement>('#aiRoleLabel'),
+    aiThemeSelect: $<HTMLSelectElement>('#aiThemeSelect'),
+    aiTargetChars: $<HTMLInputElement>('#aiTargetChars'),
+    aiCardEstimate: $<HTMLElement>('#aiCardEstimate'),
   };
 }

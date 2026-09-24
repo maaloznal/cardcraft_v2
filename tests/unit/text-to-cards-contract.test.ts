@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   AI_TEXT_MAX_LENGTH,
+  AI_DEFAULT_TARGET_CHARS,
   aiDraftToCard,
+  countAiCardCharacters,
+  isAiRole,
   isAiTextMode,
+  normalizeAiTargetChars,
   parseAiCardsResponse,
 } from '@/ai/text-to-cards-contract';
 
@@ -21,20 +25,38 @@ describe('text-to-cards contract', () => {
     expect(isAiTextMode('ignore-rules')).toBe(false);
   });
 
+  it('validates roles and the user-defined card limit', () => {
+    expect(isAiRole('smm-editor')).toBe(true);
+    expect(isAiRole('invent-facts')).toBe(false);
+    expect(normalizeAiTargetChars('420')).toBe(420);
+    expect(normalizeAiTargetChars(179)).toBeNull();
+    expect(AI_DEFAULT_TARGET_CHARS).toBe(350);
+  });
+
   it('validates a server response', () => {
-    expect(parseAiCardsResponse({ version: 1, mode: 'preserve', cards: [draft] }).cards).toEqual([draft]);
+    expect(parseAiCardsResponse({
+      version: 1,
+      mode: 'preserve',
+      role: 'content-strategist',
+      targetChars: 350,
+      cards: [draft],
+    }).cards).toEqual([draft]);
   });
 
   it('rejects oversized and malformed fields', () => {
-    expect(() => parseAiCardsResponse({ version: 1, mode: 'preserve', cards: [{ ...draft, title: 'x'.repeat(201) }] })).toThrow();
-    expect(() => parseAiCardsResponse({ version: 1, mode: 'unknown', cards: [draft] })).toThrow();
+    const response = { version: 1, mode: 'preserve', role: 'content-strategist', targetChars: 350 };
+    expect(() => parseAiCardsResponse({ ...response, cards: [{ ...draft, title: 'x'.repeat(201) }] })).toThrow();
+    expect(() => parseAiCardsResponse({ ...response, mode: 'unknown', cards: [draft] })).toThrow();
+    expect(() => parseAiCardsResponse({ ...response, targetChars: 180, cards: [{ ...draft, text: 'x'.repeat(181) }] })).toThrow();
   });
 
   it('creates a safe application card with a new id and empty styles', () => {
-    const card = aiDraftToCard(draft);
+    const card = aiDraftToCard(draft, 'spearmint-fresh');
     expect(card.id).toBeTruthy();
     expect(card.title).toBe(draft.title);
     expect(card.colors).toEqual({});
     expect(card.wordStyles).toEqual({});
+    expect(card.theme).toBe('spearmint-fresh');
+    expect(countAiCardCharacters(draft)).toBe(14);
   });
 });

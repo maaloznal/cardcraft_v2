@@ -70,6 +70,7 @@ export interface Snapshot {
   progressBarStyle: string;
   listStyleType: string;
   charLimitEnabled: boolean;
+  charLimit: number;
   exportQuality: ExportQuality;
 }
 
@@ -191,6 +192,7 @@ export type Action =
   | { type: 'SET_PROGRESS_BAR_STYLE'; payload: { style: string } }
   | { type: 'SET_LIST_STYLE'; payload: { style: string } }
   | { type: 'SET_CHAR_LIMIT'; payload: { enabled: boolean } }
+  | { type: 'SET_CHAR_LIMIT_VALUE'; payload: { limit: number } }
   | { type: 'SET_EXPORT_QUALITY'; payload: { quality: ExportQuality } }
 
   // ── Snapshot / clear ──

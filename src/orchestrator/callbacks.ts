@@ -69,9 +69,27 @@ export function wireRendererCallbacks(ctx: OrchestratorContext): void {
     if (action === 'input' || action === 'paste') {
       const idx = Number(data.index);
       const field = String(data.field) as keyof Card;
-      const value = String(data.value);
+      let value = String(data.value);
       const card = stateManager.getCard(idx);
       if (!card) return;
+      const settings = stateManager.getSettings();
+      if (settings.charLimitEnabled) {
+        const textFields: Array<keyof Pick<Card, 'title' | 'subtitle' | 'text' | 'listItems' | 'footer' | 'cta'>> =
+          ['title', 'subtitle', 'text', 'listItems', 'footer', 'cta'];
+        if (textFields.includes(field as typeof textFields[number])) {
+          const otherCharacters = textFields
+            .filter((key) => key !== field)
+            .reduce((total, key) => total + card[key].length, 0);
+          const available = Math.max(0, settings.charLimit - otherCharacters);
+          if (value.length > available) {
+            value = value.slice(0, available);
+            const element = data.element;
+            if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
+              element.value = value;
+            }
+          }
+        }
+      }
       // P1-1: dispatch typed UPDATE_CARD_FIELD instead of direct mutation.
       // The state subscriber does NOT re-render preview/editor on card-content
       // changes (only on settings changes), so O(1) typing responsiveness is

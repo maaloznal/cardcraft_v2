@@ -118,6 +118,9 @@ export function createStateSubscriber(ctx: OrchestratorContext): () => void {
       if (refs.charLimitToggle && refs.charLimitToggle.checked !== state.settings.charLimitEnabled) {
         refs.charLimitToggle.checked = state.settings.charLimitEnabled;
       }
+      if (refs.charLimitInput && refs.charLimitInput.value !== String(state.settings.charLimit)) {
+        refs.charLimitInput.value = String(state.settings.charLimit);
+      }
       // Apply CSS state
       uiAppliers.applyThemeToWorkspace();
       uiAppliers.applyNumberingVisibility();

@@ -3,7 +3,7 @@
  *
  * Owns:
  *   - applyCharLimit() — set maxlength on every editor input/textarea
- *     based on settings.charLimitEnabled + current format limit. Toggle
+ *     based on settings.charLimitEnabled + the user-defined card limit. Toggle
  *     char-counter visibility. Called by the state subscriber (on
  *     settings change) and by the topbar char-limit-toggle event handler.
  *   - updateCharCounter(idx) — update the counter text for a specific
@@ -19,7 +19,7 @@
  *   destroy() — no-op (stateless)
  */
 
-import { FORMAT_CHAR_LIMITS, EDITOR_FIELDS } from '@/core/constants';
+import { EDITOR_FIELDS } from '@/core/constants';
 import type { OrchestratorContext } from './types';
 
 export interface CharLimitController {
@@ -33,18 +33,20 @@ export function createCharLimitController(ctx: OrchestratorContext): CharLimitCo
 
   /**
    * Apply current char-limit settings to every editor input/textarea: set
-   * `maxlength` to the format-specific limit when enabled, or fall back to
+   * `maxlength` to the user-defined limit when enabled, or fall back to
    * each field's per-field default. Toggle the char-counter widget visibility.
    */
   function applyCharLimit(): void {
     if (!refs.editorCardsList) return;
     const settings = stateManager.getSettings();
-    const limit = settings.charLimitEnabled ? FORMAT_CHAR_LIMITS[settings.format] || 0 : 0;
+    const limit = settings.charLimitEnabled ? settings.charLimit : 0;
     refs.editorCardsList
       .querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input[data-field], textarea[data-field]')
       .forEach((el) => {
         if (limit > 0) {
-          el.setAttribute('maxlength', String(limit));
+          const field = el.dataset.field;
+          const fieldConfig = EDITOR_FIELDS.find((ef) => ef.key === field);
+          el.setAttribute('maxlength', String(Math.min(limit, fieldConfig?.maxlength ?? limit)));
         } else {
           const field = el.dataset.field;
           const f = EDITOR_FIELDS.find((ef) => ef.key === field);
@@ -64,7 +66,7 @@ export function createCharLimitController(ctx: OrchestratorContext): CharLimitCo
   function updateCharCounter(idx: number): void {
     const settings = stateManager.getSettings();
     if (!settings.charLimitEnabled || !refs.charCounterText || !refs.charCounter) return;
-    const limit = FORMAT_CHAR_LIMITS[settings.format] || 0;
+    const limit = settings.charLimit;
     if (limit <= 0) {
       refs.charCounter.style.display = 'none';
       return;

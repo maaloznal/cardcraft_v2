@@ -18,6 +18,9 @@ import {
   DEFAULT_LIST_STYLE,
   DEFAULT_PROGRESS_STYLE,
   DEFAULT_EXPORT_QUALITY,
+  DEFAULT_CHAR_LIMIT,
+  MIN_CHAR_LIMIT,
+  MAX_CHAR_LIMIT,
 } from '../core/constants';
 
 // ─── Sub-state interfaces ──────────────────────────────────────
@@ -35,6 +38,7 @@ export interface SettingsState {
   progressBarStyle: string;
   listStyleType: string;
   charLimitEnabled: boolean;
+  charLimit: number;
   exportQuality: ExportQuality;
 }
 
@@ -73,6 +77,7 @@ function createDefaultState(): AppState {
       progressBarStyle: DEFAULT_PROGRESS_STYLE,
       listStyleType: DEFAULT_LIST_STYLE,
       charLimitEnabled: false,
+      charLimit: DEFAULT_CHAR_LIMIT,
       exportQuality: DEFAULT_EXPORT_QUALITY,
     },
     ui: createDefaultUIState(),
@@ -193,6 +198,7 @@ export class StateManager {
         progressBarStyle: snapshot.progressBarStyle,
         listStyleType: snapshot.listStyleType,
         charLimitEnabled: snapshot.charLimitEnabled,
+        charLimit: snapshot.charLimit ?? DEFAULT_CHAR_LIMIT,
         exportQuality: snapshot.exportQuality,
       },
     };
@@ -212,6 +218,7 @@ export class StateManager {
       progressBarStyle: s.progressBarStyle,
       listStyleType: s.listStyleType,
       charLimitEnabled: s.charLimitEnabled,
+      charLimit: s.charLimit,
       exportQuality: s.exportQuality,
     };
   }
@@ -397,6 +404,7 @@ export class StateManager {
             progressBarStyle: snap.progressBarStyle,
             listStyleType: snap.listStyleType,
             charLimitEnabled: snap.charLimitEnabled,
+            charLimit: snap.charLimit ?? DEFAULT_CHAR_LIMIT,
             exportQuality: snap.exportQuality,
           },
         };
@@ -433,6 +441,10 @@ export class StateManager {
           ...state,
           settings: { ...state.settings, charLimitEnabled: action.payload.enabled },
         };
+      case 'SET_CHAR_LIMIT_VALUE': {
+        const limit = Math.min(MAX_CHAR_LIMIT, Math.max(MIN_CHAR_LIMIT, Math.round(action.payload.limit)));
+        return { ...state, settings: { ...state.settings, charLimit: limit } };
+      }
       case 'SET_EXPORT_QUALITY':
         return {
           ...state,

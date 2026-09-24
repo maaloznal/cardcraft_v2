@@ -109,6 +109,7 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
       listStyleType: state.settings.listStyleType,
       gradientAngle: state.settings.gradientAngle,
       charLimitEnabled: state.settings.charLimitEnabled,
+      charLimit: state.settings.charLimit,
       exportQuality: state.settings.exportQuality,
       sidebarWidth: null,
       headerHeight: null,
@@ -141,6 +142,8 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
         stateManager.dispatch({ type: 'SET_GRADIENT_ANGLE', payload: { angle: payload.gradientAngle } });
       if (payload.charLimitEnabled !== undefined)
         stateManager.dispatch({ type: 'SET_CHAR_LIMIT', payload: { enabled: payload.charLimitEnabled } });
+      if (payload.charLimit !== undefined)
+        stateManager.dispatch({ type: 'SET_CHAR_LIMIT_VALUE', payload: { limit: payload.charLimit } });
       if (payload.exportQuality !== undefined)
         stateManager.dispatch({ type: 'SET_EXPORT_QUALITY', payload: { quality: payload.exportQuality } });
       // Persist to local storage so it survives reloads even without re-pulling

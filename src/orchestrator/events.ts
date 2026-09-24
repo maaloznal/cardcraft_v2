@@ -33,7 +33,7 @@
  * Extracted from CardCraftApp.ts section 22 (lines 907-1258).
  */
 
-import { MODAL_FIELDS } from '@/core/constants';
+import { MAX_CHAR_LIMIT, MIN_CHAR_LIMIT, MODAL_FIELDS } from '@/core/constants';
 import type { ExportQuality } from '@/core/types';
 import type { OrchestratorContext } from './types';
 
@@ -74,6 +74,20 @@ export function bindTopbarEvents(ctx: OrchestratorContext): void {
       type: 'SET_CHAR_LIMIT',
       payload: { enabled: (e.target as HTMLInputElement).checked },
     });
+    charLimit.applyCharLimit();
+    charLimit.updateCharCounter(0);
+    storage.scheduleSave({ silent: true });
+    history.pushHistory();
+  });
+
+  // User-defined per-card character limit. It is independent of the selected
+  // social format because story readability is a content decision, not a
+  // platform transport maximum.
+  ctx.listeners.addEl(refs.charLimitInput, 'change', (e) => {
+    const input = e.target as HTMLInputElement;
+    const limit = Math.min(MAX_CHAR_LIMIT, Math.max(MIN_CHAR_LIMIT, Number(input.value) || 350));
+    stateManager.dispatch({ type: 'SET_CHAR_LIMIT_VALUE', payload: { limit } });
+    input.value = String(stateManager.getSettings().charLimit);
     charLimit.applyCharLimit();
     charLimit.updateCharCounter(0);
     storage.scheduleSave({ silent: true });

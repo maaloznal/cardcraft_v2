@@ -64,6 +64,9 @@ export const DEFAULT_GRADIENT_ANGLE = 135;
 export const DEFAULT_LIST_STYLE = 'numbers';
 export const DEFAULT_PROGRESS_STYLE = 'default';
 export const DEFAULT_LIST_NUM_SIZE = 22;
+export const DEFAULT_CHAR_LIMIT = 350;
+export const MIN_CHAR_LIMIT = 100;
+export const MAX_CHAR_LIMIT = 2200;
 
 export const ALLOWED_THEMES = [
   'default',
@@ -95,14 +98,6 @@ export const PRESET_COLORS = [
   '#ec4899',
   '#7c3aed',
 ] as const;
-
-export const FORMAT_CHAR_LIMITS: Record<string, number> = {
-  'aspect-4-5': 2200,
-  'telegram': 2048,
-  'whatsapp': 700,
-  'vk': 200,
-  'aspect-9-16': 2200,
-};
 
 export const FIELD_LABELS: Record<string, string> = {
   title: 'Заголовок',

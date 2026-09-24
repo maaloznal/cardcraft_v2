@@ -59,6 +59,7 @@ export function createStorageController(ctx: OrchestratorContext): StorageContro
       listStyleType: state.settings.listStyleType,
       gradientAngle: state.settings.gradientAngle,
       charLimitEnabled: state.settings.charLimitEnabled,
+      charLimit: state.settings.charLimit,
       exportQuality: state.settings.exportQuality,
     };
     try {
@@ -123,6 +124,8 @@ export function createStorageController(ctx: OrchestratorContext): StorageContro
       stateManager.dispatch({ type: 'SET_GRADIENT_ANGLE', payload: { angle: saved.gradientAngle } });
     if (saved.charLimitEnabled !== undefined)
       stateManager.dispatch({ type: 'SET_CHAR_LIMIT', payload: { enabled: saved.charLimitEnabled } });
+    if (saved.charLimit !== undefined)
+      stateManager.dispatch({ type: 'SET_CHAR_LIMIT_VALUE', payload: { limit: saved.charLimit } });
     if (saved.exportQuality !== undefined)
       stateManager.dispatch({ type: 'SET_EXPORT_QUALITY', payload: { quality: saved.exportQuality } });
   }

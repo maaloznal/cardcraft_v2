@@ -5,7 +5,23 @@
 
 import type { Card, ExportQuality } from '../core/types';
 import { sanitizeCardId, isValidHexColor, clampFontSize, isValidTheme, isValidFormat, isValidExportQuality } from '../core/utils';
-import { ALLOWED_THEMES, ALLOWED_FORMATS, EXPORT_QUALITY_VALUES, DEFAULT_EXPORT_QUALITY } from '../core/constants';
+import {
+  ALLOWED_FORMATS,
+  ALLOWED_THEMES,
+  EXPORT_QUALITY_VALUES,
+  DEFAULT_EXPORT_QUALITY,
+  DEFAULT_CHAR_LIMIT,
+  MIN_CHAR_LIMIT,
+  MAX_CHAR_LIMIT,
+} from '../core/constants';
+import { THEME_GROUPS } from '../themes/themeData';
+
+const VALID_THEME_VALUES = [
+  ...new Set([
+    ...ALLOWED_THEMES,
+    ...THEME_GROUPS.flatMap((group) => group.themes.map((theme) => theme.value)),
+  ]),
+];
 
 const KEYS = {
   CARDS: 'flashcard-cards',
@@ -17,10 +33,18 @@ const KEYS = {
   LIST_STYLE: 'flashcard-list-style',
   GRADIENT_ANGLE: 'flashcard-gradient-angle',
   CHAR_LIMIT: 'flashcard-char-limit',
+  CHAR_LIMIT_VALUE: 'flashcard-char-limit-value',
   SIDEBAR_WIDTH: 'flashcard-sidebar-width',
   HEADER_HEIGHT: 'flashcard-header-height',
   EXPORT_QUALITY: 'flashcard-export-quality',
+  AI_IMPORT_PREFS: 'flashcard-ai-import-prefs',
 } as const;
+
+export interface AiImportPreferences {
+  role?: string;
+  theme?: string;
+  targetChars?: number;
+}
 
 export interface SavedState {
   cards: Card[];
@@ -32,6 +56,7 @@ export interface SavedState {
   listStyleType: string;
   gradientAngle: number;
   charLimitEnabled: boolean;
+  charLimit: number;
   sidebarWidth: number | null;
   headerHeight: number | null;
   exportQuality: ExportQuality;
@@ -65,6 +90,7 @@ export function save(state: Partial<SavedState>): void {
     if (state.listStyleType !== undefined) localStorage.setItem(KEYS.LIST_STYLE, state.listStyleType);
     if (state.gradientAngle !== undefined) localStorage.setItem(KEYS.GRADIENT_ANGLE, String(state.gradientAngle));
     if (state.charLimitEnabled !== undefined) localStorage.setItem(KEYS.CHAR_LIMIT, String(state.charLimitEnabled));
+    if (state.charLimit !== undefined) localStorage.setItem(KEYS.CHAR_LIMIT_VALUE, String(state.charLimit));
     if (state.sidebarWidth !== undefined && state.sidebarWidth !== null) localStorage.setItem(KEYS.SIDEBAR_WIDTH, String(state.sidebarWidth));
     if (state.headerHeight !== undefined && state.headerHeight !== null) localStorage.setItem(KEYS.HEADER_HEIGHT, String(state.headerHeight));
     if (state.exportQuality !== undefined) localStorage.setItem(KEYS.EXPORT_QUALITY, state.exportQuality);
@@ -103,7 +129,7 @@ export function load(): Partial<SavedState> {
   }
 
   const theme = localStorage.getItem(KEYS.THEME);
-  if (theme && isValidTheme(theme, ALLOWED_THEMES)) {
+  if (theme && isValidTheme(theme, VALID_THEME_VALUES)) {
     result.theme = theme;
   }
 
@@ -130,6 +156,11 @@ export function load(): Partial<SavedState> {
   const charLimit = localStorage.getItem(KEYS.CHAR_LIMIT);
   if (charLimit !== null) result.charLimitEnabled = charLimit === 'true';
 
+  const charLimitValue = Number(localStorage.getItem(KEYS.CHAR_LIMIT_VALUE));
+  result.charLimit = Number.isFinite(charLimitValue) && charLimitValue >= MIN_CHAR_LIMIT
+    ? Math.min(MAX_CHAR_LIMIT, Math.round(charLimitValue))
+    : DEFAULT_CHAR_LIMIT;
+
   const sidebarWidth = localStorage.getItem(KEYS.SIDEBAR_WIDTH);
   if (sidebarWidth) result.sidebarWidth = Number(sidebarWidth);
 
@@ -152,6 +183,22 @@ export function load(): Partial<SavedState> {
 /** Remove every cardcraft-related key from localStorage (used by 'delete all' + reset flows). */
 export function clear(): void {
   Object.values(KEYS).forEach((key) => localStorage.removeItem(key));
+}
+
+export function saveAiImportPreferences(preferences: AiImportPreferences): void {
+  localStorage.setItem(KEYS.AI_IMPORT_PREFS, JSON.stringify(preferences));
+}
+
+export function loadAiImportPreferences(): AiImportPreferences {
+  const raw = localStorage.getItem(KEYS.AI_IMPORT_PREFS);
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return parsed && typeof parsed === 'object' ? parsed as AiImportPreferences : {};
+  } catch {
+    localStorage.removeItem(KEYS.AI_IMPORT_PREFS);
+    return {};
+  }
 }
 
 /** Migrate old card format to current structure */
@@ -213,7 +260,7 @@ function migrateCard(card: Partial<Card>): Card {
   }
 
   // Validate theme against whitelist
-  if (migrated.theme && !isValidTheme(migrated.theme, ALLOWED_THEMES)) {
+  if (migrated.theme && !isValidTheme(migrated.theme, VALID_THEME_VALUES)) {
     delete migrated.theme;
   }
 

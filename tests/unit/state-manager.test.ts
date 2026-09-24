@@ -266,6 +266,16 @@ describe('StateManager', () => {
       sm.dispatch({ type: 'SET_CHAR_LIMIT', payload: { enabled: true } });
       expect(sm.getSettings().charLimitEnabled).toBe(true);
     });
+
+    it('uses a story-friendly custom limit and clamps invalid values', () => {
+      expect(sm.getSettings().charLimit).toBe(350);
+      sm.dispatch({ type: 'SET_CHAR_LIMIT_VALUE', payload: { limit: 420 } });
+      expect(sm.getSettings().charLimit).toBe(420);
+      sm.dispatch({ type: 'SET_CHAR_LIMIT_VALUE', payload: { limit: 50 } });
+      expect(sm.getSettings().charLimit).toBe(100);
+      sm.dispatch({ type: 'SET_CHAR_LIMIT_VALUE', payload: { limit: 9999 } });
+      expect(sm.getSettings().charLimit).toBe(2200);
+    });
   });
 
   // ─── Export quality (P-EXPORT-Q) ────────────────────────────

@@ -24,6 +24,31 @@ test.describe('AI text import dialog', () => {
     await expect(page.locator('input[name="aiTextMode"][value="improve"]')).toBeChecked();
   });
 
+  test('offers roles, a visual theme and a custom per-card limit', async ({ page }) => {
+    await expect(page.locator('input[name="aiRole"][value="content-strategist"]')).toBeChecked();
+    await expect(page.locator('#aiRoleLabel')).toHaveText('Контент-стратег');
+    await expect(page.locator('#aiTargetChars')).toHaveValue('350');
+    await expect(page.locator('#aiThemeSelect')).toHaveValue('');
+
+    await page.locator('#aiRolePicker summary').click();
+    await page.locator('input[name="aiRole"][value="smm-editor"]').check();
+    await expect(page.locator('#aiRoleLabel')).toHaveText('SMM-редактор');
+    await page.locator('#aiThemeSelect').selectOption('spearmint-fresh');
+    await page.locator('#aiTargetChars').fill('420');
+    await page.locator('#aiTargetChars').blur();
+
+    const preferences = await page.evaluate(() => JSON.parse(localStorage.getItem('flashcard-ai-import-prefs') || '{}'));
+    expect(preferences).toEqual({ role: 'smm-editor', theme: 'spearmint-fresh', targetChars: 420 });
+  });
+
+  test('estimates the card count and rejects an invalid target before sending', async ({ page }) => {
+    await page.locator('#aiSourceText').fill('Тестовый текст. '.repeat(80));
+    await expect(page.locator('#aiCardEstimate')).toContainText('Ориентировочно');
+    await page.locator('#aiTargetChars').fill('100');
+    await page.locator('#aiGenerateBtn').click();
+    await expect(page.locator('#aiImportError')).toContainText('от 180 до 2 200');
+  });
+
   test('closes with Escape and restores focus', async ({ page }) => {
     await page.keyboard.press('Escape');
     await expect(page.locator('#aiImportModal')).not.toHaveClass(/active/);
@@ -43,4 +68,26 @@ test('AI dialog fits a 390×844 phone viewport', async ({ page }) => {
   expect(box!.width).toBeLessThanOrEqual(390);
   expect(box!.height).toBeLessThanOrEqual(844);
   await expect(page.locator('#aiGenerateBtn')).toHaveCSS('min-height', '44px');
+  await expect(page.locator('#aiRolePicker summary')).toBeVisible();
+  await expect(page.locator('#aiThemeSelect')).toBeVisible();
 });
+
+for (const viewport of [
+  { name: 'portrait', width: 768, height: 1024 },
+  { name: 'landscape', width: 1024, height: 768 },
+]) {
+  test(`AI dialog fits a tablet in ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await gotoApp(page);
+    await page.locator('#aiImportBtn').click();
+    const panel = page.locator('.ai-import-panel');
+    const box = await panel.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.width).toBeLessThanOrEqual(viewport.width);
+    expect(box!.height).toBeLessThanOrEqual(viewport.height);
+    await expect(page.locator('#aiRolePicker summary')).toBeVisible();
+    await expect(page.locator('#aiThemeSelect')).toBeVisible();
+    await expect(page.locator('#aiTargetChars')).toBeVisible();
+  });
+}

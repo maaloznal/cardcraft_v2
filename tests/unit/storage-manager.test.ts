@@ -111,6 +111,11 @@ describe('StorageManager', () => {
       expect(loaded.theme).toBe('ocean');
     });
 
+    it('preserves a modern per-card theme used by AI import', () => {
+      save({ cards: [makeCard({ theme: 'spearmint-fresh' })] });
+      expect(load().cards?.[0].theme).toBe('spearmint-fresh');
+    });
+
     it('format survives a save → load cycle when in the whitelist', () => {
       save({ format: 'telegram' });
       const loaded = load();
@@ -522,12 +527,14 @@ describe('StorageManager', () => {
         showCardNumbers: false,
         showProgressBar: true,
         charLimitEnabled: true,
+        charLimit: 420,
       };
       save(state);
       const loaded = load();
       expect(loaded.showCardNumbers).toBe(false);
       expect(loaded.showProgressBar).toBe(true);
       expect(loaded.charLimitEnabled).toBe(true);
+      expect(loaded.charLimit).toBe(420);
     });
 
     it('progressBarStyle and listStyleType round-trip', () => {
