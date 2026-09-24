@@ -11,6 +11,7 @@
  *   updateCardTitle(index)             — O(1) title badge update
  *   getCardInput(cardId, field)        — get input element for a card/field
  *   focusField(cardId, field)          — focus a specific input
+ *   revealCard(index)                  — expand and scroll to a chosen card
  */
 
 import type { Card } from '../core/types';
@@ -145,6 +146,7 @@ export class EditorRenderer {
       // Show/hide delete button (only hide when single card)
       const delBtn = block.querySelector<HTMLElement>('[data-action="delete"]');
       if (delBtn) delBtn.style.display = blocks.length > 1 ? '' : 'none';
+      this.syncCollapseState(block, block.classList.contains('collapsed'));
     });
   }
 
@@ -177,6 +179,7 @@ export class EditorRenderer {
     // Show/hide delete button
     const delBtn = block.querySelector<HTMLElement>('[data-action="delete"]');
     if (delBtn) delBtn.style.display = blocks.length > 1 ? '' : 'none';
+    this.syncCollapseState(block, block.classList.contains('collapsed'));
   }
 
   /** Set the last card block to collapsed state */
@@ -185,8 +188,7 @@ export class EditorRenderer {
     const lastBlock = blocks[blocks.length - 1];
     if (!lastBlock) return;
     lastBlock.classList.add('collapsed');
-    const chevron = lastBlock.querySelector<HTMLElement>('.card-collapse-toggle svg');
-    if (chevron) chevron.style.transform = 'rotate(-90deg)';
+    this.syncCollapseState(lastBlock, true);
   }
 
   /**
@@ -200,32 +202,72 @@ export class EditorRenderer {
       if (i === blocks.length - 1) {
         // Last (new) card — ensure it's expanded
         block.classList.remove('collapsed');
-        const chevron = block.querySelector<HTMLElement>('.card-collapse-toggle svg');
-        if (chevron) chevron.style.transform = '';
+        this.syncCollapseState(block, false);
       } else {
         // All others — collapse
         block.classList.add('collapsed');
-        const chevron = block.querySelector<HTMLElement>('.card-collapse-toggle svg');
-        if (chevron) chevron.style.transform = 'rotate(-90deg)';
+        this.syncCollapseState(block, true);
       }
     });
+  }
+
+  /** Collapse every completed card while leaving empty cards ready to type in. */
+  collapseCompletedCards(): void {
+    const blocks = this.container.querySelectorAll<HTMLElement>('.card-editor-block');
+    blocks.forEach((block) => {
+      const hasContent = Array.from(
+        block.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(
+          'input[data-field], textarea[data-field]',
+        ),
+      ).some((field) => field.value.trim().length > 0);
+      if (!hasContent) return;
+      block.classList.add('collapsed');
+      this.syncCollapseState(block, true);
+    });
+  }
+
+  /** Expand one card, collapse its neighbours and bring it into view. */
+  revealCard(index: number): void {
+    const blocks = this.container.querySelectorAll<HTMLElement>('.card-editor-block');
+    const target = blocks[index];
+    if (!target) return;
+
+    blocks.forEach((block, blockIndex) => {
+      const collapsed = blockIndex !== index;
+      block.classList.toggle('collapsed', collapsed);
+      this.syncCollapseState(block, collapsed);
+      block.classList.remove('editor-target-card');
+    });
+
+    target.classList.add('editor-target-card');
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    target.querySelector<HTMLElement>('.card-collapse-toggle')?.focus({ preventScroll: true });
+    window.setTimeout(() => target.classList.remove('editor-target-card'), 1400);
   }
 
   // ─── Private helpers ────────────────────────────────────────
 
   private buildEditorBlock(card: Card, index: number, total: number): HTMLElement {
     const block = document.createElement('div');
-    block.className = 'card-editor-block';
+    const summary = this.getCardSummary(card);
+    const startsCollapsed =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(max-width: 767px)').matches &&
+      summary.length > 0;
+    block.className = `card-editor-block${startsCollapsed ? ' collapsed' : ''}`;
     const title = `Карточка ${index + 1}`;
 
     block.innerHTML = `
       <div class="card-editor-header">
-        <button class="btn-icon card-collapse-toggle" data-action="collapse" data-index="${index}" title="Свернуть/развернуть" aria-label="Свернуть" type="button">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <button class="btn-icon card-collapse-toggle" data-action="collapse" data-index="${index}" title="Свернуть/развернуть" aria-label="${startsCollapsed ? 'Развернуть' : 'Свернуть'} карточку ${index + 1}" aria-expanded="${startsCollapsed ? 'false' : 'true'}" type="button">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"${startsCollapsed ? ' style="transform:rotate(-90deg)"' : ''}><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <div class="card-editor-title-group">
           <span class="card-editor-num-badge">${index + 1}</span>
-          <h3 title="${title}">${title}</h3>
+          <div class="card-editor-heading">
+            <h3 title="${title}">${title}</h3>
+            <span class="card-editor-summary">${summary ? escapeHtml(summary) : 'Пустая карточка'}</span>
+          </div>
         </div>
         <div class="card-editor-actions">
           <button class="btn-icon" data-action="duplicate" data-index="${index}" title="Дублировать" aria-label="Дублировать"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
@@ -270,11 +312,10 @@ export class EditorRenderer {
       const action = btn.dataset.action || '';
 
       if (action === 'collapse') {
-        const block = btn.closest('.card-editor-block');
+        const block = btn.closest<HTMLElement>('.card-editor-block');
         if (!block) return;
         block.classList.toggle('collapsed');
-        const svg = btn.querySelector('svg');
-        if (svg) svg.style.transform = block.classList.contains('collapsed') ? 'rotate(-90deg)' : '';
+        this.syncCollapseState(block, block.classList.contains('collapsed'));
         return;
       }
 
@@ -307,6 +348,8 @@ export class EditorRenderer {
       const target = e.target as HTMLElement;
       if (target.matches('input[data-field], textarea[data-field]')) {
         const el = target as HTMLInputElement | HTMLTextAreaElement;
+        const block = el.closest<HTMLElement>('.card-editor-block');
+        if (block) this.updateBlockSummary(block);
         this.actionHandler?.('input', {
           index: Number(el.dataset.index || 0),
           field: el.dataset.field || '',
@@ -343,6 +386,8 @@ export class EditorRenderer {
       const end = el.selectionEnd ?? 0;
       const cur = el.value;
       el.value = cur.substring(0, start) + cleanText + cur.substring(end);
+      const block = el.closest<HTMLElement>('.card-editor-block');
+      if (block) this.updateBlockSummary(block);
       this.actionHandler?.('paste', {
         index: Number(el.dataset.index || 0),
         field,
@@ -351,5 +396,36 @@ export class EditorRenderer {
       });
     };
     this.container.addEventListener('paste', this.pasteHandler);
+  }
+
+  private syncCollapseState(block: HTMLElement, collapsed: boolean): void {
+    const toggle = block.querySelector<HTMLElement>('.card-collapse-toggle');
+    const svg = toggle?.querySelector<SVGElement>('svg');
+    if (svg) svg.style.transform = collapsed ? 'rotate(-90deg)' : '';
+    if (toggle) {
+      const badge = block.querySelector<HTMLElement>('.card-editor-num-badge')?.textContent || '';
+      toggle.setAttribute('aria-expanded', String(!collapsed));
+      toggle.setAttribute('aria-label', `${collapsed ? 'Развернуть' : 'Свернуть'} карточку ${badge}`);
+    }
+  }
+
+  private getCardSummary(card: Card): string {
+    const value = [card.title, card.subtitle, card.text, card.listItems, card.footer, card.cta]
+      .find((field) => field.trim().length > 0);
+    return (value || '').replace(/\s+/g, ' ').trim().slice(0, 90);
+  }
+
+  private updateBlockSummary(block: HTMLElement): void {
+    const fields = ['title', 'subtitle', 'text', 'listItems', 'footer', 'cta'];
+    let summary = '';
+    for (const field of fields) {
+      const input = block.querySelector<HTMLInputElement | HTMLTextAreaElement>(`[data-field="${field}"]`);
+      if (input?.value.trim()) {
+        summary = input.value.replace(/\s+/g, ' ').trim().slice(0, 90);
+        break;
+      }
+    }
+    const summaryNode = block.querySelector<HTMLElement>('.card-editor-summary');
+    if (summaryNode) summaryNode.textContent = summary || 'Пустая карточка';
   }
 }

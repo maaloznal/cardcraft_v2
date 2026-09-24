@@ -84,6 +84,99 @@ test.describe('P4-S1: Exclusive subsections (phone 320×568)', () => {
   });
 });
 
+/* ═══ Mobile editor navigation — Xiaomi Mi 11 Lite (393×873) ═══ */
+
+async function openXiaomiProject(page: Page, cardCount = 6): Promise<void> {
+  await page.setViewportSize({ width: 393, height: 873 });
+  await gotoApp(page);
+  await switchToEditorMode(page);
+  for (let index = 0; index < cardCount; index++) {
+    const current = page.locator('#editorCardsList .card-editor-block').nth(index);
+    await current.locator('[data-field="title"]').fill(`Мысль карточки ${index + 1}`);
+    await current.locator('[data-field="text"]').fill(`Содержимое для быстрой идентификации карточки ${index + 1}.`);
+    if (index < cardCount - 1) await page.locator('#addCardBtn').click();
+  }
+  await expect(page.locator('#editorCardsList .card-editor-block')).toHaveCount(cardCount);
+  await switchToPreviewMode(page);
+}
+
+test.describe('Mobile editor navigation (Xiaomi Mi 11 Lite)', () => {
+  test('completed cards start collapsed with readable numbers and contained actions', async ({ page }) => {
+    await openXiaomiProject(page);
+    await switchToEditorMode(page);
+
+    const blocks = page.locator('#editorCardsList .card-editor-block');
+    await expect(blocks).toHaveCount(6);
+    for (let index = 0; index < 6; index++) {
+      await expect(blocks.nth(index)).toHaveClass(/\bcollapsed\b/);
+      await expect(blocks.nth(index).locator('.card-editor-num-badge')).toHaveText(String(index + 1));
+      await expect(blocks.nth(index).locator('.card-editor-summary')).toContainText(`Мысль карточки ${index + 1}`);
+    }
+
+    const target = blocks.nth(5);
+    await target.locator('.card-collapse-toggle').click();
+    await expect(target).not.toHaveClass(/\bcollapsed\b/);
+
+    const containment = await target.evaluate((block) => {
+      const outer = block.getBoundingClientRect();
+      const controls = Array.from(block.querySelectorAll<HTMLElement>('.card-editor-actions button, .card-editor-num-badge'));
+      return controls.map((control) => {
+        const rect = control.getBoundingClientRect();
+        return {
+          left: rect.left >= outer.left - 0.5,
+          right: rect.right <= outer.right + 0.5,
+          width: rect.width,
+        };
+      });
+    });
+    expect(containment.length).toBe(5);
+    for (const control of containment) {
+      expect(control.left).toBe(true);
+      expect(control.right).toBe(true);
+      expect(control.width).toBeGreaterThanOrEqual(22);
+    }
+    expect(await getHorizontalOverflow(page)).toBe(0);
+  });
+
+  test('preview edit button opens the matching card and keeps the preview return point', async ({ page }) => {
+    await openXiaomiProject(page);
+    const sixthPreview = page.locator('#cardsArea .card-wrapper').nth(5);
+    await sixthPreview.scrollIntoViewIfNeeded();
+    await sixthPreview.locator('[data-action="edit-preview"]').click();
+
+    await expect(page.locator('.cc-root')).toHaveAttribute('data-mobile-mode', 'editor');
+    const blocks = page.locator('#editorCardsList .card-editor-block');
+    await expect(blocks.nth(5)).not.toHaveClass(/\bcollapsed\b/);
+    await expect(blocks.nth(5).locator('.card-editor-num-badge')).toHaveText('6');
+    for (let index = 0; index < 5; index++) {
+      await expect(blocks.nth(index)).toHaveClass(/\bcollapsed\b/);
+    }
+
+    await expect.poll(async () => {
+      const box = await blocks.nth(5).boundingBox();
+      return box ? box.y >= 90 && box.y < 873 : false;
+    }).toBe(true);
+
+    await switchToPreviewMode(page);
+    await expect.poll(async () => {
+      const box = await sixthPreview.boundingBox();
+      return box ? box.y < 873 && box.y + box.height > 96 : false;
+    }).toBe(true);
+  });
+
+  test('mode switcher stays fixed while the preview is scrolled', async ({ page }) => {
+    await openXiaomiProject(page);
+    const switcher = page.locator('#mobileModeSwitcher');
+    await expect(switcher).toHaveCSS('position', 'fixed');
+    const before = await switcher.boundingBox();
+    await page.locator('#cardsArea .card-wrapper').last().scrollIntoViewIfNeeded();
+    const after = await switcher.boundingBox();
+    expect(before).not.toBeNull();
+    expect(after).not.toBeNull();
+    expect(Math.abs(after!.y - before!.y)).toBeLessThan(1);
+  });
+});
+
 /* ═══ STAGE 2: Settings summary (mobile-chrome, 390×844) ═══ */
 
 test.describe('P4-S2: Settings summary (phone 390×844)', () => {

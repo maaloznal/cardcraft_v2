@@ -318,12 +318,18 @@
     padding: 0 clamp(8px, 2vw, 16px);
     border-bottom: 1px solid var(--ui-border, #e4e4e7);
     background: var(--ui-bg, #fafafa);
-    position: sticky;
+    position: fixed;
     top: calc(var(--top-bar-height) + var(--safe-area-top, 0px));
+    left: 0;
+    right: 0;
+    width: 100%;
     z-index: 1001;
     padding-left: max(8px, var(--safe-area-left, 0px));
     padding-right: max(8px, var(--safe-area-right, 0px));
     box-sizing: border-box;
+  }
+  .app-layout {
+    margin-top: var(--mobile-switcher-height);
   }
   /* Inner tabs container (role="tablist") — flex row of tab buttons */
   .mobile-mode-tabs {
@@ -428,6 +434,49 @@
     flex: none;
     min-height: 0;
     overflow: visible;
+  }
+
+  /* A phone cannot fit the collapse control, number/title and four 44px
+     actions on one row. Keep the identity row clean and move actions below
+     it only while the card is expanded. Collapsed completed cards therefore
+     stay compact and easy to scan by number and content summary. */
+  #editorCardsList {
+    padding: 12px;
+    gap: 8px;
+  }
+  .card-editor-block {
+    padding: 10px;
+    gap: 8px;
+    scroll-margin-top: 8px;
+  }
+  .card-editor-header {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    align-items: center;
+    gap: 6px 8px;
+  }
+  .card-editor-title-group {
+    grid-column: 2;
+    min-width: 0;
+  }
+  .card-editor-actions {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(44px, 1fr));
+    width: 100%;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--ui-border);
+  }
+  .card-editor-actions > button {
+    width: 100%;
+    max-width: none;
+  }
+  .card-editor-block.collapsed .card-editor-actions {
+    display: none;
+  }
+  .card-editor-block.collapsed {
+    gap: 0;
   }
 
   /* Cards full width on phone */

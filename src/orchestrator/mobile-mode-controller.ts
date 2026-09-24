@@ -39,6 +39,7 @@ export type MobileMode = 'editor' | 'preview';
 
 export interface MobileModeController {
   setMobileMode(mode: MobileMode): void;
+  openCard(index: number): void;
   toggleSidebar(): void;
   getMobileMode(): MobileMode;
   destroy(): void;
@@ -150,6 +151,9 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
 
     // P2-FIX: focus management using explicit hasOpenedEditor flag
     if (mode === 'editor') {
+      // A compact list is easier to scan by number/summary. Empty cards stay
+      // open so a newly added card is still ready for immediate input.
+      ctx.editorRenderer.collapseCompletedCards();
       const active = document.activeElement as HTMLElement | null;
       if (active && active !== document.body) {
         lastFocusedBeforeEditor = active;
@@ -255,6 +259,18 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
 
   function getMobileMode(): MobileMode {
     return currentMode;
+  }
+
+  /** Open the editor directly at a card selected in preview. */
+  function openCard(index: number): void {
+    // Direct navigation should not focus the first card and open the keyboard.
+    hasOpenedEditor = true;
+    if (isCompactLayout()) {
+      setMobileMode('editor');
+    }
+    window.setTimeout(() => {
+      ctx.editorRenderer.revealCard(index);
+    }, isCompactLayout() ? 80 : 0);
   }
 
   // ─── Event handlers ──────────────────────────────────────────────
@@ -366,6 +382,7 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
 
   return {
     setMobileMode,
+    openCard,
     toggleSidebar,
     getMobileMode,
     destroy() {

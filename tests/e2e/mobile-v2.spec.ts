@@ -313,9 +313,9 @@ test.describe('P1-touch: 44×44 touch targets', () => {
     { name: 'close sidebar button', selector: '#closeSidebarBtn' },
     { name: 'card collapse toggle', selector: '.card-collapse-toggle' },
     { name: 'card duplicate button', selector: '[data-action="duplicate"]' },
-    { name: 'card delete button', selector: '[data-action="delete"]', setup: 'addCard' },
-    { name: 'card move up', selector: '[data-action="move"][data-dir="-1"]', setup: 'addCard' },
-    { name: 'card move down', selector: '[data-action="move"][data-dir="1"]', setup: 'addCard' },
+    { name: 'card delete button', selector: '.card-editor-block:not(.collapsed) [data-action="delete"]', setup: 'addCard' },
+    { name: 'card move up', selector: '.card-editor-block:not(.collapsed) [data-action="move"][data-dir="-1"]', setup: 'addCard' },
+    { name: 'card move down', selector: '.card-editor-block:not(.collapsed) [data-action="move"][data-dir="1"]', setup: 'addCard' },
     { name: 'card palette button', selector: '[data-action="palette"]' },
     { name: 'clear field button', selector: '.btn-clear-field' },
     { name: 'add card button', selector: '#addCardBtn' },
@@ -340,7 +340,12 @@ test.describe('P1-touch: 44×44 touch targets', () => {
 
   test('touch: card actions (download/copy/delete under preview) >= 44×44', async ({ page }) => {
     await switchToPreviewMode(page);
-    const actions = ['#cardsArea [data-action="download"]', '#cardsArea [data-action="copy"]', '#cardsArea [data-action="delete-preview"]'];
+    const actions = [
+      '#cardsArea [data-action="edit-preview"]',
+      '#cardsArea [data-action="download"]',
+      '#cardsArea [data-action="copy"]',
+      '#cardsArea [data-action="delete-preview"]',
+    ];
     for (const sel of actions) {
       const size = await getEffectiveTouchSize(page, sel);
       const minDim = Math.min(size.width, size.height);
