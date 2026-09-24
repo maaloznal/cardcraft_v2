@@ -92,6 +92,10 @@ export default function Home() {
           </div>
         </div>
         <div className="top-bar-right">
+          <button className="btn-ai-import" id="aiImportBtn" title="Разбить текст на карточки с помощью ИИ" type="button">
+            <span aria-hidden="true">✦</span>
+            <span>Текст → карточки</span>
+          </button>
           <button className="btn-icon top-bar-btn" id="undoBtn" title="Отменить (Ctrl+Z)" aria-label="Отменить" type="button">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
           </button>
@@ -596,6 +600,51 @@ export default function Home() {
       </div>
 
       {/* ================= WORD STYLE POPUP ================= */}
+      <div className="ai-import-overlay" id="aiImportModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="aiImportTitle">
+        <div className="ai-import-panel">
+          <div className="ai-import-header">
+            <div>
+              <h2 id="aiImportTitle">Текст → карточки</h2>
+              <p>ИИ исправит ошибки и распределит текст по полям карточек.</p>
+            </div>
+            <button className="modal-close" type="button" data-ai-close aria-label="Закрыть">×</button>
+          </div>
+          <div className="ai-import-body">
+            <label htmlFor="aiSourceText">Исходный текст</label>
+            <textarea
+              id="aiSourceText"
+              maxLength={10000}
+              rows={10}
+              placeholder="Вставьте текст объёмом до 10 000 символов…"
+              aria-describedby="aiCharCount aiPrivacyNote"
+            />
+            <div className="ai-import-meta">
+              <span id="aiPrivacyNote">Текст будет отправлен выбранному ИИ-провайдеру.</span>
+              <output id="aiCharCount" htmlFor="aiSourceText">0 / 10 000</output>
+            </div>
+            <fieldset className="ai-mode-picker">
+              <legend>Режим обработки</legend>
+              <label>
+                <input type="radio" name="aiTextMode" value="preserve" defaultChecked />
+                <span><strong>Сохранить формулировки</strong><small>Только исправить ошибки и распределить текст</small></span>
+              </label>
+              <label>
+                <input type="radio" name="aiTextMode" value="improve" />
+                <span><strong>Улучшить текст</strong><small>Повысить связность и читаемость без добавления фактов</small></span>
+              </label>
+            </fieldset>
+            <p className="ai-import-error" id="aiImportError" role="alert" hidden />
+            <div className="ai-preview" id="aiPreview" aria-live="polite" hidden />
+          </div>
+          <div className="ai-import-footer">
+            <button className="btn-secondary" type="button" data-ai-close>Закрыть</button>
+            <button className="btn-secondary" id="aiCancelBtn" type="button" hidden>Остановить ожидание</button>
+            <button className="btn-primary" id="aiGenerateBtn" type="button" disabled>Подготовить карточки</button>
+            <button className="btn-primary" id="aiAddCardsBtn" type="button" hidden>Добавить карточки</button>
+          </div>
+        </div>
+      </div>
+
       <div className="word-style-popup" id="wordStylePopup" role="dialog" aria-modal="true" aria-label="Настройка слова">
         <div className="word-popup-header" id="wordPopupHeader" />
         <button

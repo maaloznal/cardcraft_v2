@@ -22,9 +22,11 @@
 
 import type { OrchestratorContext } from './types';
 import type { PreviewSettings } from '@/preview/PreviewRenderer';
+import { aiDraftToCard, type AiCardDraft } from '@/ai/text-to-cards-contract';
 
 export interface CardOpsController {
   addCard(): void;
+  addCards(cards: AiCardDraft[]): void;
   deleteCard(idx: number): void;
   duplicateCard(idx: number): void;
   moveCard(idx: number, dir: number): void;
@@ -88,6 +90,19 @@ export function createCardOpsController(ctx: OrchestratorContext): CardOpsContro
     ctx.storage.scheduleSave({ silent: true });
     ctx.storage.showToast('Карточка добавлена');
     announce(`Карточка ${stateManager.getCardCount()} добавлена`);
+  }
+
+  /** Append AI-prepared cards as one atomic history operation. */
+  function addCards(drafts: AiCardDraft[]): void {
+    if (drafts.length === 0) return;
+    const cards = drafts.map(aiDraftToCard);
+    stateManager.dispatch({ type: 'ADD_CARDS', payload: { cards } });
+    uiAppliers.renderEditor();
+    uiAppliers.renderPreview();
+    ctx.history.pushHistory();
+    ctx.storage.scheduleSave({ silent: true });
+    ctx.storage.showToast(`Добавлено карточек: ${cards.length}`);
+    announce(`Добавлено карточек: ${cards.length}`);
   }
 
   /**
@@ -170,6 +185,7 @@ export function createCardOpsController(ctx: OrchestratorContext): CardOpsContro
 
   return {
     addCard,
+    addCards,
     deleteCard,
     duplicateCard,
     moveCard,

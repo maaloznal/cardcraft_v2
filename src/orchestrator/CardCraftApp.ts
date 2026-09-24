@@ -68,6 +68,7 @@ import { createCardOpsController } from './card-ops';
 import { createSidebarController } from './sidebar-controller';
 import { createCloudSyncController } from './cloud-sync-controller';
 import { createMobileModeController } from './mobile-mode-controller';
+import { createAiImportController } from './ai-import-controller';
 import {
   COMPACT_LAYOUT_BREAKPOINT,
   TOUCH_LAYOUT_BREAKPOINT,
@@ -258,6 +259,7 @@ export function initCardCraftApp(root: HTMLElement): () => void {
   // (Editor/Preview switcher visible on phone). Must be created AFTER sidebar
   // (it calls ctx.sidebar.setSidebarOpen()).
   ctx.mobileMode = createMobileModeController(ctx);
+  ctx.aiImport = createAiImportController(ctx);
 
   /* ---------- 7. Wire renderer callbacks (composition root) ---------- */
   // Routes PreviewRenderer/EditorRenderer/WordEditorManager action
@@ -332,6 +334,7 @@ export function initCardCraftApp(root: HTMLElement): () => void {
     ctx.sidebar.destroy();
     ctx.cloudSync.destroy();
     ctx.mobileMode.destroy();
+    ctx.aiImport.destroy();
     // Destroy UI primitives
     sidebarAccordion.destroy();
     // P6-LEAK: explicitly remove matchMedia listener

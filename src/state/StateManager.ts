@@ -242,6 +242,13 @@ export class StateManager {
           cards: { list: [...state.cards.list, card] },
         };
       }
+      case 'ADD_CARDS': {
+        if (action.payload.cards.length === 0) return state;
+        return {
+          ...state,
+          cards: { list: [...state.cards.list, ...deepClone(action.payload.cards)] },
+        };
+      }
       case 'DELETE_CARD': {
         const { idx } = action.payload;
         if (state.cards.list.length <= 1 || idx < 0 || idx >= state.cards.list.length) return state;

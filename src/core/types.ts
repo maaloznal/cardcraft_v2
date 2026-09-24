@@ -150,6 +150,7 @@ export interface UIState {
 export type Action =
   // ── Card operations ──
   | { type: 'ADD_CARD' }
+  | { type: 'ADD_CARDS'; payload: { cards: Card[] } }
   | { type: 'DELETE_CARD'; payload: { idx: number } }
   | { type: 'DUPLICATE_CARD'; payload: { idx: number } }
   | { type: 'MOVE_CARD'; payload: { idx: number; dir: number } }

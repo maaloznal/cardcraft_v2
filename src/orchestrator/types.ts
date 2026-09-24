@@ -48,6 +48,7 @@ import type { createCardOpsController } from './card-ops';
 import type { createSidebarController } from './sidebar-controller';
 import type { createCloudSyncController } from './cloud-sync-controller';
 import type { createMobileModeController } from './mobile-mode-controller';
+import type { createAiImportController } from './ai-import-controller';
 
 export interface OrchestratorContext {
   // ── Core DOM + state ──
@@ -83,4 +84,5 @@ export interface OrchestratorContext {
   sidebar: ReturnType<typeof createSidebarController>;
   cloudSync: ReturnType<typeof createCloudSyncController>;
   mobileMode: ReturnType<typeof createMobileModeController>;
+  aiImport: ReturnType<typeof createAiImportController>;
 }

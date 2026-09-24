@@ -67,6 +67,7 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
   let remoteApplyTimer: ReturnType<typeof setTimeout> | null = null;
   let authSubscription: { subscription: { unsubscribe: () => void } } | null = null;
   let realtimeChannel: RealtimeChannel | null = null;
+  let realtimeUserId: string | null = null;
   let currentUser: User | null = null;
   let cachedProject: Project | null = null; // cache of the default project (id + version)
   let syncing = false;
@@ -265,14 +266,19 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
    */
   function subscribeToRealtime(userId: string): void {
     if (!supabase) return;
-    // Unsubscribe any previous channel (e.g. from a stale session)
+    // Supabase can emit INITIAL_SESSION and SIGNED_IN back-to-back for the
+    // same session. Reusing an already-subscribed channel and adding another
+    // postgres_changes callback throws, so this operation must be idempotent.
+    if (realtimeChannel && realtimeUserId === userId) return;
+
+    // Unsubscribe any channel from a stale/different session. A different
+    // user has a different channel topic, so removal can finish asynchronously.
     if (realtimeChannel) {
-      try {
-        supabase.removeChannel(realtimeChannel);
-      } catch {
+      void supabase.removeChannel(realtimeChannel).catch(() => {
         // ignore — channel may already be removed
-      }
+      });
       realtimeChannel = null;
+      realtimeUserId = null;
     }
 
     log.info('Subscribing to realtime updates', { userId });
@@ -326,6 +332,7 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
           log.warn('Realtime channel error', { status });
         }
       });
+    realtimeUserId = userId;
   }
 
   /**
@@ -388,12 +395,11 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
       }
       // Unsubscribe from realtime
       if (realtimeChannel && supabase) {
-        try {
-          supabase.removeChannel(realtimeChannel);
-        } catch {
-          // ignore
-        }
+        void supabase.removeChannel(realtimeChannel).catch(() => {
+          // ignore — channel may already be removed
+        });
         realtimeChannel = null;
+        realtimeUserId = null;
       }
       // Clear local state — prevents card leakage between accounts on shared
       // devices. Without this, the next user to log in would see the previous
@@ -453,15 +459,9 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
 
   // Subscribe to auth changes
   if (supabase) {
-    // Get initial session synchronously (best-effort)
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        handleAuthChange('INITIAL_SESSION', data.session);
-      }
-    }).catch((e) => {
-      log.error('Failed to get initial session', { error: e instanceof Error ? e.message : String(e) });
-    });
-    // Subscribe to future changes
+    // onAuthStateChange always emits INITIAL_SESSION after registration. A
+    // separate getSession() races with that event and used to initialize the
+    // same Realtime channel twice.
     const sub = supabase.auth.onAuthStateChange((event, session) => {
       handleAuthChange(event, session);
     });
@@ -482,12 +482,11 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
         authSubscription = null;
       }
       if (realtimeChannel && supabase) {
-        try {
-          supabase.removeChannel(realtimeChannel);
-        } catch {
-          // ignore
-        }
+        void supabase.removeChannel(realtimeChannel).catch(() => {
+          // ignore — channel may already be removed
+        });
         realtimeChannel = null;
+        realtimeUserId = null;
       }
       currentUser = null;
       cachedProject = null;

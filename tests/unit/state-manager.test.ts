@@ -91,6 +91,20 @@ describe('StateManager', () => {
     });
   });
 
+  describe('ADD_CARDS', () => {
+    it('appends a batch atomically without sharing references', () => {
+      const card = {
+        id: 'ai-1', title: 'AI', subtitle: '', text: 'Text', listItems: '', footer: '', cta: '',
+        colors: {}, wordStyles: {}, sectionStyles: {},
+      };
+      sm.dispatch({ type: 'ADD_CARDS', payload: { cards: [card] } });
+      expect(sm.getCardCount()).toBe(2);
+      expect(sm.getCards()[1].title).toBe('AI');
+      card.title = 'mutated';
+      expect(sm.getCards()[1].title).toBe('AI');
+    });
+  });
+
   // ─── DELETE_CARD ────────────────────────────────────────────
   describe('DELETE_CARD', () => {
     it('removes the card at the given index', () => {

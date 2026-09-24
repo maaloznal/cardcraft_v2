@@ -70,6 +70,17 @@ export interface DOMRefs {
   undoBtn: HTMLButtonElement | null;
   redoBtn: HTMLButtonElement | null;
   cardCountBadge: HTMLElement | null;
+
+  // ── AI text import ──
+  aiImportBtn: HTMLButtonElement | null;
+  aiImportModal: HTMLElement | null;
+  aiSourceText: HTMLTextAreaElement | null;
+  aiCharCount: HTMLElement | null;
+  aiGenerateBtn: HTMLButtonElement | null;
+  aiCancelBtn: HTMLButtonElement | null;
+  aiPreview: HTMLElement | null;
+  aiAddCardsBtn: HTMLButtonElement | null;
+  aiImportError: HTMLElement | null;
 }
 
 /**
@@ -134,5 +145,14 @@ export function collectDOMRefs(root: HTMLElement): DOMRefs {
     undoBtn: $<HTMLButtonElement>('#undoBtn'),
     redoBtn: $<HTMLButtonElement>('#redoBtn'),
     cardCountBadge: $<HTMLElement>('#cardCountBadge'),
+    aiImportBtn: $<HTMLButtonElement>('#aiImportBtn'),
+    aiImportModal: $<HTMLElement>('#aiImportModal'),
+    aiSourceText: $<HTMLTextAreaElement>('#aiSourceText'),
+    aiCharCount: $<HTMLElement>('#aiCharCount'),
+    aiGenerateBtn: $<HTMLButtonElement>('#aiGenerateBtn'),
+    aiCancelBtn: $<HTMLButtonElement>('#aiCancelBtn'),
+    aiPreview: $<HTMLElement>('#aiPreview'),
+    aiAddCardsBtn: $<HTMLButtonElement>('#aiAddCardsBtn'),
+    aiImportError: $<HTMLElement>('#aiImportError'),
   };
 }
