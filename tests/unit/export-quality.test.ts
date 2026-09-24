@@ -110,6 +110,12 @@ describe('Export quality', () => {
       }
     });
 
+    it('forces the cloned card visible when mobile editor mode hides preview', () => {
+      for (const q of EXPORT_QUALITY_VALUES) {
+        expect(buildExportOptions(q).style.visibility).toBe('visible');
+      }
+    });
+
     it('output pixel width = width × pixelRatio (deterministic)', () => {
       // This is the invariant html-to-image applies: canvas.width = width × pixelRatio
       expect(EXPORT_CARD_WIDTH * buildExportOptions('x2').pixelRatio).toBe(760);

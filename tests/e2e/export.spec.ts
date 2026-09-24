@@ -4,6 +4,7 @@ import {
   getPreviewCardCount,
   downloadPngAndReadDimensions,
   downloadPngAndInspect,
+  inspectPngDownload,
   setExportQuality,
   switchToEditorMode,
   switchToPreviewMode,
@@ -253,6 +254,45 @@ test.describe('Export quality — viewport parity (×3)', () => {
       expect(inspection.width).toBe(1140);
       expect(inspection.byteLength).toBeGreaterThan(1_000);
       expect(inspection.nonBlackPixelRatio, 'PNG must contain visible non-black pixels').toBeGreaterThan(0.25);
+    } finally {
+      await context.close();
+    }
+  });
+
+  test('Xiaomi Android batch export from hidden preview produces valid cards', async ({ browser }) => {
+    const context = await browser.newContext({
+      viewport: { width: 393, height: 873 },
+      deviceScaleFactor: 2.75,
+      isMobile: true,
+      hasTouch: true,
+      acceptDownloads: true,
+      userAgent: 'Mozilla/5.0 (Linux; Android 13; 2109119DG) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36',
+    });
+    const mobilePage = await context.newPage();
+    try {
+      await gotoApp(mobilePage);
+      await switchToEditorMode(mobilePage);
+      for (let index = 0; index < 2; index++) {
+        await mobilePage.locator('#addCardBtn').click();
+      }
+      const editors = mobilePage.locator('#editorCardsList .card-editor-block');
+      for (let index = 0; index < 3; index++) {
+        await editors.nth(index).locator('[data-field="title"]').fill(`Карточка ${index + 1}`);
+        await editors.nth(index).locator('[data-field="text"]').fill('Проверка пакетного мобильного экспорта.');
+      }
+      await expect(mobilePage.locator('.preview-workspace')).toHaveCSS('visibility', 'hidden');
+
+      const downloads: import('@playwright/test').Download[] = [];
+      mobilePage.on('download', (download) => downloads.push(download));
+      await mobilePage.locator('#saveAll').click();
+      await expect.poll(() => downloads.length, { timeout: 60000 }).toBe(3);
+
+      for (let index = 0; index < downloads.length; index++) {
+        const inspection = await inspectPngDownload(mobilePage, downloads[index], `xiaomi-batch-${index}`);
+        expect(inspection.width).toBe(1140);
+        expect(inspection.byteLength).toBeGreaterThan(1_000);
+        expect(inspection.nonBlackPixelRatio, `batch PNG ${index + 1} must not be black`).toBeGreaterThan(0.25);
+      }
     } finally {
       await context.close();
     }

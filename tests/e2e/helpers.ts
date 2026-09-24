@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Download, type Page } from '@playwright/test';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
@@ -288,6 +288,15 @@ export async function downloadPngAndInspect(
   const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
   await trigger();
   const download = await downloadPromise;
+  return inspectPngDownload(page, download, suggestedNamePrefix);
+}
+
+/** Inspect an already captured download (used by real multi-download flows). */
+export async function inspectPngDownload(
+  page: Page,
+  download: Download,
+  suggestedNamePrefix = 'card-inspect',
+): Promise<PngInspection> {
   const tmpDir = process.env.TMPDIR || '/tmp';
   const savePath = path.join(tmpDir, `${suggestedNamePrefix}-${Date.now()}.png`);
   await download.saveAs(savePath);

@@ -36,7 +36,7 @@ export interface ExportOptions {
   width: number;
   pixelRatio: number;
   cacheBust: boolean;
-  style: { width: string; maxWidth: string; padding: string };
+  style: { width: string; maxWidth: string; padding: string; visibility: string };
   filter: (domNode: HTMLElement) => boolean;
   skipAutoScale: boolean;
 }
@@ -82,6 +82,11 @@ export function buildExportOptions(quality: ExportQuality): ExportOptions {
       width: `${EXPORT_CARD_WIDTH}px`,
       maxWidth: `${EXPORT_CARD_WIDTH}px`,
       padding: `${CARD_PADDING}px`,
+      // On phones, "Скачать все" is launched from editor mode while the
+      // preview workspace has visibility:hidden. Visibility is inherited, so
+      // html-to-image otherwise clones a hidden card and produces a blank or
+      // black PNG. Apply this only to the internal clone (no visible UI flash).
+      visibility: 'visible',
     },
     // Exclude editor-only chrome from the PNG. `.card-actions` is a sibling
     // of `.card` so it's never part of the cloned subtree; this filter is a
