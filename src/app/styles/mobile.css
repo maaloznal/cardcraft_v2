@@ -4,8 +4,7 @@
    ---------------------------------------------------------------------
    Breakpoints:
    - max-width: 1023px (tablet portrait / small desktop)
-   - max-width: 768px  (tablet portrait)
-   - max-width: 600px   (phone landscape / small tablet portrait)
+   - max-width: 767px   (focused phone / small-tablet layout)
    - max-width: 480px   (phone portrait)
    - max-width: 360px   (narrow phone — iPhone SE 1st gen, foldables)
    ---------------------------------------------------------------------
@@ -14,8 +13,8 @@
    - Font-size 16px on inputs (prevents iOS auto-zoom).
    - 44×44px touch targets via padding + ::before hit area extensions.
    - env(safe-area-inset-*) on fixed/sticky elements (notch / home-indicator).
-   - Mobile mode tabs (Editor / Preview) — exclusive view on narrow screens.
-   - Tablet split-view — sidebar + preview visible simultaneously.
+   - Mode tabs (Editor / Preview) — exclusive view below 768px.
+   - Tablet split-view — sidebar + preview visible simultaneously from 768px.
    ===================================================================== */
 
 /* ─── Viewport unit fallbacks ────────────────────────────────────────
@@ -264,10 +263,18 @@
     padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
              env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
   }
+
+  /* Keep the Design toggle reachable while its settings pane scrolls. */
+  .sidebar-fixed-header > .sidebar-accordion > .sidebar-accordion-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--ui-surface);
+  }
 }
 
 /* ─── Phone (< 600px) — mobile mode switcher visible ────────────── */
-@media (max-width: 599px) {
+@media (max-width: 767px) {
   /* P0-LAYOUT-V2: override --top-bar-height to the mobile value (52px).
      All calc() that reference --top-bar-height now get 52px on phone. */
   :root {
@@ -304,7 +311,7 @@
        top/bottom — use align-items:center for vertical centering instead.
        This ensures the switcher doesn't exceed the variable value. */
     height: var(--mobile-switcher-height);
-    padding: 0 8px;
+    padding: 0 clamp(8px, 2vw, 16px);
     border-bottom: 1px solid var(--ui-border, #e4e4e7);
     background: var(--ui-bg, #fafafa);
     position: sticky;
@@ -383,6 +390,15 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  /* Small tablets have room for a comfortable full-width editor. Avoid an
+     unusable empty strip beside the legacy 300px drawer. */
+  @media (min-width: 600px) {
+    .editor-sidebar {
+      width: 100%;
+      max-width: none;
+    }
+  }
+
   /* Desktop lets the user resize the Design/cards split. On a phone that
      persisted inline height must not constrain either section: both become
      normal children of the sidebar's single scroll container. */
@@ -396,14 +412,6 @@
     flex: none;
     min-height: 0;
     overflow: visible;
-  }
-
-  /* Keep the outer Design toggle reachable while its long contents scroll. */
-  .sidebar-fixed-header > .sidebar-accordion > .sidebar-accordion-header {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    background: var(--ui-surface);
   }
 
   /* Cards full width on phone */
@@ -435,12 +443,12 @@
    Use !important only for position/transform to override sidebar.css
    @media(max-width:1023px) which sets position:fixed (overlay drawer).
    Width/max-width/margin-left don't need !important (no conflict). */
-@media (min-width: 600px) and (max-width: 1023px) {
+@media (min-width: 768px) and (max-width: 1023px) {
   /* P0-TABLET-V2: sidebar width adapts to viewport — 280px on 600px
      screens (leaves 320px for preview + divider), up to 340px on
      larger tablets. calc() with clamp() ensures smooth scaling. */
   .editor-sidebar {
-    width: clamp(280px, 38vw, 340px);
+    width: clamp(300px, 40vw, 360px);
     /* Reset mobile drawer styles — on tablet sidebar is a normal flex item.
        !important needed to override sidebar.css @media(max-width:1023px)
        position:fixed + transform:translateX. */

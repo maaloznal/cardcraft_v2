@@ -68,6 +68,11 @@ import { createCardOpsController } from './card-ops';
 import { createSidebarController } from './sidebar-controller';
 import { createCloudSyncController } from './cloud-sync-controller';
 import { createMobileModeController } from './mobile-mode-controller';
+import {
+  COMPACT_LAYOUT_BREAKPOINT,
+  TOUCH_LAYOUT_BREAKPOINT,
+  isTouchLayout,
+} from './responsive-layout';
 import { createStateSubscriber } from './state-subscriber';
 import { wireRendererCallbacks } from './callbacks';
 import { bindAll } from './events';
@@ -120,30 +125,29 @@ export function initCardCraftApp(root: HTMLElement): () => void {
   const toastQueue = new ToastQueue(refs.toastEl!);
 
   // Accordion controllers (defaults: initial='none' — matches old behavior)
-  // P1-EXCLUSIVE: on phone (<600px), sidebar subsections within "Дизайн"
-  // are exclusive — opening one closes the previous. On tablet/desktop,
-  // multiple can be open simultaneously (existing behavior preserved).
-  const PHONE_BREAKPOINT = 600;
+  // TABLET-UX: on touch layouts (<1024px), sidebar subsections within
+  // "Дизайн" are exclusive. This keeps the settings surface short enough
+  // to navigate comfortably on phones and tablets.
   const sidebarAccordion = new SidebarAccordion(root, {
     initial: 'none',
-    exclusive: typeof window !== 'undefined' && window.innerWidth < PHONE_BREAKPOINT,
+    exclusive: isTouchLayout(),
   });
   const modalAccordion = new ModalAccordion(refs.colorModal!, { initial: 'none' });
 
   // P1-EXCLUSIVE: toggle exclusive mode when crossing phone/tablet breakpoint
-  // P5-FIX: when entering phone mode, collapse extra subsections so only
-  // one remains open (rule: max 1 open subsection on phone).
+  // When entering a touch layout, collapse extra subsections so only one
+  // remains open on phones and tablets.
   // P6-LEAK: store handler reference for explicit cleanup in destroy().
   let exclusiveMql: MediaQueryList | null = null;
   let onBreakpointChange: ((e: MediaQueryListEvent) => void) | null = null;
   if (typeof window !== 'undefined' && window.matchMedia) {
-    exclusiveMql = window.matchMedia(`(min-width: ${PHONE_BREAKPOINT}px)`);
+    exclusiveMql = window.matchMedia(`(min-width: ${TOUCH_LAYOUT_BREAKPOINT}px)`);
     onBreakpointChange = (e: MediaQueryListEvent): void => {
-      const isPhoneNow = !e.matches;
-      sidebarAccordion.setExclusive(isPhoneNow);
-      // P5-FIX: when entering phone mode, enforce exclusive rule —
-      // collapse all but the first expanded subsection in Дизайн body
-      if (isPhoneNow) {
+      const isTouchLayoutNow = !e.matches;
+      sidebarAccordion.setExclusive(isTouchLayoutNow);
+      // When entering a phone/tablet layout, enforce the exclusive rule by
+      // collapsing every expanded subsection after the first one.
+      if (isTouchLayoutNow) {
         const designAccordion = root.querySelector<HTMLElement>(
           '.sidebar-fixed-header > .sidebar-accordion'
         );
@@ -297,11 +301,13 @@ export function initCardCraftApp(root: HTMLElement): () => void {
   // Initial history snapshot
   historyManager.init(stateManager.snapshot());
   ctx.history.updateUndoRedoButtons();
-  // Sidebar initial state: open on desktop+tablet (split-view), closed on phone.
+  // Sidebar initial state: open in split-view (>=768px), closed in the focused
+  // phone/small-tablet layout. The mode controller has already synchronized
+  // aria/inert state for the same breakpoint.
   // P0-SYNC-V2: use ctx.sidebar.setSidebarOpen directly (mobileMode.syncState
-  // will be called by events.ts handlers when user interacts). On phone the
-  // mobileMode controller initializes to 'preview' mode with sidebar closed.
-  if (typeof window !== 'undefined' && window.innerWidth >= 600) {
+  // will be called by events.ts handlers when user interacts). In compact
+  // mode the mobileMode controller initializes to preview with sidebar closed.
+  if (typeof window !== 'undefined' && window.innerWidth >= COMPACT_LAYOUT_BREAKPOINT) {
     ctx.sidebar.setSidebarOpen(true);
   } else {
     ctx.sidebar.setSidebarOpen(false);

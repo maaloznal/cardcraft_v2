@@ -9,17 +9,17 @@
  *   - aria-expanded on #toggleSidebarBtn
  *   - aria-selected on #modeEditorTab / #modePreviewTab
  *
- * On phone (< 600px):
+ * On compact screens (< 768px: phones + small tablets):
  *   - "editor" mode → sidebar open (drawer slides in)
  *   - "preview" mode → sidebar closed (drawer slides out)
  *
- * On tablet/desktop (≥ 600px):
+ * On split-view tablet/desktop (≥ 768px):
  *   - sidebar is part of split-view layout, mode concept doesn't apply
  *   - sidebar can still be toggled open/closed independently
  *   - data-mobile-mode is set to "preview" but has no visual effect (CSS
  *     hides the switcher and ignores the attribute)
  *
- * Breakpoint sync: on orientation/resize crossing 600px boundary, state
+ * Breakpoint sync: on orientation/resize crossing 768px boundary, state
  * is reconciled via matchMedia listener.
  *
  * Public API:
@@ -31,12 +31,11 @@
 
 import type { OrchestratorContext } from './types';
 import { createLogger } from '@/lib/logger';
+import { COMPACT_LAYOUT_BREAKPOINT, isCompactLayout } from './responsive-layout';
 
 const log = createLogger('MobileMode');
 
 export type MobileMode = 'editor' | 'preview';
-
-const PHONE_BREAKPOINT = 600; // px — below = phone, above = tablet/desktop
 
 export interface MobileModeController {
   setMobileMode(mode: MobileMode): void;
@@ -49,7 +48,7 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
   const { root, refs } = ctx;
 
   let currentMode: MobileMode = 'preview';
-  let isPhone = false;
+  let isCompact = false;
   let lastFocusedBeforeEditor: HTMLElement | null = null;
   // P2-FIX: explicit flag for first editor open — don't use scrollTop===0
   let hasOpenedEditor = false;
@@ -60,18 +59,13 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
   let editorScrollTop = 0;
   let previewScrollTop = 0;
 
-  /** Check if current viewport is phone (< 600px). */
-  function checkIsPhone(): boolean {
-    return typeof window !== 'undefined' && window.innerWidth < PHONE_BREAKPOINT;
-  }
-
   /**
    * THE single source of truth — syncs ALL state attributes/classes to match
    * the given mode. Called whenever mode or sidebar open state changes.
    */
   function syncState(mode: MobileMode, sidebarOpen: boolean): void {
     currentMode = mode;
-    isPhone = checkIsPhone();
+    isCompact = isCompactLayout();
 
     // 1. data-mobile-mode on .cc-root
     root.setAttribute('data-mobile-mode', mode);
@@ -79,7 +73,7 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
     // 2. .sidebar-open on .cc-root (controls backdrop visibility on phone).
     // P0-SYNC-V2: only set .sidebar-open on phone — on tablet/desktop the
     // backdrop is hidden via CSS and .sidebar-open would wrongly show it.
-    if (isPhone) {
+    if (isCompact) {
       root.classList.toggle('sidebar-open', sidebarOpen);
     } else {
       root.classList.remove('sidebar-open');
@@ -115,7 +109,21 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
       previewTab.setAttribute('tabindex', mode === 'preview' ? '0' : '-1');
     }
 
-    log.debug('syncState', { mode, sidebarOpen, isPhone });
+    // Keep the inactive compact-layout region out of both the accessibility
+    // tree and sequential focus navigation. In split-view both regions stay
+    // available at the same time.
+    const editorHidden = isCompact && mode === 'preview';
+    const previewHidden = isCompact && mode === 'editor';
+    if (refs.editorSidebar) {
+      refs.editorSidebar.toggleAttribute('inert', editorHidden);
+      refs.editorSidebar.setAttribute('aria-hidden', String(editorHidden));
+    }
+    if (refs.previewWorkspace) {
+      refs.previewWorkspace.toggleAttribute('inert', previewHidden);
+      refs.previewWorkspace.setAttribute('aria-hidden', String(previewHidden));
+    }
+
+    log.debug('syncState', { mode, sidebarOpen, isCompact });
   }
 
   /**
@@ -126,7 +134,7 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
    * P2-FIX: uses hasOpenedEditor flag for first-open focus, not scrollTop===0.
    */
   function setMobileMode(mode: MobileMode): void {
-    if (!checkIsPhone()) {
+    if (!isCompactLayout()) {
       return;
     }
     // P1-FIX: save current scroll position BEFORE syncState
@@ -236,7 +244,7 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
    */
   function toggleSidebar(): void {
     const willBeOpen = refs.editorSidebar?.classList.contains('collapsed') ?? false;
-    if (checkIsPhone()) {
+    if (isCompactLayout()) {
       // Phone: mode-driven
       setMobileMode(willBeOpen ? 'editor' : 'preview');
     } else {
@@ -289,18 +297,18 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
   }
 
   /**
-   * Breakpoint change handler — reconciles state when crossing 600px.
-   * - Phone→tablet: if editor mode was active, keep sidebar open (split-view)
-   * - Tablet→phone: if sidebar was open, switch to editor mode; else preview
+   * Breakpoint change handler — reconciles state when crossing 768px.
+   * - Compact→split: reveal editor and preview together
+   * - Split→compact: derive the focused mode from sidebar visibility
    */
   function handleBreakpointChange(e: MediaQueryListEvent): void {
-    const wasPhone = isPhone;
-    const nowPhone = !e.matches; // matches = ≥600px, so !matches = phone
-    if (wasPhone === nowPhone) return; // no change
+    const wasCompact = isCompact;
+    const nowCompact = !e.matches;
+    if (wasCompact === nowCompact) return;
 
-    log.info('Breakpoint crossed', { wasPhone, nowPhone });
-    if (nowPhone) {
-      // Tablet→phone: if sidebar currently open, switch to editor mode
+    log.info('Breakpoint crossed', { wasCompact, nowCompact });
+    if (nowCompact) {
+      // Split→compact: if sidebar is open, keep the user in the editor.
       const sidebarOpen = !refs.editorSidebar?.classList.contains('collapsed');
       if (sidebarOpen) {
         syncState('editor', true);
@@ -308,9 +316,10 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
         syncState('preview', false);
       }
     } else {
-      // Phone→tablet: keep sidebar state as-is, but mode becomes 'preview'
-      const sidebarOpen = !refs.editorSidebar?.classList.contains('collapsed');
-      syncState('preview', sidebarOpen);
+      // Compact→split: reveal both panes. The wider layout has enough room
+      // for simultaneous editing and preview, regardless of the focused tab
+      // that was active before rotation/resize.
+      syncState('preview', true);
     }
   }
 
@@ -324,7 +333,7 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
 
   // matchMedia for breakpoint sync (orientation/resize)
   if (typeof window !== 'undefined' && window.matchMedia) {
-    mql = window.matchMedia(`(min-width: ${PHONE_BREAKPOINT}px)`);
+    mql = window.matchMedia(`(min-width: ${COMPACT_LAYOUT_BREAKPOINT}px)`);
     matchMediaHandler = handleBreakpointChange;
     // Modern API (Safari 14+)
     if (mql.addEventListener) {
@@ -335,10 +344,11 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
     }
   }
 
-  // Initialize state: start in preview mode with sidebar collapsed (phone)
-  // or sidebar open (tablet/desktop — set by CardCraftApp after this controller)
-  isPhone = checkIsPhone();
-  syncState('preview', false);
+  // Initialize state: compact layouts start in preview; split-view layouts
+  // expose editor and preview together. CardCraftApp mirrors this into the
+  // persisted UI state immediately after controller creation.
+  isCompact = isCompactLayout();
+  syncState('preview', !isCompact);
 
   const cleanup = (): void => {
     if (switcher) {

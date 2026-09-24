@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { gotoApp, getHorizontalOverflow, switchToEditorMode } from './helpers';
+import { gotoApp, getHorizontalOverflow } from './helpers';
 
 /**
  * P4-V3-REGRESSION: desktop design-subsection + breakpoint-transition tests.
@@ -67,49 +67,46 @@ test.describe('Desktop design subsections (non-exclusive, 1280×800)', () => {
 });
 
 /* ═══ Breakpoint transition (chromium, resize) ═══ */
-/* P5-FIX: verifies that entering phone mode collapses extra-open subsections
- * so at most one remains expanded (exclusive-mode enforcement on breakpoint
+/* TABLET-UX: verifies that entering a touch-sized layout collapses extra-open
+ * subsections (exclusive-mode enforcement on breakpoint
  * change in CardCraftApp.ts). Runs in chromium so the resize is clean
  * (desktop UA, no touch). */
 
-test.describe('Breakpoint transition: tablet → phone', () => {
-  test('B1: tablet→phone collapses extra open subsections', async ({ page }) => {
-    // Start on tablet (non-exclusive)
-    await page.setViewportSize({ width: 768, height: 1024 });
+test.describe('Breakpoint transition: desktop → tablet', () => {
+  test('B1: desktop→tablet collapses extra open subsections', async ({ page }) => {
+    // Start on desktop (non-exclusive)
+    await page.setViewportSize({ width: 1024, height: 800 });
     await gotoApp(page);
     // Open Дизайн + two subsections
     await page.locator('.sidebar-fixed-header > .sidebar-accordion > .sidebar-accordion-header').click();
     const subsections = page.locator('.sidebar-accordion-body > .sidebar-accordion');
     await subsections.nth(0).locator('.sidebar-accordion-header').click();
     await subsections.nth(1).locator('.sidebar-accordion-header').click();
-    // Confirm both open on tablet (non-exclusive)
+    // Confirm both open on desktop (non-exclusive)
     await expect.poll(() => getExpandedDesignSubsections(page)).toBe(2);
-    // Resize to phone — triggers matchMedia change event
-    await page.setViewportSize({ width: 390, height: 844 });
+    // Resize to tablet — triggers matchMedia change event
+    await page.setViewportSize({ width: 834, height: 1112 });
     // Wait for the matchMedia change handler to run + DOM update
     await expect.poll(
       () => getExpandedDesignSubsections(page),
-      { message: 'phone should have at most 1 open subsection after resize', timeout: 5000, intervals: [100] },
+      { message: 'tablet should have at most 1 open subsection after resize', timeout: 5000, intervals: [100] },
     ).toBeLessThanOrEqual(1);
   });
 
-  test('B2: phone→tablet does not force-collapse subsections', async ({ page }) => {
-    // Start on phone (exclusive)
-    await page.setViewportSize({ width: 390, height: 844 });
+  test('B2: tablet→desktop keeps the current subsection open', async ({ page }) => {
+    // Start on tablet (exclusive)
+    await page.setViewportSize({ width: 834, height: 1112 });
     await gotoApp(page);
-    // On phone the sidebar starts collapsed (preview mode) — switch to editor
-    // so the Дизайн accordion header is visible and clickable.
-    await switchToEditorMode(page);
     await page.locator('.sidebar-fixed-header > .sidebar-accordion > .sidebar-accordion-header').click();
     const subsections = page.locator('.sidebar-accordion-body > .sidebar-accordion');
-    // Open one subsection on phone
+    // Open one subsection on tablet
     await subsections.nth(0).locator('.sidebar-accordion-header').click();
     await expect.poll(() => getExpandedDesignSubsections(page)).toBe(1);
-    // Resize to tablet — exclusive turns off, the one open stays open
-    await page.setViewportSize({ width: 768, height: 1024 });
+    // Resize to desktop — exclusive turns off, the one open stays open
+    await page.setViewportSize({ width: 1024, height: 800 });
     await expect.poll(
       () => getExpandedDesignSubsections(page),
-      { message: 'the open subsection should remain open after tablet resize', timeout: 5000, intervals: [100] },
+      { message: 'the open subsection should remain open after desktop resize', timeout: 5000, intervals: [100] },
     ).toBeGreaterThanOrEqual(1);
   });
 });

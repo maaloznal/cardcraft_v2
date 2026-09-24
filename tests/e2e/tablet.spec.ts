@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { gotoApp, getHorizontalOverflow } from './helpers';
+import { gotoApp, getHorizontalOverflow, switchToEditorMode, switchToPreviewMode } from './helpers';
 
 /**
  * P-MOBILE: tablet tests.
@@ -21,7 +21,7 @@ import { gotoApp, getHorizontalOverflow } from './helpers';
 test.describe('Tablet portrait (iPad gen 7, ~834×1194 / split-view)', () => {
   test.beforeEach(async ({ page }) => {
     // Use the device's default viewport (Playwright iPad gen 7 = 834×1194 in CSS px)
-    // which falls in the 600-1023px range → split-view on tablet
+    // which falls in the 768-1023px range → split-view on tablet
     await gotoApp(page);
   });
 
@@ -63,7 +63,7 @@ test.describe('Tablet portrait (iPad gen 7, ~834×1194 / split-view)', () => {
 
   test('C3: no backdrop dimming in tablet split-view', async ({ page }) => {
     await page.locator('#toggleSidebarBtn').click();
-    // Backdrop should be display:none on tablet (CSS @media 600-1023px)
+    // Backdrop should be display:none on split-view tablet
     const backdropVisible = await page.locator('#sidebarBackdrop').isVisible();
     expect(backdropVisible).toBe(false);
   });
@@ -74,7 +74,7 @@ test.describe('Tablet portrait (iPad gen 7, ~834×1194 / split-view)', () => {
   });
 
   test('C5: mobile mode switcher is hidden on tablet (split-view, no tabs needed)', async ({ page }) => {
-    // The switcher is only visible on phone (<600px), hidden on tablet
+    // The switcher is hidden in split-view (>=768px)
     await expect(page.locator('#mobileModeSwitcher')).not.toBeVisible();
   });
 
@@ -103,6 +103,89 @@ test.describe('Tablet portrait (iPad gen 7, ~834×1194 / split-view)', () => {
   });
 });
 
+test.describe('Compact tablet (720×1024 / focused editor-preview modes)', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 720, height: 1024 });
+    await gotoApp(page);
+  });
+
+  test('CT1: starts in full-width preview with visible mode switcher', async ({ page }) => {
+    await expect(page.locator('#mobileModeSwitcher')).toBeVisible();
+    await expect(page.locator('.cc-root')).toHaveAttribute('data-mobile-mode', 'preview');
+    await expect(page.locator('#editorSidebar')).toHaveClass(/\bcollapsed\b/);
+    await expect(page.locator('#editorSidebar')).toHaveAttribute('inert', '');
+    await expect(page.locator('#editorSidebar')).toHaveAttribute('aria-hidden', 'true');
+    await expect(page.locator('#previewWorkspace')).toHaveAttribute('aria-hidden', 'false');
+
+    const previewBox = await page.locator('#previewWorkspace').boundingBox();
+    expect(previewBox).not.toBeNull();
+    expect(previewBox!.width).toBeGreaterThanOrEqual(719);
+  });
+
+  test('CT2: editor is full-width and close returns to preview', async ({ page }) => {
+    await switchToEditorMode(page);
+    await expect(page.locator('#editorSidebar')).toBeVisible();
+    await expect(page.locator('#closeSidebarBtn')).toBeVisible();
+    await expect(page.locator('#previewWorkspace')).toHaveAttribute('inert', '');
+    await expect(page.locator('#previewWorkspace')).toHaveAttribute('aria-hidden', 'true');
+
+    const editorBox = await page.locator('#editorSidebar').boundingBox();
+    expect(editorBox).not.toBeNull();
+    expect(editorBox!.width).toBeGreaterThanOrEqual(719);
+
+    await page.locator('#closeSidebarBtn').click();
+    await expect(page.locator('.cc-root')).toHaveAttribute('data-mobile-mode', 'preview');
+    await expect(page.locator('#previewWorkspace')).not.toHaveAttribute('inert', '');
+  });
+
+  test('CT3: Design is exclusive, sticky, and does not freeze editor scrolling', async ({ page }) => {
+    await switchToEditorMode(page);
+    const designToggle = page.locator(
+      '.sidebar-fixed-header > .sidebar-accordion > .sidebar-accordion-header',
+    );
+    await designToggle.click();
+
+    const subsections = page.locator('.sidebar-accordion-body > .sidebar-accordion');
+    const formatToggle = subsections.nth(0).locator('.sidebar-accordion-header');
+    const themeToggle = subsections.nth(1).locator('.sidebar-accordion-header');
+    await formatToggle.click();
+    await themeToggle.click();
+    await expect(formatToggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(themeToggle).toHaveAttribute('aria-expanded', 'true');
+
+    const stickyPosition = await designToggle.evaluate((el) => getComputedStyle(el).position);
+    expect(stickyPosition).toBe('sticky');
+    await expect(designToggle).toBeInViewport();
+
+    for (let i = 0; i < 6; i++) await page.locator('#addCardBtn').click();
+    const sidebar = page.locator('#editorSidebar');
+    const box = await sidebar.boundingBox();
+    await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+    await page.mouse.wheel(0, 500);
+    await expect.poll(() => sidebar.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+
+    // The persistent close control must remain available even after scrolling
+    // into the cards area; closing must not leave the interface frozen.
+    await expect(page.locator('#closeSidebarBtn')).toBeVisible();
+    await page.locator('#closeSidebarBtn').click();
+    await expect(page.locator('.cc-root')).toHaveAttribute('data-mobile-mode', 'preview');
+    await expect(page.locator('#previewWorkspace')).not.toHaveAttribute('inert', '');
+  });
+
+  test('CT4: crossing 767→768 reveals split-view without stale inert state', async ({ page }) => {
+    await page.setViewportSize({ width: 767, height: 1024 });
+    await switchToPreviewMode(page);
+    await page.setViewportSize({ width: 768, height: 1024 });
+
+    await expect(page.locator('#mobileModeSwitcher')).not.toBeVisible();
+    await expect(page.locator('#editorSidebar')).not.toHaveClass(/\bcollapsed\b/);
+    await expect(page.locator('#editorSidebar')).not.toHaveAttribute('inert', '');
+    await expect(page.locator('#previewWorkspace')).not.toHaveAttribute('inert', '');
+    await expect(page.locator('#editorSidebar')).toHaveAttribute('aria-hidden', 'false');
+    await expect(page.locator('#previewWorkspace')).toHaveAttribute('aria-hidden', 'false');
+  });
+});
+
 test.describe('Tablet landscape (1024×768 — desktop layout)', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 768 });
@@ -111,7 +194,7 @@ test.describe('Tablet landscape (1024×768 — desktop layout)', () => {
 
   test('D1: layout doesn\'t jump — sidebar + preview both visible', async ({ page }) => {
     // P-MOBILE: at 1024px (desktop layout), sidebar is open by default
-    // (CardCraftApp.ts threshold is 600px). Verify both are visible without
+    // (CardCraftApp.ts split-view threshold is 768px). Verify both are visible without
     // needing to click toggle.
     await expect(page.locator('#editorSidebar')).not.toHaveClass(/\bcollapsed\b/);
 
@@ -145,11 +228,9 @@ test.describe('Tablet landscape (1024×768 — desktop layout)', () => {
   });
 });
 
-/* ═══ P4-V3-REGRESSION: design subsections (tablet, non-exclusive) ═══ */
-/* P9-FIX: moved here from mobile-v3.spec.ts so it runs in the tablet-chrome
- * project (real iPad UA + touch) instead of mobile-chrome (iPhone UA).
- * On tablet (≥600px) the Дизайн subsections are NON-exclusive — multiple
- * can be open at once. */
+/* ═══ Tablet design subsections: exclusive to reduce vertical clutter ═══ */
+/* Runs in the tablet-chrome project with an iPad UA + touch. On tablets
+ * below 1024px, Design subsections are exclusive to limit vertical clutter. */
 
 async function getExpandedDesignSubsectionsTablet(page: import('@playwright/test').Page): Promise<number> {
   return page.evaluate(() => {
@@ -162,32 +243,30 @@ async function getExpandedDesignSubsectionsTablet(page: import('@playwright/test
   });
 }
 
-test.describe('Tablet design subsections (non-exclusive, 768×1024)', () => {
+test.describe('Tablet design subsections (exclusive, 768×1024)', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await gotoApp(page);
   });
 
-  test('T1: multiple design subsections can be open simultaneously', async ({ page }) => {
+  test('T1: opening a subsection closes the previous one', async ({ page }) => {
     // Open Дизайн
     await page.locator('.sidebar-fixed-header > .sidebar-accordion > .sidebar-accordion-header').click();
     const subsections = page.locator('.sidebar-accordion-body > .sidebar-accordion');
     // Open two subsections
     await subsections.nth(0).locator('.sidebar-accordion-header').click();
     await subsections.nth(1).locator('.sidebar-accordion-header').click();
-    // Both should remain open (non-exclusive on tablet)
-    await expect.poll(() => getExpandedDesignSubsectionsTablet(page)).toBe(2);
+    await expect.poll(() => getExpandedDesignSubsectionsTablet(page)).toBe(1);
   });
 
-  test('T2: aria-expanded reflects non-exclusive open state', async ({ page }) => {
+  test('T2: aria-expanded reflects exclusive open state', async ({ page }) => {
     await page.locator('.sidebar-fixed-header > .sidebar-accordion > .sidebar-accordion-header').click();
     const subsections = page.locator('.sidebar-accordion-body > .sidebar-accordion');
     const fmtToggle = subsections.nth(0).locator('.sidebar-accordion-header');
     const themeToggle = subsections.nth(1).locator('.sidebar-accordion-header');
     await fmtToggle.click();
     await themeToggle.click();
-    // Both should have aria-expanded=true (non-exclusive)
-    await expect(fmtToggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(fmtToggle).toHaveAttribute('aria-expanded', 'false');
     await expect(themeToggle).toHaveAttribute('aria-expanded', 'true');
   });
 });

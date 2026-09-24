@@ -104,7 +104,8 @@ export default function Home() {
 
       {/* P-MOBILE: mobile mode switcher — lives OUTSIDE the sidebar so it's
           always visible/accessible even when the sidebar is collapsed.
-          Visible only on phone (<600px) via CSS. Allows the user to switch
+          Visible on compact screens (<768px: phones and small tablets) via CSS.
+          Allows the user to switch
           between Editor and Preview modes without first opening the sidebar.
           The × close button is also here so the user can dismiss the sidebar
           from within view (not just by tapping the backdrop).

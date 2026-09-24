@@ -116,7 +116,7 @@ export async function setTabletLandscapeViewport(page: Page): Promise<void> {
 
 /**
  * Open the mobile sidebar by tapping the sidebar toggle button.
- * On phone (<600px) this slides the editor sidebar in from the left.
+ * On compact screens (<768px) this opens the focused editor view.
  * Equivalent to clicking the "burger" icon in the top bar.
  */
 export async function openMobileSidebar(page: Page): Promise<void> {
@@ -127,7 +127,7 @@ export async function openMobileSidebar(page: Page): Promise<void> {
 
 /**
  * Close the mobile sidebar via the explicit close button (×).
- * The close button is only visible on phone (<600px), but the click is
+ * The close button is only visible in compact mode (<768px), but the click is
  * a no-op on desktop/tablet where the button is hidden.
  */
 export async function closeMobileSidebar(page: Page): Promise<void> {

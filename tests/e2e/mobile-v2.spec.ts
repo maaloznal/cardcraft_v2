@@ -236,10 +236,10 @@ test.describe('P0-layout: mobile layout integrity', () => {
 });
 
 /* ═══════════════════════════════════════════════════════════════════
- * P0 — TABLET split-view: no preview overflow at 600-755px
+ * P0 — COMPACT TABLET: focused preview below 768px, split-view from 768px
  * ═══════════════════════════════════════════════════════════════════ */
 
-test.describe('P0-tablet: split-view no overflow', () => {
+test.describe('P0-tablet: adaptive layout has no preview overflow', () => {
   for (const vp of [
     { w: 600, name: '600' },
     { w: 640, name: '640' },
@@ -272,18 +272,16 @@ test.describe('P0-tablet: split-view no overflow', () => {
     });
   }
 
-  test('tablet-599: transition at 599→600px does not break preview', async ({ page }) => {
-    await page.setViewportSize({ width: 599, height: 844 });
+  test('tablet boundary: transition at 767→768px reveals split-view', async ({ page }) => {
+    await page.setViewportSize({ width: 767, height: 1024 });
     await gotoApp(page);
-    // At 599 (phone) — preview should be full width, no overflow
-    const overflow599 = await getPreviewOverflow(page);
-    expect(overflow599).toBe(0);
-    // Resize to 600 (tablet)
-    await page.setViewportSize({ width: 600, height: 900 });
-    await page.waitForTimeout(300);
-    // At 600 (tablet) — preview should still have no overflow
-    const overflow600 = await getPreviewOverflow(page);
-    expect(overflow600).toBe(0);
+    await expect(page.locator('#mobileModeSwitcher')).toBeVisible();
+    expect(await getPreviewOverflow(page)).toBe(0);
+
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await expect(page.locator('#mobileModeSwitcher')).not.toBeVisible();
+    await expect(page.locator('#editorSidebar')).not.toHaveClass(/\bcollapsed\b/);
+    expect(await getPreviewOverflow(page)).toBe(0);
   });
 });
 
