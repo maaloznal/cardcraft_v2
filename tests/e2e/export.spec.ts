@@ -254,6 +254,8 @@ test.describe('Export quality — viewport parity (×3)', () => {
       expect(inspection.width).toBe(1140);
       expect(inspection.byteLength).toBeGreaterThan(1_000);
       expect(inspection.nonBlackPixelRatio, 'PNG must contain visible non-black pixels').toBeGreaterThan(0.25);
+      expect(inspection.darkPixelRatio, 'PNG must contain visible text or other dark details').toBeGreaterThan(0.002);
+      expect(inspection.luminanceRange, 'PNG must not be a solid-color image').toBeGreaterThan(40);
     } finally {
       await context.close();
     }
@@ -281,6 +283,7 @@ test.describe('Export quality — viewport parity (×3)', () => {
         await editors.nth(index).locator('[data-field="text"]').fill('Проверка пакетного мобильного экспорта.');
       }
       await expect(mobilePage.locator('.preview-workspace')).toHaveCSS('visibility', 'hidden');
+      await expect(mobilePage.locator('#cardsArea .card-title').first()).toHaveCSS('visibility', 'hidden');
 
       const downloads: import('@playwright/test').Download[] = [];
       mobilePage.on('download', (download) => downloads.push(download));
@@ -292,6 +295,8 @@ test.describe('Export quality — viewport parity (×3)', () => {
         expect(inspection.width).toBe(1140);
         expect(inspection.byteLength).toBeGreaterThan(1_000);
         expect(inspection.nonBlackPixelRatio, `batch PNG ${index + 1} must not be black`).toBeGreaterThan(0.25);
+        expect(inspection.darkPixelRatio, `batch PNG ${index + 1} must contain visible text`).toBeGreaterThan(0.002);
+        expect(inspection.luminanceRange, `batch PNG ${index + 1} must not be solid white`).toBeGreaterThan(40);
       }
     } finally {
       await context.close();

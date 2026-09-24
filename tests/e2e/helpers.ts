@@ -231,6 +231,8 @@ export interface PngDimensions {
 export interface PngInspection extends PngDimensions {
   byteLength: number;
   nonBlackPixelRatio: number;
+  darkPixelRatio: number;
+  luminanceRange: number;
 }
 
 /** Read width/height from a PNG file's IHDR chunk. Throws on non-PNG data. */
@@ -277,9 +279,9 @@ export async function downloadPngAndReadDimensions(
   return dims;
 }
 
-/** Download and decode a PNG in the browser, then sample it on a tiny canvas.
+/** Download and decode a PNG in the browser, then sample it on a small canvas.
  * This catches Android regressions where a nominally valid PNG has dimensions
- * and bytes but every rendered pixel is black. */
+ * and bytes but renders as either a solid black or a solid white image. */
 export async function downloadPngAndInspect(
   page: Page,
   trigger: () => Promise<void>,
@@ -303,31 +305,45 @@ export async function inspectPngDownload(
   const buf = fs.readFileSync(savePath);
   const dimensions = readPngDimensions(savePath);
   const dataUrl = `data:image/png;base64,${buf.toString('base64')}`;
-  const nonBlackPixelRatio = await page.evaluate(async (src) => {
+  const pixelInspection = await page.evaluate(async (src) => {
     const image = new Image();
     image.src = src;
     await image.decode();
     const canvas = document.createElement('canvas');
-    canvas.width = 32;
-    canvas.height = 32;
+    canvas.width = 64;
+    canvas.height = 64;
     const context = canvas.getContext('2d', { willReadFrequently: true });
     if (!context) throw new Error('Canvas 2D context is unavailable');
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
     const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
     let nonBlack = 0;
+    let dark = 0;
+    let minLuminance = 255;
+    let maxLuminance = 0;
     for (let index = 0; index < pixels.length; index += 4) {
-      if (pixels[index + 3] > 0 && (pixels[index] > 16 || pixels[index + 1] > 16 || pixels[index + 2] > 16)) {
+      if (pixels[index + 3] === 0) continue;
+      if (pixels[index] > 16 || pixels[index + 1] > 16 || pixels[index + 2] > 16) {
         nonBlack++;
       }
+      const luminance =
+        0.2126 * pixels[index] + 0.7152 * pixels[index + 1] + 0.0722 * pixels[index + 2];
+      if (luminance < 210) dark++;
+      minLuminance = Math.min(minLuminance, luminance);
+      maxLuminance = Math.max(maxLuminance, luminance);
     }
-    return nonBlack / (pixels.length / 4);
+    const pixelCount = pixels.length / 4;
+    return {
+      nonBlackPixelRatio: nonBlack / pixelCount,
+      darkPixelRatio: dark / pixelCount,
+      luminanceRange: maxLuminance - minLuminance,
+    };
   }, dataUrl);
   try {
     fs.unlinkSync(savePath);
   } catch {
     /* best-effort */
   }
-  return { ...dimensions, byteLength: buf.length, nonBlackPixelRatio };
+  return { ...dimensions, byteLength: buf.length, ...pixelInspection };
 }
 
 /** Set the export quality via the real <select> (selects the option by value). */

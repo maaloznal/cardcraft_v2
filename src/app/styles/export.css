@@ -17,6 +17,16 @@
   user-select: none;
 }
 
+/* On phones, batch export starts while the preview workspace is hidden.
+   html-to-image copies the computed visibility of every descendant, so
+   making only the cloned .card visible restores its background but leaves
+   the title/body hidden. Force the complete card subtree visible during the
+   short export window; the editor remains above it in the mobile layout. */
+.cc-root.exporting .card,
+.cc-root.exporting .card * {
+  visibility: visible !important;
+}
+
 .cc-root.exporting .card-empty-hint {
   display: none !important;
 }
