@@ -39,7 +39,7 @@ export default defineConfig({
       // tablet-chrome) with proper device emulation. Running them in chromium
       // causes false failures because setViewportSize after gotoApp doesn't
       // re-trigger CSS @media rules for already-rendered elements.
-      testIgnore: /.*\/(mobile|narrow|tablet|mobile-accessibility|mobile-v2)\.spec\.ts/,
+      testIgnore: /.*\/(mobile|narrow|tablet|mobile-accessibility|mobile-v2|mobile-v3)\.spec\.ts/,
     },
     // P-MOBILE: phone — iPhone 14 viewport (390×844) + touch + mobile userAgent.
     // NOTE: We use channel:'chromium' (not the default Safari/webkit) because
@@ -56,7 +56,7 @@ export default defineConfig({
         ...devices['iPhone 14'],
         browserName: 'chromium',
       },
-      testMatch: /.*\/(mobile|narrow|mobile-v2)\.spec\.ts/,
+      testMatch: /.*\/(mobile|narrow|mobile-v2|mobile-v3)\.spec\.ts/,
     },
     // P-MOBILE: tablet portrait — iPad (gen 7) covers 768-1023px range.
     // Same chromium engine as mobile-chrome (same rationale).

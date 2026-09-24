@@ -160,17 +160,20 @@ export default function Home() {
 
           {/* 1. Дизайн — combined accordion for all design settings (format, theme,
               gradient angle, list style, progress bar). Closed by default so
-              the card editor below is raised to the top and immediately visible. */}
+              the card editor below is raised to the top and immediately visible.
+              P2-SUMMARY: header includes a compact summary of current format + theme
+              that updates when settings change. Visible when "Дизайн" is collapsed. */}
           <div className="sidebar-accordion" data-sidebar-accordion>
-            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle>
+            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle aria-expanded="false">
               <span>Дизайн</span>
+              <span className="design-summary" id="designSummary" aria-hidden="true"></span>
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
             <div className="sidebar-accordion-body">
 
           {/* 1a. Формат */}
           <div className="sidebar-accordion" data-sidebar-accordion>
-            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle>
+            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle aria-expanded="false">
               <span>Формат</span>
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
@@ -199,7 +202,7 @@ export default function Home() {
 
           {/* 1b. Тема оформления */}
           <div className="sidebar-accordion" data-sidebar-accordion>
-            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle>
+            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle aria-expanded="false">
               <span>Тема оформления</span>
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
@@ -253,7 +256,7 @@ export default function Home() {
 
           {/* 1c. Угол градиента */}
           <div className="sidebar-accordion" data-sidebar-accordion>
-            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle>
+            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle aria-expanded="false">
               <span>Угол градиента</span>
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
@@ -276,7 +279,7 @@ export default function Home() {
 
           {/* 1d. Стиль списков (включая нумерацию карточек) */}
           <div className="sidebar-accordion" data-sidebar-accordion>
-            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle>
+            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle aria-expanded="false">
               <span>Стиль списков</span>
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
@@ -305,7 +308,7 @@ export default function Home() {
 
           {/* 1e. Шкала прогресса (стиль + переключатель) */}
           <div className="sidebar-accordion" data-sidebar-accordion>
-            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle>
+            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle aria-expanded="false">
               <span>Шкала прогресса</span>
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
             </button>

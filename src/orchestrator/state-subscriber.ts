@@ -19,6 +19,28 @@
 
 import type { AppState } from '@/state/StateManager';
 import type { OrchestratorContext } from './types';
+import { getThemeLabel } from '@/themes/ThemeManager';
+
+/** P2-SUMMARY: Short format labels for the design summary */
+const FORMAT_SHORT: Record<string, string> = {
+  'auto': 'Авто',
+  'aspect-4-5': '4:5',
+  'aspect-9-16': '9:16',
+  'whatsapp': 'WA',
+  'telegram': 'TG',
+  'vk': 'VK',
+};
+
+/** P2-SUMMARY: Update the compact design summary in the Дизайн header */
+function updateDesignSummary(format: string, theme: string): void {
+  const summary = document.getElementById('designSummary');
+  if (!summary) return;
+  const fmtShort = FORMAT_SHORT[format] || format;
+  // Shorten theme label: "1. Clean Minimal (Notion / Apple)" → "1. Clean Minimal"
+  const themeLabel = getThemeLabel(theme);
+  const themeShort = themeLabel.replace(/\s*\(.*\)/, '').trim();
+  summary.textContent = `${fmtShort} · ${themeShort}`;
+}
 
 /**
  * Subscribe to StateManager and sync the UI on every state change. Tracks the
@@ -36,6 +58,8 @@ export function createStateSubscriber(ctx: OrchestratorContext): () => void {
     const settingsChanged = state.settings !== prevSettings;
     prevSettings = state.settings;
     if (settingsChanged) {
+      // P2-SUMMARY: update design summary on every settings change
+      updateDesignSummary(state.settings.format, state.settings.theme);
       // Sync selects/toggles/sliders (idempotent — only update if differs)
       if (refs.themeSelect && refs.themeSelect.value !== state.settings.theme) {
         refs.themeSelect.value = state.settings.theme;

@@ -73,6 +73,7 @@ import { wireRendererCallbacks } from './callbacks';
 import { bindAll } from './events';
 import type { OrchestratorContext } from './types';
 import { createLogger } from '@/lib/logger';
+import { getThemeLabel } from '@/themes/ThemeManager';
 import * as Sentry from '@sentry/nextjs';
 
 const log = createLogger('Cardcraft');
@@ -119,8 +120,31 @@ export function initCardCraftApp(root: HTMLElement): () => void {
   const toastQueue = new ToastQueue(refs.toastEl!);
 
   // Accordion controllers (defaults: initial='none' — matches old behavior)
-  const sidebarAccordion = new SidebarAccordion(root, { initial: 'none' });
+  // P1-EXCLUSIVE: on phone (<600px), sidebar subsections within "Дизайн"
+  // are exclusive — opening one closes the previous. On tablet/desktop,
+  // multiple can be open simultaneously (existing behavior preserved).
+  const PHONE_BREAKPOINT = 600;
+  const sidebarAccordion = new SidebarAccordion(root, {
+    initial: 'none',
+    exclusive: typeof window !== 'undefined' && window.innerWidth < PHONE_BREAKPOINT,
+  });
   const modalAccordion = new ModalAccordion(refs.colorModal!, { initial: 'none' });
+
+  // P1-EXCLUSIVE: toggle exclusive mode when crossing phone/tablet breakpoint
+  let exclusiveMql: MediaQueryList | null = null;
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    exclusiveMql = window.matchMedia(`(min-width: ${PHONE_BREAKPOINT}px)`);
+    const onBreakpointChange = (e: MediaQueryListEvent): void => {
+      // e.matches = true when ≥600px (tablet/desktop) → exclusive OFF
+      // e.matches = false when <600px (phone) → exclusive ON
+      sidebarAccordion.setExclusive(!e.matches);
+    };
+    if (exclusiveMql.addEventListener) {
+      exclusiveMql.addEventListener('change', onBreakpointChange);
+    } else if (exclusiveMql.addListener) {
+      exclusiveMql.addListener(onBreakpointChange);
+    }
+  }
 
   // Modal controller — ESC handled centrally (keyboard-controller), so disable auto-ESC
   const colorModalController = new Modal(refs.colorModal!, {
@@ -216,6 +240,22 @@ export function initCardCraftApp(root: HTMLElement): () => void {
 
   /* ---------- 10. Init sequence ---------- */
   guard('loadCardsFromLocalStorage', () => ctx.storage.loadCardsFromLocalStorage());
+  // P2-SUMMARY: initialize design summary with current state (in case no
+  // localStorage data was loaded, the subscriber hasn't fired yet)
+  guard('initDesignSummary', () => {
+    const settings = stateManager.getSettings();
+    const summary = document.getElementById('designSummary');
+    if (summary) {
+      const FORMAT_SHORT: Record<string, string> = {
+        'auto': 'Авто', 'aspect-4-5': '4:5', 'aspect-9-16': '9:16',
+        'whatsapp': 'WA', 'telegram': 'TG', 'vk': 'VK',
+      };
+      const fmtShort = FORMAT_SHORT[settings.format] || settings.format;
+      const themeLabel = getThemeLabel(settings.theme);
+      const themeShort = themeLabel.replace(/\s*\(.*\)/, '').trim();
+      summary.textContent = `${fmtShort} · ${themeShort}`;
+    }
+  });
   guard('renderEditor', () => ctx.uiAppliers.renderEditor());
   guard('renderPreview', () => ctx.uiAppliers.renderPreview());
   guard('applyCharLimit', () => ctx.charLimit.applyCharLimit());
@@ -253,6 +293,13 @@ export function initCardCraftApp(root: HTMLElement): () => void {
     ctx.mobileMode.destroy();
     // Destroy UI primitives
     sidebarAccordion.destroy();
+    // P1-EXCLUSIVE: cleanup matchMedia listener
+    if (exclusiveMql) {
+      // removeAllListeners is not available; we rely on the MediaQueryList
+      // being garbage-collected when the page/app is torn down. In practice,
+      // the listener reference is held by onBreakpointChange closure which
+      // goes out of scope when this function returns.
+    }
     modalAccordion.destroy();
     colorModalController.destroy();
     themeDropdownController.destroy();

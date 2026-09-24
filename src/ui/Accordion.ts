@@ -83,26 +83,40 @@ export class Accordion {
 
   /**
    * Expand a specific group. When `exclusive` is true, collapse sibling groups
-   * sharing the same parent first. Fires onChange with the new state.
+   * sharing the same parent first. Uses `:scope >` to only affect direct
+   * children (not nested descendants), so parent accordions don't collapse
+   * their own children. Fires onChange with the new state.
+   * Also syncs `aria-expanded` on the toggle button.
    */
   expand(group: HTMLElement): void {
     if (this.exclusive) {
-      // Collapse siblings sharing the same parent
+      // Collapse direct siblings only (not nested descendants)
       const parent = group.parentElement;
       if (parent) {
-        parent.querySelectorAll<HTMLElement>(this.groupSelector).forEach((sib) => {
-          if (sib !== group) sib.classList.remove('expanded');
+        parent.querySelectorAll<HTMLElement>(`:scope > ${this.groupSelector}`).forEach((sib) => {
+          if (sib !== group) {
+            sib.classList.remove('expanded');
+            this.updateAriaExpanded(sib, false);
+          }
         });
       }
     }
     group.classList.add('expanded');
+    this.updateAriaExpanded(group, true);
     this.onChange?.(group, true);
   }
 
-  /** Collapse a specific group + fire onChange with the new state. */
+  /** Collapse a specific group + fire onChange with the new state. Syncs aria-expanded. */
   collapse(group: HTMLElement): void {
     group.classList.remove('expanded');
+    this.updateAriaExpanded(group, false);
     this.onChange?.(group, false);
+  }
+
+  /** Set aria-expanded on the toggle button within the group. */
+  private updateAriaExpanded(group: HTMLElement, expanded: boolean): void {
+    const toggle = group.querySelector<HTMLElement>(this.toggleSelector);
+    if (toggle) toggle.setAttribute('aria-expanded', String(expanded));
   }
 
   /** Expand every group under root (ignores `exclusive`) + fire onChange for each. */
