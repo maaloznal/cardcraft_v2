@@ -74,6 +74,7 @@ export interface DOMRefs {
 
   // ── AI text import ──
   aiImportBtn: HTMLButtonElement | null;
+  mobileAiImportBtn: HTMLButtonElement | null;
   aiImportModal: HTMLElement | null;
   aiSourceText: HTMLTextAreaElement | null;
   aiCharCount: HTMLElement | null;
@@ -153,6 +154,7 @@ export function collectDOMRefs(root: HTMLElement): DOMRefs {
     redoBtn: $<HTMLButtonElement>('#redoBtn'),
     cardCountBadge: $<HTMLElement>('#cardCountBadge'),
     aiImportBtn: $<HTMLButtonElement>('#aiImportBtn'),
+    mobileAiImportBtn: $<HTMLButtonElement>('#mobileAiImportBtn'),
     aiImportModal: $<HTMLElement>('#aiImportModal'),
     aiSourceText: $<HTMLTextAreaElement>('#aiSourceText'),
     aiCharCount: $<HTMLElement>('#aiCharCount'),

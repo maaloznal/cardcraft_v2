@@ -251,9 +251,15 @@ export class StateManager {
       }
       case 'ADD_CARDS': {
         if (action.payload.cards.length === 0) return state;
+        const shouldReplacePlaceholder =
+          state.cards.list.length === 1 && isPristineEmptyCard(state.cards.list[0]);
         return {
           ...state,
-          cards: { list: [...state.cards.list, ...deepClone(action.payload.cards)] },
+          cards: {
+            list: shouldReplacePlaceholder
+              ? deepClone(action.payload.cards)
+              : [...state.cards.list, ...deepClone(action.payload.cards)],
+          },
         };
       }
       case 'DELETE_CARD': {
@@ -481,4 +487,21 @@ function createEmptyCard(): Card {
     wordStyles: {},
     sectionStyles: {},
   };
+}
+
+/** The initial card is a UI placeholder, not user content. AI import may
+ * replace it, but never replaces a card the user has typed in or styled. */
+function isPristineEmptyCard(card: Card): boolean {
+  return (
+    !card.title.trim() &&
+    !card.subtitle.trim() &&
+    !card.text.trim() &&
+    !card.listItems.trim() &&
+    !card.footer.trim() &&
+    !card.cta.trim() &&
+    !card.theme &&
+    Object.keys(card.colors).length === 0 &&
+    Object.keys(card.wordStyles).length === 0 &&
+    Object.keys(card.sectionStyles).length === 0
+  );
 }

@@ -156,6 +156,7 @@ export function createAiImportController(ctx: OrchestratorContext) {
   }
 
   ctx.listeners.addEl(refs.aiImportBtn, 'click', open);
+  ctx.listeners.addEl(refs.mobileAiImportBtn, 'click', open);
   ctx.listeners.addEl(refs.aiSourceText, 'input', () => {
     resetResult();
     setError();

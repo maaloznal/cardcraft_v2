@@ -155,8 +155,7 @@
 }
 
 @media (max-width: 767px) {
-  .btn-ai-import { min-width: 44px; min-height: 44px; padding: 0 10px; }
-  .btn-ai-import span:last-child { display: none; }
+  .top-bar .btn-ai-import { display: none; }
   .ai-import-overlay { padding: 0; align-items: stretch; }
   .ai-import-panel { width: 100%; max-height: 100dvh; border: 0; border-radius: 0; }
   .ai-import-header, .ai-import-body, .ai-import-footer { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }

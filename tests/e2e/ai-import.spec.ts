@@ -59,7 +59,9 @@ test.describe('AI text import dialog', () => {
 test('AI dialog fits a 390×844 phone viewport', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await gotoApp(page);
-  await page.locator('#aiImportBtn').click();
+  await expect(page.locator('#aiImportBtn')).toBeHidden();
+  await expect(page.locator('#mobileAiImportBtn')).toBeVisible();
+  await page.locator('#mobileAiImportBtn').click();
   const panel = page.locator('.ai-import-panel');
   await expect(panel).toBeVisible();
   const box = await panel.boundingBox();
@@ -70,6 +72,8 @@ test('AI dialog fits a 390×844 phone viewport', async ({ page }) => {
   await expect(page.locator('#aiGenerateBtn')).toHaveCSS('min-height', '44px');
   await expect(page.locator('#aiRolePicker summary')).toBeVisible();
   await expect(page.locator('#aiThemeSelect')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#mobileAiImportBtn')).toBeFocused();
 });
 
 for (const viewport of [

@@ -153,6 +153,16 @@ export default function Home() {
           </button>
         </div>
         <button
+          className="mobile-mode-tab mobile-ai-import"
+          id="mobileAiImportBtn"
+          aria-label="Создать карточки с помощью ИИ"
+          title="Создать карточки с помощью ИИ"
+          type="button"
+        >
+          <span aria-hidden="true">✦</span>
+          <span>Создать с ИИ</span>
+        </button>
+        <button
           className="mobile-sidebar-close"
           id="closeSidebarBtn"
           aria-label="Закрыть редактор"

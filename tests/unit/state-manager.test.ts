@@ -92,16 +92,37 @@ describe('StateManager', () => {
   });
 
   describe('ADD_CARDS', () => {
-    it('appends a batch atomically without sharing references', () => {
+    it('replaces the pristine initial placeholder without sharing references', () => {
       const card = {
         id: 'ai-1', title: 'AI', subtitle: '', text: 'Text', listItems: '', footer: '', cta: '',
         colors: {}, wordStyles: {}, sectionStyles: {},
       };
       sm.dispatch({ type: 'ADD_CARDS', payload: { cards: [card] } });
-      expect(sm.getCardCount()).toBe(2);
-      expect(sm.getCards()[1].title).toBe('AI');
+      expect(sm.getCardCount()).toBe(1);
+      expect(sm.getCards()[0].title).toBe('AI');
       card.title = 'mutated';
-      expect(sm.getCards()[1].title).toBe('AI');
+      expect(sm.getCards()[0].title).toBe('AI');
+    });
+
+    it('appends after a card containing user text', () => {
+      sm.dispatch({ type: 'UPDATE_CARD_FIELD', payload: { idx: 0, field: 'title', value: 'Моя карточка' } });
+      const card = {
+        id: 'ai-2', title: 'AI', subtitle: '', text: '', listItems: '', footer: '', cta: '',
+        colors: {}, wordStyles: {}, sectionStyles: {},
+      };
+      sm.dispatch({ type: 'ADD_CARDS', payload: { cards: [card] } });
+      expect(sm.getCardCount()).toBe(2);
+      expect(sm.getCards().map((item) => item.title)).toEqual(['Моя карточка', 'AI']);
+    });
+
+    it('does not replace an empty card the user has styled', () => {
+      sm.dispatch({ type: 'SET_CARD_THEME', payload: { idx: 0, theme: 'spearmint-fresh' } });
+      const card = {
+        id: 'ai-3', title: 'AI', subtitle: '', text: '', listItems: '', footer: '', cta: '',
+        colors: {}, wordStyles: {}, sectionStyles: {},
+      };
+      sm.dispatch({ type: 'ADD_CARDS', payload: { cards: [card] } });
+      expect(sm.getCardCount()).toBe(2);
     });
   });
 

@@ -3,6 +3,7 @@ import {
   gotoApp,
   getPreviewCardCount,
   downloadPngAndReadDimensions,
+  downloadPngAndInspect,
   setExportQuality,
   switchToEditorMode,
   switchToPreviewMode,
@@ -223,6 +224,40 @@ test.describe('Export quality — persistence + content', () => {
  * ═══════════════════════════════════════════════════════════════════ */
 
 test.describe('Export quality — viewport parity (×3)', () => {
+  test('Xiaomi Android downloads a decodable, non-black PNG', async ({ browser }) => {
+    const context = await browser.newContext({
+      viewport: { width: 393, height: 873 },
+      deviceScaleFactor: 2.75,
+      isMobile: true,
+      hasTouch: true,
+      userAgent: 'Mozilla/5.0 (Linux; Android 13; 2109119DG) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36',
+    });
+    const mobilePage = await context.newPage();
+    try {
+      await gotoApp(mobilePage);
+      await switchToEditorMode(mobilePage);
+      await mobilePage
+        .locator('#editorCardsList .card-editor-block')
+        .first()
+        .locator('[data-field="title"]')
+        .fill('Xiaomi PNG');
+      await mobilePage
+        .locator('#editorCardsList .card-editor-block')
+        .first()
+        .locator('[data-field="text"]')
+        .fill('Проверка корректного мобильного экспорта без чёрного изображения.');
+      await switchToPreviewMode(mobilePage);
+      const inspection = await downloadPngAndInspect(mobilePage, async () => {
+        await mobilePage.locator('#cardsArea .card-wrapper').first().locator('[data-action="download"]').click();
+      }, 'xiaomi');
+      expect(inspection.width).toBe(1140);
+      expect(inspection.byteLength).toBeGreaterThan(1_000);
+      expect(inspection.nonBlackPixelRatio, 'PNG must contain visible non-black pixels').toBeGreaterThan(0.25);
+    } finally {
+      await context.close();
+    }
+  });
+
   test('390×844 phone downloads a 1140 px PNG', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await gotoApp(page);

@@ -137,8 +137,11 @@ export async function generateBlob(
 }
 
 /**
- * Download a node as a PNG file at the given quality. The data URL is held
- * only for the duration of the click then dropped (no lingering large string).
+ * Download a node as a PNG file at the given quality. Downloads use a Blob
+ * URL instead of a large data URL. Android/MIUI browsers can save a data URL
+ * before its canvas payload is fully committed, producing a small black PNG.
+ * A Blob is binary and its object URL remains alive briefly after click so the
+ * mobile download manager can finish reading it.
  */
 export async function downloadPng(
   node: HTMLElement,
@@ -146,16 +149,19 @@ export async function downloadPng(
   quality: ExportQuality,
   signal?: AbortSignal,
 ): Promise<void> {
-  const dataUrl = await generatePng(node, quality, signal);
+  const blob = await generateBlob(node, quality, signal);
+  if (!blob) throw new Error('PNG blob generation failed');
   if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+  const objectUrl = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.download = filename;
-  link.href = dataUrl;
+  link.href = objectUrl;
   document.body.appendChild(link);
   link.click();
   link.remove();
-  // Release the data URL reference so the large string can be GC'd promptly.
-  link.href = '';
+  // Android's download manager may consume the URL asynchronously. Revoking
+  // immediately after click is racy on Xiaomi/MIUI, so keep it briefly alive.
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 2_000);
 }
 
 /** Copy a node as PNG to the clipboard (with fallback to download) at the

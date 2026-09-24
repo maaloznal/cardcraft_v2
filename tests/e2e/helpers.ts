@@ -228,6 +228,11 @@ export interface PngDimensions {
   height: number;
 }
 
+export interface PngInspection extends PngDimensions {
+  byteLength: number;
+  nonBlackPixelRatio: number;
+}
+
 /** Read width/height from a PNG file's IHDR chunk. Throws on non-PNG data. */
 export function readPngDimensions(filePath: string): PngDimensions {
   const buf = fs.readFileSync(filePath);
@@ -270,6 +275,50 @@ export async function downloadPngAndReadDimensions(
     /* best-effort */
   }
   return dims;
+}
+
+/** Download and decode a PNG in the browser, then sample it on a tiny canvas.
+ * This catches Android regressions where a nominally valid PNG has dimensions
+ * and bytes but every rendered pixel is black. */
+export async function downloadPngAndInspect(
+  page: Page,
+  trigger: () => Promise<void>,
+  suggestedNamePrefix = 'card-inspect',
+): Promise<PngInspection> {
+  const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
+  await trigger();
+  const download = await downloadPromise;
+  const tmpDir = process.env.TMPDIR || '/tmp';
+  const savePath = path.join(tmpDir, `${suggestedNamePrefix}-${Date.now()}.png`);
+  await download.saveAs(savePath);
+  const buf = fs.readFileSync(savePath);
+  const dimensions = readPngDimensions(savePath);
+  const dataUrl = `data:image/png;base64,${buf.toString('base64')}`;
+  const nonBlackPixelRatio = await page.evaluate(async (src) => {
+    const image = new Image();
+    image.src = src;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = 32;
+    canvas.height = 32;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) throw new Error('Canvas 2D context is unavailable');
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let nonBlack = 0;
+    for (let index = 0; index < pixels.length; index += 4) {
+      if (pixels[index + 3] > 0 && (pixels[index] > 16 || pixels[index + 1] > 16 || pixels[index + 2] > 16)) {
+        nonBlack++;
+      }
+    }
+    return nonBlack / (pixels.length / 4);
+  }, dataUrl);
+  try {
+    fs.unlinkSync(savePath);
+  } catch {
+    /* best-effort */
+  }
+  return { ...dimensions, byteLength: buf.length, nonBlackPixelRatio };
 }
 
 /** Set the export quality via the real <select> (selects the option by value). */

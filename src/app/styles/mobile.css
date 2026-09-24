@@ -53,6 +53,9 @@
 .mobile-mode-switcher {
   display: none; /* hidden by default, shown via media query */
 }
+.mobile-ai-import {
+  display: none;
+}
 .mobile-mode-tab,
 .mobile-sidebar-close {
   font-family: inherit;
@@ -133,6 +136,7 @@
   .color-swatch,
   .switch,
   .mobile-mode-tab,
+  .mobile-ai-import,
   .mobile-sidebar-close,
   .card-collapse-toggle,
   /* Login/register controls */
@@ -326,7 +330,19 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    flex: 1;
+    flex: 2 1 0;
+  }
+  .mobile-mode-tabs .mobile-mode-tab,
+  .mobile-ai-import {
+    flex: 1 1 0;
+    justify-content: center;
+    min-width: 0;
+    padding: 0 6px;
+    white-space: nowrap;
+  }
+  .mobile-ai-import {
+    display: inline-flex;
+    color: var(--ui-accent, #2563eb);
   }
 
   /* data-mobile-mode="preview" → hide the sidebar (slide it out) */
