@@ -119,18 +119,22 @@ export class Accordion {
     if (toggle) toggle.setAttribute('aria-expanded', String(expanded));
   }
 
-  /** Expand every group under root (ignores `exclusive`) + fire onChange for each. */
+  /** Expand every group under root (ignores `exclusive`) + fire onChange for each.
+   *  P7-SYNC: also syncs aria-expanded on each toggle button. */
   expandAll(): void {
     this.root.querySelectorAll<HTMLElement>(this.groupSelector).forEach((g) => {
       g.classList.add('expanded');
+      this.updateAriaExpanded(g, true);
       this.onChange?.(g, true);
     });
   }
 
-  /** Collapse every group under root + fire onChange for each. */
+  /** Collapse every group under root + fire onChange for each.
+   *  P7-SYNC: also syncs aria-expanded on each toggle button. */
   collapseAll(): void {
     this.root.querySelectorAll<HTMLElement>(this.groupSelector).forEach((g) => {
       g.classList.remove('expanded');
+      this.updateAriaExpanded(g, false);
       this.onChange?.(g, false);
     });
   }

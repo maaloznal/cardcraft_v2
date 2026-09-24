@@ -31,15 +31,30 @@ const FORMAT_SHORT: Record<string, string> = {
   'vk': 'VK',
 };
 
-/** P2-SUMMARY: Update the compact design summary in the Дизайн header */
+/** P2-SUMMARY: Full format labels for screen reader text */
+const FORMAT_FULL: Record<string, string> = {
+  'auto': 'Стандартный',
+  'aspect-4-5': '4:5 Instagram',
+  'aspect-9-16': '9:16 Stories',
+  'whatsapp': 'WhatsApp',
+  'telegram': 'Telegram',
+  'vk': 'VK',
+};
+
+/** P2-SUMMARY: Update the compact design summary in the Дизайн header.
+ *  P3-A11Y: also updates sr-only text for screen readers. */
 function updateDesignSummary(format: string, theme: string): void {
   const summary = document.getElementById('designSummary');
-  if (!summary) return;
-  const fmtShort = FORMAT_SHORT[format] || format;
+  const srText = document.getElementById('designSummaryText');
   // Shorten theme label: "1. Clean Minimal (Notion / Apple)" → "1. Clean Minimal"
   const themeLabel = getThemeLabel(theme);
   const themeShort = themeLabel.replace(/\s*\(.*\)/, '').trim();
-  summary.textContent = `${fmtShort} · ${themeShort}`;
+  const fmtShort = FORMAT_SHORT[format] || format;
+  const visualText = `${fmtShort} · ${themeShort}`;
+  if (summary) summary.textContent = visualText;
+  // P3-A11Y: screen reader text uses full names
+  const fmtFull = FORMAT_FULL[format] || format;
+  if (srText) srText.textContent = `Формат: ${fmtFull}, тема: ${themeShort}`;
 }
 
 /**

@@ -331,6 +331,7 @@
   }
   .preview-workspace {
     width: 100%;
+    overflow-y: auto;
   }
 
   /* P1-A11Y-V2: when editor mode is active on phone, the preview workspace

@@ -51,7 +51,10 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
   let currentMode: MobileMode = 'preview';
   let isPhone = false;
   let lastFocusedBeforeEditor: HTMLElement | null = null;
-  let matchMediaListener: ((e: MediaQueryListEvent) => void) | null = null;
+  // P2-FIX: explicit flag for first editor open — don't use scrollTop===0
+  let hasOpenedEditor = false;
+  // P6-LEAK: store handler reference for cleanup
+  let matchMediaHandler: ((e: MediaQueryListEvent) => void) | null = null;
   let mql: MediaQueryList | null = null;
   // P3-SCROLL: per-session scroll positions for editor and preview
   let editorScrollTop = 0;
@@ -118,36 +121,34 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
   /**
    * Switch to a specific mobile mode. Only effective on phone — on
    * tablet/desktop this is a no-op (mode concept doesn't apply).
-   * P3-SCROLL: saves scroll position of the current mode before switching,
-   * then restores the scroll position of the target mode.
+   * P1-FIX: saves #editorSidebar.scrollTop (NOT .sidebar-scroll-area which
+   * has overflow:visible on mobile and is not a scroll container).
+   * P2-FIX: uses hasOpenedEditor flag for first-open focus, not scrollTop===0.
    */
   function setMobileMode(mode: MobileMode): void {
     if (!checkIsPhone()) {
       return;
     }
-    // P3-SCROLL: save current scroll position before switching
-    saveScrollPosition(currentMode);
+    // P1-FIX: save current scroll position BEFORE syncState
+    const prevMode = currentMode;
+    saveScrollPosition(prevMode);
     const sidebarOpen = mode === 'editor';
     syncState(mode, sidebarOpen);
 
-    // P3-SCROLL: restore scroll position of target mode after DOM updates
+    // P1-FIX: restore scroll position of target mode after DOM updates
     requestAnimationFrame(() => {
       restoreScrollPosition(mode);
     });
 
-    // Focus management: when opening editor, save current focus + focus editor
-    // When closing (preview), restore focus to opener
+    // P2-FIX: focus management using explicit hasOpenedEditor flag
     if (mode === 'editor') {
       const active = document.activeElement as HTMLElement | null;
       if (active && active !== document.body) {
         lastFocusedBeforeEditor = active;
       }
-      // Focus first input in editor (after a tick so DOM is ready)
-      // P3-SCROLL: only focus if this is the first time opening editor
-      // (no saved scroll = first open). On subsequent opens, preserve scroll
-      // position instead of jumping to first input.
-      const isFirstOpen = editorScrollTop === 0 && currentMode === 'preview';
-      if (isFirstOpen) {
+      // Only focus first input on FIRST editor open
+      if (!hasOpenedEditor) {
+        hasOpenedEditor = true;
         setTimeout(() => {
           const firstInput = document.querySelector<HTMLElement>(
             '#editorCardsList input[data-field="title"], #editorCardsList textarea[data-field="text"]',
@@ -158,6 +159,7 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
         }, 50);
       }
     } else {
+      // Closing editor — restore focus to opener
       if (lastFocusedBeforeEditor) {
         setTimeout(() => {
           try {
@@ -170,39 +172,59 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
     }
   }
 
-  /** P3-SCROLL: save scroll position of the given mode's container */
+  /** P1-FIX: save scroll position of the given mode's container.
+   *  Editor: #editorSidebar (NOT .sidebar-scroll-area — it has overflow:visible on mobile)
+   *  Preview: find the actual scrollable element inside #previewWorkspace */
   function saveScrollPosition(mode: MobileMode): void {
     if (mode === 'editor') {
       const sidebar = document.getElementById('editorSidebar');
-      const scrollArea = sidebar?.querySelector('.sidebar-scroll-area');
-      if (scrollArea) {
-        editorScrollTop = scrollArea.scrollTop;
+      if (sidebar) {
+        editorScrollTop = sidebar.scrollTop;
       }
     } else {
-      const preview = document.getElementById('previewWorkspace');
-      if (preview) {
-        previewScrollTop = preview.scrollTop;
+      // P1-FIX: find the actual scroll container in preview
+      const scrollEl = findPreviewScrollContainer();
+      if (scrollEl) {
+        previewScrollTop = scrollEl.scrollTop;
       }
     }
   }
 
-  /** P3-SCROLL: restore scroll position of the given mode's container */
+  /** P1-FIX: restore scroll position of the given mode's container. */
   function restoreScrollPosition(mode: MobileMode): void {
     if (mode === 'editor') {
       const sidebar = document.getElementById('editorSidebar');
-      const scrollArea = sidebar?.querySelector('.sidebar-scroll-area');
-      if (scrollArea) {
-        // Clamp to available scroll range (content may have changed)
-        const maxScroll = scrollArea.scrollHeight - scrollArea.clientHeight;
-        scrollArea.scrollTop = Math.min(editorScrollTop, Math.max(0, maxScroll));
+      if (sidebar) {
+        const maxScroll = sidebar.scrollHeight - sidebar.clientHeight;
+        sidebar.scrollTop = Math.min(editorScrollTop, Math.max(0, maxScroll));
       }
     } else {
-      const preview = document.getElementById('previewWorkspace');
-      if (preview) {
-        const maxScroll = preview.scrollHeight - preview.clientHeight;
-        preview.scrollTop = Math.min(previewScrollTop, Math.max(0, maxScroll));
+      const scrollEl = findPreviewScrollContainer();
+      if (scrollEl) {
+        const maxScroll = scrollEl.scrollHeight - scrollEl.clientHeight;
+        scrollEl.scrollTop = Math.min(previewScrollTop, Math.max(0, maxScroll));
       }
     }
+  }
+
+  /** P1-FIX: find the actual scrollable element in the preview area.
+   *  On phone, #previewWorkspace may have overflow:hidden, and the actual
+   *  scroll container is a child element (like .cards-container or #cardsArea). */
+  function findPreviewScrollContainer(): HTMLElement | null {
+    const ws = document.getElementById('previewWorkspace');
+    if (!ws) return null;
+    // Check if ws itself is scrollable
+    if (ws.scrollHeight > ws.clientHeight + 1) return ws;
+    // Check #cardsArea
+    const cards = document.getElementById('cardsArea');
+    if (cards && cards.scrollHeight > cards.clientHeight + 1) return cards;
+    // Search direct children
+    for (const child of Array.from(ws.children)) {
+      const el = child as HTMLElement;
+      if (el.scrollHeight > el.clientHeight + 1 && el.clientHeight > 50) return el;
+    }
+    // Fallback: return ws (even if not scrollable — restore will be no-op)
+    return ws;
   }
 
   /**
@@ -303,13 +325,13 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
   // matchMedia for breakpoint sync (orientation/resize)
   if (typeof window !== 'undefined' && window.matchMedia) {
     mql = window.matchMedia(`(min-width: ${PHONE_BREAKPOINT}px)`);
-    matchMediaListener = handleBreakpointChange;
+    matchMediaHandler = handleBreakpointChange;
     // Modern API (Safari 14+)
     if (mql.addEventListener) {
-      mql.addEventListener('change', matchMediaListener);
+      mql.addEventListener('change', matchMediaHandler);
     } else if (mql.addListener) {
       // Legacy API (older Safari)
-      mql.addListener(matchMediaListener);
+      mql.addListener(matchMediaHandler);
     }
   }
 
@@ -323,11 +345,11 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
       switcher.removeEventListener('click', handleSwitcherClick);
       switcher.removeEventListener('keydown', handleToggleKeydown);
     }
-    if (mql && matchMediaListener) {
+    if (mql && matchMediaHandler) {
       if (mql.removeEventListener) {
-        mql.removeEventListener('change', matchMediaListener);
+        mql.removeEventListener('change', matchMediaHandler);
       } else if (mql.removeListener) {
-        mql.removeListener(matchMediaListener);
+        mql.removeListener(matchMediaHandler);
       }
     }
   };

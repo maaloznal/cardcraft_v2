@@ -131,13 +131,42 @@ export function initCardCraftApp(root: HTMLElement): () => void {
   const modalAccordion = new ModalAccordion(refs.colorModal!, { initial: 'none' });
 
   // P1-EXCLUSIVE: toggle exclusive mode when crossing phone/tablet breakpoint
+  // P5-FIX: when entering phone mode, collapse extra subsections so only
+  // one remains open (rule: max 1 open subsection on phone).
+  // P6-LEAK: store handler reference for explicit cleanup in destroy().
   let exclusiveMql: MediaQueryList | null = null;
+  let onBreakpointChange: ((e: MediaQueryListEvent) => void) | null = null;
   if (typeof window !== 'undefined' && window.matchMedia) {
     exclusiveMql = window.matchMedia(`(min-width: ${PHONE_BREAKPOINT}px)`);
-    const onBreakpointChange = (e: MediaQueryListEvent): void => {
-      // e.matches = true when ≥600px (tablet/desktop) → exclusive OFF
-      // e.matches = false when <600px (phone) → exclusive ON
-      sidebarAccordion.setExclusive(!e.matches);
+    onBreakpointChange = (e: MediaQueryListEvent): void => {
+      const isPhoneNow = !e.matches;
+      sidebarAccordion.setExclusive(isPhoneNow);
+      // P5-FIX: when entering phone mode, enforce exclusive rule —
+      // collapse all but the first expanded subsection in Дизайн body
+      if (isPhoneNow) {
+        const designAccordion = root.querySelector<HTMLElement>(
+          '.sidebar-fixed-header > .sidebar-accordion'
+        );
+        if (designAccordion) {
+          const body = designAccordion.querySelector<HTMLElement>('.sidebar-accordion-body');
+          if (body) {
+            const subsections = Array.from(body.querySelectorAll<HTMLElement>(':scope > .sidebar-accordion'));
+            let foundFirst = false;
+            for (const sub of subsections) {
+              if (sub.classList.contains('expanded')) {
+                if (foundFirst) {
+                  // Collapse extra subsections
+                  sub.classList.remove('expanded');
+                  const toggle = sub.querySelector<HTMLElement>('[data-sidebar-toggle]');
+                  if (toggle) toggle.setAttribute('aria-expanded', 'false');
+                } else {
+                  foundFirst = true;
+                }
+              }
+            }
+          }
+        }
+      }
     };
     if (exclusiveMql.addEventListener) {
       exclusiveMql.addEventListener('change', onBreakpointChange);
@@ -245,16 +274,22 @@ export function initCardCraftApp(root: HTMLElement): () => void {
   guard('initDesignSummary', () => {
     const settings = stateManager.getSettings();
     const summary = document.getElementById('designSummary');
-    if (summary) {
-      const FORMAT_SHORT: Record<string, string> = {
-        'auto': 'Авто', 'aspect-4-5': '4:5', 'aspect-9-16': '9:16',
-        'whatsapp': 'WA', 'telegram': 'TG', 'vk': 'VK',
-      };
-      const fmtShort = FORMAT_SHORT[settings.format] || settings.format;
-      const themeLabel = getThemeLabel(settings.theme);
-      const themeShort = themeLabel.replace(/\s*\(.*\)/, '').trim();
-      summary.textContent = `${fmtShort} · ${themeShort}`;
-    }
+    const srText = document.getElementById('designSummaryText');
+    const themeLabel = getThemeLabel(settings.theme);
+    const themeShort = themeLabel.replace(/\s*\(.*\)/, '').trim();
+    const FORMAT_SHORT: Record<string, string> = {
+      'auto': 'Авто', 'aspect-4-5': '4:5', 'aspect-9-16': '9:16',
+      'whatsapp': 'WA', 'telegram': 'TG', 'vk': 'VK',
+    };
+    const FORMAT_FULL: Record<string, string> = {
+      'auto': 'Стандартный', 'aspect-4-5': '4:5 Instagram',
+      'aspect-9-16': '9:16 Stories', 'whatsapp': 'WhatsApp',
+      'telegram': 'Telegram', 'vk': 'VK',
+    };
+    const fmtShort = FORMAT_SHORT[settings.format] || settings.format;
+    if (summary) summary.textContent = `${fmtShort} · ${themeShort}`;
+    const fmtFull = FORMAT_FULL[settings.format] || settings.format;
+    if (srText) srText.textContent = `Формат: ${fmtFull}, тема: ${themeShort}`;
   });
   guard('renderEditor', () => ctx.uiAppliers.renderEditor());
   guard('renderPreview', () => ctx.uiAppliers.renderPreview());
@@ -293,12 +328,13 @@ export function initCardCraftApp(root: HTMLElement): () => void {
     ctx.mobileMode.destroy();
     // Destroy UI primitives
     sidebarAccordion.destroy();
-    // P1-EXCLUSIVE: cleanup matchMedia listener
-    if (exclusiveMql) {
-      // removeAllListeners is not available; we rely on the MediaQueryList
-      // being garbage-collected when the page/app is torn down. In practice,
-      // the listener reference is held by onBreakpointChange closure which
-      // goes out of scope when this function returns.
+    // P6-LEAK: explicitly remove matchMedia listener
+    if (exclusiveMql && onBreakpointChange) {
+      if (exclusiveMql.removeEventListener) {
+        exclusiveMql.removeEventListener('change', onBreakpointChange);
+      } else if (exclusiveMql.removeListener) {
+        exclusiveMql.removeListener(onBreakpointChange);
+      }
     }
     modalAccordion.destroy();
     colorModalController.destroy();

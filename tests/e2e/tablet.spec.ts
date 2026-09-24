@@ -144,3 +144,50 @@ test.describe('Tablet landscape (1024×768 — desktop layout)', () => {
     await expect(page.locator('#mobileModeSwitcher')).not.toBeVisible();
   });
 });
+
+/* ═══ P4-V3-REGRESSION: design subsections (tablet, non-exclusive) ═══ */
+/* P9-FIX: moved here from mobile-v3.spec.ts so it runs in the tablet-chrome
+ * project (real iPad UA + touch) instead of mobile-chrome (iPhone UA).
+ * On tablet (≥600px) the Дизайн subsections are NON-exclusive — multiple
+ * can be open at once. */
+
+async function getExpandedDesignSubsectionsTablet(page: import('@playwright/test').Page): Promise<number> {
+  return page.evaluate(() => {
+    const designAccordion = document.querySelector('.sidebar-fixed-header > .sidebar-accordion');
+    if (!designAccordion) return -1;
+    const body = designAccordion.querySelector('.sidebar-accordion-body');
+    if (!body) return -1;
+    return Array.from(body.querySelectorAll(':scope > .sidebar-accordion'))
+      .filter((el) => el.classList.contains('expanded')).length;
+  });
+}
+
+test.describe('Tablet design subsections (non-exclusive, 768×1024)', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await gotoApp(page);
+  });
+
+  test('T1: multiple design subsections can be open simultaneously', async ({ page }) => {
+    // Open Дизайн
+    await page.locator('.sidebar-fixed-header > .sidebar-accordion > .sidebar-accordion-header').click();
+    const subsections = page.locator('.sidebar-accordion-body > .sidebar-accordion');
+    // Open two subsections
+    await subsections.nth(0).locator('.sidebar-accordion-header').click();
+    await subsections.nth(1).locator('.sidebar-accordion-header').click();
+    // Both should remain open (non-exclusive on tablet)
+    await expect.poll(() => getExpandedDesignSubsectionsTablet(page)).toBe(2);
+  });
+
+  test('T2: aria-expanded reflects non-exclusive open state', async ({ page }) => {
+    await page.locator('.sidebar-fixed-header > .sidebar-accordion > .sidebar-accordion-header').click();
+    const subsections = page.locator('.sidebar-accordion-body > .sidebar-accordion');
+    const fmtToggle = subsections.nth(0).locator('.sidebar-accordion-header');
+    const themeToggle = subsections.nth(1).locator('.sidebar-accordion-header');
+    await fmtToggle.click();
+    await themeToggle.click();
+    // Both should have aria-expanded=true (non-exclusive)
+    await expect(fmtToggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(themeToggle).toHaveAttribute('aria-expanded', 'true');
+  });
+});

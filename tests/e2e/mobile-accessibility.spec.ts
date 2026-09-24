@@ -88,17 +88,18 @@ test.describe('Accessibility — mobile (390×844)', () => {
   test('E5: keyboard — close button is focusable and activated via Enter', async ({ page }) => {
     // Switch to editor mode first
     await switchToEditorMode(page);
-    // Wait for close button to become visible (CSS visibility transition)
+    // Wait for close button to become visible
     await expect(page.locator('#closeSidebarBtn')).toBeVisible({ timeout: 5000 });
 
     // Focus the close button
     await page.locator('#closeSidebarBtn').focus();
     await expect(page.locator('#closeSidebarBtn')).toBeFocused();
 
-    // Press Enter
+    // Press Enter — should switch to preview
     await page.keyboard.press('Enter');
-    // Should switch to preview (close = switch to preview)
-    await expect(page.locator('.cc-root')).toHaveAttribute('data-mobile-mode', 'preview');
+    await expect.poll(async () => {
+      return await page.evaluate(() => document.querySelector('.cc-root')?.getAttribute('data-mobile-mode') || '');
+    }, { timeout: 5000, intervals: [100] }).toBe('preview');
   });
 
   test('E6: focus-visible outline appears on tabs when keyboard-focused', async ({ page }) => {

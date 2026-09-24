@@ -164,11 +164,14 @@ export default function Home() {
               P2-SUMMARY: header includes a compact summary of current format + theme
               that updates when settings change. Visible when "Дизайн" is collapsed. */}
           <div className="sidebar-accordion" data-sidebar-accordion>
-            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle aria-expanded="false">
+            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle aria-expanded="false" aria-describedby="designSummaryText">
               <span>Дизайн</span>
               <span className="design-summary" id="designSummary" aria-hidden="true"></span>
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
+            {/* P3-A11Y: visually hidden text for screen readers — provides
+                accessible description of current design settings */}
+            <span id="designSummaryText" className="sr-only" aria-hidden="false"></span>
             <div className="sidebar-accordion-body">
 
           {/* 1a. Формат */}
