@@ -461,18 +461,29 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  @media (max-width: 380px) {
-    .mobile-mode-tab > span,
-    #mobileAiImportBtn > span:last-child {
+  /* At Xiaomi-class widths the two mode labels compete with the longer AI
+     action. Keep their accessible names/title, but render them as compact
+     icon tabs so the AI label never overflows into Design. */
+  @media (max-width: 420px) {
+    .mobile-mode-tabs .mobile-mode-tab > span {
       display: none;
     }
-    .mobile-mode-tabs .mobile-mode-tab,
-    .mobile-ai-import {
+    .mobile-mode-tabs .mobile-mode-tab {
       flex: 0 0 44px;
       padding: 0;
     }
     .mobile-mode-tabs {
-      flex: 0 1 auto;
+      flex: 0 0 auto;
+    }
+  }
+
+  @media (max-width: 360px) {
+    #mobileAiImportBtn > span:last-child {
+      display: none;
+    }
+    .mobile-ai-import {
+      flex: 0 0 44px;
+      padding: 0;
     }
   }
 

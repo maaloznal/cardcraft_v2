@@ -127,6 +127,37 @@ test.describe('P4-S5: Unified mobile command bars', () => {
     expect(Math.abs(after.modesY - after.topBottom)).toBeLessThan(1);
     expect(await getHorizontalOverflow(page)).toBeLessThanOrEqual(1);
   });
+
+  test('Xiaomi command bar keeps AI and Design controls visually separated', async ({ page }) => {
+    await page.setViewportSize({ width: 393, height: 873 });
+    await page.reload();
+    await expect(page.locator('#mobileAiImportBtn')).toBeVisible();
+    await expect(page.locator('#mobileDesignSlot')).toBeVisible();
+
+    const assertSeparated = async (): Promise<void> => {
+      const metrics = await page.evaluate(() => {
+        const ai = document.getElementById('mobileAiImportBtn')!;
+        const aiLabel = ai.querySelector('span')!;
+        const design = document.getElementById('mobileDesignSlot')!;
+        const aiRect = ai.getBoundingClientRect();
+        const labelRect = aiLabel.getBoundingClientRect();
+        const designRect = design.getBoundingClientRect();
+        return {
+          aiRight: aiRect.right,
+          labelRight: labelRect.right,
+          designLeft: designRect.left,
+          contentFits: ai.scrollWidth <= ai.clientWidth,
+        };
+      });
+      expect(metrics.aiRight).toBeLessThanOrEqual(metrics.designLeft + 0.5);
+      expect(metrics.labelRight).toBeLessThanOrEqual(metrics.designLeft + 0.5);
+      expect(metrics.contentFits).toBe(true);
+    };
+
+    await assertSeparated();
+    await page.locator('#modeEditorTab').click();
+    await assertSeparated();
+  });
 });
 
 /* ═══ Mobile editor navigation — Xiaomi Mi 11 Lite (393×873) ═══ */
