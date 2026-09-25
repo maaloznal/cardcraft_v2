@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { unzipSync } from 'fflate';
 import {
   gotoApp,
   getPreviewCardCount,
@@ -47,10 +48,41 @@ test.describe('Export', () => {
     }
     await expect.poll(() => getPreviewCardCount(page)).toBe(4);
     await page.locator('#saveAll').click();
+    await page.locator('#downloadSeparateBtn').click();
     await expect(page.locator('.cc-root')).toHaveClass(/exporting-busy/, { timeout: 5000 });
     await page.keyboard.press('Escape');
     await expect(page.locator('.cc-root')).not.toHaveClass(/exporting-busy/, { timeout: 5000 });
     await expect(page.locator('#toast')).toContainText(/отменён|Готово/);
+  });
+
+  test('download all offers ZIP and creates one ordered archive', async ({ page }) => {
+    await page.locator('#addCardBtn').click();
+    const editors = page.locator('#editorCardsList .card-editor-block');
+    await editors.nth(0).locator('[data-field="title"]').fill('ZIP one');
+    await editors.nth(1).locator('[data-field="title"]').fill('ZIP two');
+    await setExportQuality(page, 'x2');
+
+    await page.locator('#saveAll').click();
+    await expect(page.locator('#exportChoiceModal')).toHaveAttribute('aria-hidden', 'false');
+    await expect(page.locator('#downloadZipBtn')).toContainText('Рекомендуется');
+
+    const downloadPromise = page.waitForEvent('download', { timeout: 60_000 });
+    await page.locator('#downloadZipBtn').click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toMatch(/^cardcraft-cards-\d{4}-\d{2}-\d{2}\.zip$/);
+
+    const stream = await download.createReadStream();
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) chunks.push(Buffer.from(chunk));
+    const files = unzipSync(new Uint8Array(Buffer.concat(chunks)));
+    expect(Object.keys(files)).toEqual(['card-01.png', 'card-02.png']);
+    for (const bytes of Object.values(files)) {
+      expect(Array.from(bytes.subarray(0, 8))).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
+      expect(bytes.byteLength).toBeGreaterThan(1_000);
+      const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+      expect(view.getUint32(16)).toBe(760);
+      expect(view.getUint32(20)).toBeGreaterThan(0);
+    }
   });
 });
 
@@ -208,6 +240,7 @@ test.describe('Export quality — persistence + content', () => {
     }
     await setExportQuality(page, 'x4');
     await page.locator('#saveAll').click();
+    await page.locator('#downloadSeparateBtn').click();
     await expect(page.locator('.cc-root')).toHaveClass(/exporting-busy/, { timeout: 5000 });
     await page.keyboard.press('Escape');
     // The blocker class must be removed even on cancel
@@ -288,6 +321,7 @@ test.describe('Export quality — viewport parity (×3)', () => {
       const downloads: import('@playwright/test').Download[] = [];
       mobilePage.on('download', (download) => downloads.push(download));
       await mobilePage.locator('#saveAll').click();
+      await mobilePage.locator('#downloadSeparateBtn').click();
       await expect.poll(() => downloads.length, { timeout: 60000 }).toBe(3);
 
       for (let index = 0; index < downloads.length; index++) {
@@ -297,6 +331,45 @@ test.describe('Export quality — viewport parity (×3)', () => {
         expect(inspection.nonBlackPixelRatio, `batch PNG ${index + 1} must not be black`).toBeGreaterThan(0.25);
         expect(inspection.darkPixelRatio, `batch PNG ${index + 1} must contain visible text`).toBeGreaterThan(0.002);
         expect(inspection.luminanceRange, `batch PNG ${index + 1} must not be solid white`).toBeGreaterThan(40);
+      }
+    } finally {
+      await context.close();
+    }
+  });
+
+  test('Xiaomi Android downloads all cards as one valid ZIP', async ({ browser }) => {
+    const context = await browser.newContext({
+      viewport: { width: 393, height: 873 },
+      deviceScaleFactor: 2.75,
+      isMobile: true,
+      hasTouch: true,
+      acceptDownloads: true,
+      userAgent: 'Mozilla/5.0 (Linux; Android 13; 2109119DG) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36',
+    });
+    const mobilePage = await context.newPage();
+    try {
+      await gotoApp(mobilePage);
+      await switchToEditorMode(mobilePage);
+      await mobilePage.locator('#addCardBtn').click();
+      const editors = mobilePage.locator('#editorCardsList .card-editor-block');
+      await editors.nth(0).locator('[data-field="title"]').fill('ZIP карточка 1');
+      await editors.nth(1).locator('[data-field="title"]').fill('ZIP карточка 2');
+
+      await mobilePage.locator('#saveAll').click();
+      await expect(mobilePage.locator('#exportChoiceModal')).toHaveAttribute('aria-hidden', 'false');
+      const downloadPromise = mobilePage.waitForEvent('download', { timeout: 60_000 });
+      await mobilePage.locator('#downloadZipBtn').click();
+      const download = await downloadPromise;
+      expect(download.suggestedFilename()).toMatch(/\.zip$/);
+
+      const stream = await download.createReadStream();
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) chunks.push(Buffer.from(chunk));
+      const files = unzipSync(new Uint8Array(Buffer.concat(chunks)));
+      expect(Object.keys(files)).toEqual(['card-01.png', 'card-02.png']);
+      for (const bytes of Object.values(files)) {
+        expect(Array.from(bytes.subarray(0, 8))).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
+        expect(bytes.byteLength).toBeGreaterThan(1_000);
       }
     } finally {
       await context.close();

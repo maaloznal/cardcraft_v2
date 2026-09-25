@@ -91,6 +91,14 @@ export class Modal {
       ? this.modal.querySelector<HTMLElement>(this.initialFocusSelector)
       : this.getFirstFocusable();
     focusTarget?.focus();
+    // A pointer-triggered click may apply its native focus step after the
+    // click handler returns, overriding the synchronous focus above. Reapply
+    // it on the next frame so keyboard users reliably start inside the dialog.
+    if (focusTarget) {
+      window.requestAnimationFrame(() => {
+        if (this.isOpen && focusTarget.isConnected) focusTarget.focus();
+      });
+    }
 
     this.openHandlers.forEach((fn) => fn());
   }

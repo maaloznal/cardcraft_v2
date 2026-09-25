@@ -84,6 +84,51 @@ test.describe('P4-S1: Exclusive subsections (phone 320×568)', () => {
   });
 });
 
+/* ═══ STAGE 5: Unified mobile command bars ═══ */
+
+test.describe('P4-S5: Unified mobile command bars', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await gotoApp(page);
+  });
+
+  test('design lives in the mode bar and never overlaps the card count', async ({ page }) => {
+    await expect(page.locator('#mobileDesignSlot [data-design-accordion]')).toHaveCount(1);
+    await expect(page.locator('#topBarDesignSlot [data-design-accordion]')).toHaveCount(0);
+    await expect(page.locator('#cardCountBadge')).toBeVisible();
+
+    const designBox = await page.locator('#mobileDesignSlot').boundingBox();
+    const countBox = await page.locator('#cardCountBadge').boundingBox();
+    expect(designBox).not.toBeNull();
+    expect(countBox).not.toBeNull();
+    expect(designBox!.y).toBeGreaterThanOrEqual(countBox!.y + countBox!.height);
+
+    const designToggle = page.locator('#mobileDesignSlot > [data-design-accordion] > [data-sidebar-toggle]');
+    await designToggle.click();
+    await expect(designToggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('#designAccordionPanel')).toBeVisible();
+  });
+
+  test('top bar and mode bar remain a contiguous fixed stack while scrolling', async ({ page }) => {
+    const before = await page.evaluate(() => {
+      const top = document.querySelector('.top-bar')!.getBoundingClientRect();
+      const modes = document.querySelector('#mobileModeSwitcher')!.getBoundingClientRect();
+      return { topY: top.y, topBottom: top.bottom, modesY: modes.y };
+    });
+    await page.evaluate(() => window.scrollTo(0, 400));
+    const after = await page.evaluate(() => {
+      const top = document.querySelector('.top-bar')!.getBoundingClientRect();
+      const modes = document.querySelector('#mobileModeSwitcher')!.getBoundingClientRect();
+      return { topY: top.y, topBottom: top.bottom, modesY: modes.y };
+    });
+
+    expect(Math.abs(after.topY - before.topY)).toBeLessThan(1);
+    expect(Math.abs(after.modesY - before.modesY)).toBeLessThan(1);
+    expect(Math.abs(after.modesY - after.topBottom)).toBeLessThan(1);
+    expect(await getHorizontalOverflow(page)).toBeLessThanOrEqual(1);
+  });
+});
+
 /* ═══ Mobile editor navigation — Xiaomi Mi 11 Lite (393×873) ═══ */
 
 async function openXiaomiProject(page: Page, cardCount = 6): Promise<void> {

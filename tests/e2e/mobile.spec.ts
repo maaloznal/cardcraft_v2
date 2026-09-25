@@ -154,8 +154,8 @@ test.describe('Mobile (390×844) — phone mode', () => {
     expect(effectiveHeight).toBeGreaterThanOrEqual(44);
   });
 
-  test('A11: sidebar toggle button has >= 44px touch target', async ({ page }) => {
-    const size = await getTouchTargetSize(page, '#toggleSidebarBtn');
+  test('A11: editor mode button has >= 44px touch target', async ({ page }) => {
+    const size = await getTouchTargetSize(page, '#modeEditorTab');
     const effectiveWidth = Math.max(size.width, size.minWidth);
     const effectiveHeight = Math.max(size.height, size.minHeight);
     expect(effectiveWidth).toBeGreaterThanOrEqual(44);

@@ -10,7 +10,7 @@
  *   5. preview   — .card, .card-list, progress bar, card numbers, list styles, card actions
  *   6. modal     — #colorModal, .modal-overlay, color picker, swatches, presets, confirm dialog
  *   7. popup     — #wordStylePopup, word style list, format buttons, color presets
- *   8. themes    — all 89 [data-theme="..."] blocks (attribute selectors, late in source = wins)
+ *   8. themes    — all 90 [data-theme="..."] blocks (attribute selectors, late in source = wins)
  *   9. export    — .cc-root.exporting overrides (must come last to override base rules)
  *
  * Plain CSS — no Tailwind directives, no @apply. Next.js 16 + Turbopack
@@ -29,6 +29,7 @@
 @import './styles/shortcuts.css';
 @import './styles/onboarding.css';
 @import './styles/ai-import.css';
+@import './styles/export-choice.css';
 /* P-MOBILE: responsive adaptations — loaded last so its media queries
    can override earlier rules without needing higher specificity. */
 @import './styles/mobile.css';

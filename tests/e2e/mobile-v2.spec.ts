@@ -71,9 +71,8 @@ test.describe('P0-sync: mobile mode state consistency', () => {
     await gotoApp(page);
   });
 
-  test('sync-1: #toggleSidebarBtn opens editor and sets data-mobile-mode=editor', async ({ page }) => {
-    // Click the top-bar sidebar toggle button
-    await page.locator('#toggleSidebarBtn').click();
+  test('sync-1: editor mode tab opens editor and sets data-mobile-mode=editor', async ({ page }) => {
+    await page.locator('#modeEditorTab').click();
     // Wait a beat for any async state sync
     await page.waitForTimeout(200);
     // data-mobile-mode MUST be 'editor' (not stuck on 'preview')
@@ -82,14 +81,11 @@ test.describe('P0-sync: mobile mode state consistency', () => {
     await expect(page.locator('#editorSidebar')).not.toHaveClass(/\bcollapsed\b/);
   });
 
-  test('sync-2: #toggleSidebarBtn has aria-expanded reflecting sidebar state', async ({ page }) => {
-    // Initially closed → aria-expanded="false"
-    await expect(page.locator('#toggleSidebarBtn')).toHaveAttribute('aria-expanded', 'false');
-    // Open
-    await page.locator('#toggleSidebarBtn').click();
-    await page.waitForTimeout(200);
-    // Now aria-expanded="true"
-    await expect(page.locator('#toggleSidebarBtn')).toHaveAttribute('aria-expanded', 'true');
+  test('sync-2: mobile tabs expose the selected mode while the redundant top-bar toggle stays hidden', async ({ page }) => {
+    await expect(page.locator('#toggleSidebarBtn')).not.toBeVisible();
+    await expect(page.locator('#modePreviewTab')).toHaveAttribute('aria-selected', 'true');
+    await page.locator('#modeEditorTab').click();
+    await expect(page.locator('#modeEditorTab')).toHaveAttribute('aria-selected', 'true');
   });
 
   test('sync-3: mode tabs aria-selected stays consistent with data-mobile-mode', async ({ page }) => {
@@ -280,7 +276,6 @@ test.describe('P1-touch: 44×44 touch targets', () => {
   // P1-TOUCH-V2: some elements only appear when there are multiple cards (delete)
   // or when modal is open (modal-close). Tests that need setup have a `setup` fn.
   const touchElements = [
-    { name: 'sidebar toggle', selector: '#toggleSidebarBtn' },
     { name: 'undo button', selector: '#undoBtn' },
     { name: 'redo button', selector: '#redoBtn' },
     { name: 'mode editor tab', selector: '#modeEditorTab' },

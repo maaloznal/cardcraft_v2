@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef } from 'react';
 import { initCardCraftApp, THEME_GROUPS } from '@/orchestrator/CardCraftApp';
 import { AuthButton } from '@/auth/AuthButton';
 import { AiAccessButton } from '@/auth/AiAccessButton';
+import { UiThemeToggle } from '@/ui/UiThemeToggle';
 import {
   AI_DEFAULT_TARGET_CHARS,
   AI_MAX_TARGET_CHARS,
@@ -101,6 +102,7 @@ export default function Home() {
         <div className="top-bar-right">
           <div className="top-bar-design-slot sidebar-fixed-header" id="topBarDesignSlot" />
           <AiAccessButton />
+          <UiThemeToggle />
           <button className="btn-icon top-bar-btn" id="undoBtn" title="Отменить (Ctrl+Z)" aria-label="Отменить" type="button">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
           </button>
@@ -152,6 +154,7 @@ export default function Home() {
           </button>
         </div>
         <AiAccessButton mobile />
+        <div className="top-bar-design-slot mobile-design-slot sidebar-fixed-header" id="mobileDesignSlot" />
         <button
           className="mobile-sidebar-close"
           id="closeSidebarBtn"
@@ -779,6 +782,45 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Batch export choice. The ZIP option avoids multi-download browser
+          prompts and is the recommended path on phones. */}
+      <div
+        className="export-choice-overlay"
+        id="exportChoiceModal"
+        role="dialog"
+        aria-modal="true"
+        aria-hidden="true"
+        aria-labelledby="exportChoiceTitle"
+        aria-describedby="exportChoiceDescription"
+      >
+        <div className="export-choice-panel">
+          <div className="export-choice-header">
+            <div>
+              <h2 id="exportChoiceTitle">Как скачать карточки?</h2>
+              <p id="exportChoiceDescription">Выберите удобный способ сохранения всей серии.</p>
+            </div>
+            <button className="modal-close" id="exportChoiceClose" data-modal-close aria-label="Закрыть" type="button">×</button>
+          </div>
+          <div className="export-choice-options">
+            <button className="export-choice-option recommended" id="downloadZipBtn" type="button">
+              <span className="export-choice-option-heading">
+                <span>Скачать одним ZIP-архивом</span>
+                <span className="export-choice-badge">Рекомендуется</span>
+              </span>
+              <span className="export-choice-option-description">Все карточки сохранятся одним файлом — удобно для телефона, отправки и хранения.</span>
+            </button>
+            <button className="export-choice-option" id="downloadSeparateBtn" type="button">
+              <span className="export-choice-option-heading">Скачать PNG по отдельности</span>
+              <span className="export-choice-option-description">Каждая карточка сохранится отдельным файлом. Браузер может запросить разрешение на несколько загрузок.</span>
+            </button>
+          </div>
+          <div className="export-choice-progress" id="exportChoiceProgress" role="status" aria-live="polite" hidden />
+          <div className="export-choice-footer">
+            <button className="btn-secondary" id="exportChoiceCancel" data-modal-close type="button">Отмена</button>
+          </div>
+        </div>
+      </div>
+
       <div id="toast" className="toast" aria-live="polite" />
 
       {/* P5: Screen reader announcements for card operations */}
@@ -833,7 +875,7 @@ export default function Home() {
               <span className="onboarding-step-num">3</span>
               <div>
                 <strong>Выберите тему</strong>
-                <p>48 готовых стилей в выпадающем списке наверху.</p>
+                <p>90 готовых стилей в разделе «Дизайн».</p>
               </div>
             </div>
             <div className="onboarding-step">
@@ -847,7 +889,7 @@ export default function Home() {
               <span className="onboarding-step-num">5</span>
               <div>
                 <strong>Экспортируйте</strong>
-                <p>Нажмите «Скачать» на карточке для PNG, или «Скачать все» для пакета.</p>
+                <p>Нажмите «Скачать» на карточке для PNG или «Скачать все», чтобы получить ZIP либо отдельные файлы.</p>
               </div>
             </div>
           </div>

@@ -4,7 +4,7 @@ import type { ThemeGroup } from '../core/types';
  * All 90 theme definitions organized in 4 groups.
  * This data drives both the global theme selector and the per-card theme selector.
  */
-export const THEME_GROUPS: ThemeGroup[] = [
+const RAW_THEME_GROUPS: ThemeGroup[] = [
   {
     label: 'Светлые темы',
     themes: [
@@ -116,3 +116,16 @@ export const THEME_GROUPS: ThemeGroup[] = [
     ],
   },
 ];
+
+/**
+ * Display numbers follow the actual grouped order. Theme values stay stable so
+ * previously saved projects continue to resolve to the same visual theme.
+ */
+let displayIndex = 0;
+export const THEME_GROUPS: ThemeGroup[] = RAW_THEME_GROUPS.map((group) => ({
+  ...group,
+  themes: group.themes.map((theme) => ({
+    ...theme,
+    label: `${++displayIndex}. ${theme.label.replace(/^\d+\.\s*/, '')}`,
+  })),
+}));

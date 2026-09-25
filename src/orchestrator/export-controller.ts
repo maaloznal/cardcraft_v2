@@ -22,20 +22,62 @@ import * as Export from '@/export/ExportManager';
 import type { ExportQuality } from '@/core/types';
 import type { OrchestratorContext } from './types';
 import { withExportMode } from './export-mode';
+import { Modal } from '@/ui/Modal';
+import {
+  buildCardPngFilename,
+  buildCardsArchiveFilename,
+  createZipArchive,
+  type ZipEntry,
+} from '@/export/ZipArchive';
 
 export interface ExportController {
   generateAndDownloadPng(node: HTMLElement, filename: string): Promise<void>;
   copyCardToClipboard(node: HTMLElement): Promise<void>;
+  openDownloadOptions(): void;
   downloadAllPng(): Promise<void>;
+  downloadAllZip(): Promise<void>;
   cancelExport(): void;
   destroy(): void;
 }
 
 export function createExportController(ctx: OrchestratorContext): ExportController {
-  const { root, stateManager } = ctx;
+  const { root, stateManager, refs } = ctx;
 
   /** AbortController for the current batch export (null when idle). */
   let batchAbort: AbortController | null = null;
+  const choiceModal = refs.exportChoiceModal
+    ? new Modal(refs.exportChoiceModal, {
+        closeSelector: '[data-modal-close]',
+        closeOnBackdrop: true,
+        closeOnEscape: true,
+        initialFocusSelector: '#downloadZipBtn',
+      })
+    : null;
+
+  function setChoiceBusy(busy: boolean, message = ''): void {
+    if (refs.downloadZipBtn) refs.downloadZipBtn.disabled = busy;
+    if (refs.downloadSeparateBtn) refs.downloadSeparateBtn.disabled = busy;
+    if (refs.exportChoiceClose) refs.exportChoiceClose.disabled = busy;
+    if (refs.exportChoiceCancel) refs.exportChoiceCancel.textContent = busy ? 'Отменить экспорт' : 'Отмена';
+    if (refs.exportChoiceProgress) {
+      refs.exportChoiceProgress.hidden = !busy && !message;
+      refs.exportChoiceProgress.textContent = message;
+    }
+  }
+
+  function updateProgress(message: string): void {
+    setChoiceBusy(true, message);
+    ctx.storage.showToast(message, 60_000);
+  }
+
+  function openDownloadOptions(): void {
+    if (batchAbort) {
+      ctx.storage.showToast('Экспорт уже идёт…');
+      return;
+    }
+    setChoiceBusy(false);
+    choiceModal?.open();
+  }
 
   /** Current export quality from settings (read fresh on each call so a
    *  mid-batch change still applies to the next card). */
@@ -142,7 +184,7 @@ export function createExportController(ctx: OrchestratorContext): ExportControll
     let downloaded = 0;
     let firstErrorShown = false;
     try {
-      ctx.storage.showToast(`Генерация PNG: 0 из ${total}...`, 60000);
+      updateProgress(`Подготовка карточки 0 из ${total}…`);
       for (let i = 0; i < total; i++) {
         if (abort.signal.aborted) break;
         const node = document.getElementById(`card-node-${cards[i].id}`);
@@ -151,7 +193,7 @@ export function createExportController(ctx: OrchestratorContext): ExportControll
           const quality = currentQuality();
           try {
             await withExportMode(root, () =>
-              Export.downloadPng(node, `card-${i + 1}.png`, quality, abort.signal),
+              Export.downloadPng(node, buildCardPngFilename(i, total), quality, abort.signal),
             );
             downloaded++;
           } catch (err) {
@@ -167,7 +209,7 @@ export function createExportController(ctx: OrchestratorContext): ExportControll
             break;
           }
           if (abort.signal.aborted) break;
-          ctx.storage.showToast(`Скачано ${downloaded} из ${total}...`, 60000);
+          updateProgress(`Скачано ${downloaded} из ${total}…`);
           // Let the browser flush the file before generating the next.
           await new Promise((r) => setTimeout(r, 250));
         }
@@ -189,6 +231,66 @@ export function createExportController(ctx: OrchestratorContext): ExportControll
       batchAbort = null;
       stateManager.setUI({ isExporting: false });
       root.classList.remove('exporting-busy');
+      setChoiceBusy(false);
+      choiceModal?.close();
+    }
+  }
+
+  async function downloadAllZip(): Promise<void> {
+    if (batchAbort) {
+      ctx.storage.showToast('Экспорт уже идёт…');
+      return;
+    }
+    const cards = stateManager.getCards();
+    const total = cards.length;
+    if (total === 0) {
+      ctx.storage.showToast('Нет карточек для скачивания.', 2500, { priority: true });
+      return;
+    }
+
+    const abort = new AbortController();
+    batchAbort = abort;
+    stateManager.setUI({ isExporting: true });
+    root.classList.add('exporting-busy');
+
+    try {
+      const entries = async function* (): AsyncGenerator<ZipEntry> {
+        for (let i = 0; i < total; i++) {
+          if (abort.signal.aborted) throw new DOMException('Aborted', 'AbortError');
+          updateProgress(`Подготовка карточки ${i + 1} из ${total}…`);
+          const node = document.getElementById(`card-node-${cards[i].id}`);
+          if (!node) throw new Error(`Card node ${i + 1} is missing`);
+          const blob = await Export.generateBlob(node, currentQuality(), abort.signal);
+          if (!blob || blob.size === 0) throw new Error(`PNG ${i + 1} is empty`);
+          yield { name: buildCardPngFilename(i, total), blob };
+        }
+      };
+
+      const zipBlob = await withExportMode(root, async () => {
+        const archive = await createZipArchive(
+          entries(),
+          abort.signal,
+          () => updateProgress('Создание ZIP-архива…'),
+        );
+        return archive;
+      });
+      if (abort.signal.aborted) throw new DOMException('Aborted', 'AbortError');
+      if (zipBlob.size === 0) throw new Error('ZIP archive is empty');
+      Export.downloadBlob(zipBlob, buildCardsArchiveFilename());
+      ctx.storage.showToast(`Готово! ${total} карточек сохранены в ZIP.`, 3000, { priority: true });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        ctx.storage.showToast('Экспорт отменён.', 2500, { priority: true });
+      } else {
+        const message = describeExportError(error, currentQuality());
+        ctx.storage.showToast(message || 'Не удалось создать ZIP-архив.', 3500, { priority: true });
+      }
+    } finally {
+      batchAbort = null;
+      stateManager.setUI({ isExporting: false });
+      root.classList.remove('exporting-busy');
+      setChoiceBusy(false);
+      choiceModal?.close();
     }
   }
 
@@ -199,14 +301,23 @@ export function createExportController(ctx: OrchestratorContext): ExportControll
     }
   }
 
+  ctx.listeners.addEl(refs.downloadZipBtn, 'click', () => void downloadAllZip());
+  ctx.listeners.addEl(refs.downloadSeparateBtn, 'click', () => void downloadAllPng());
+  choiceModal?.onClose(() => {
+    if (batchAbort) batchAbort.abort();
+  });
+
   return {
     generateAndDownloadPng,
     copyCardToClipboard,
+    openDownloadOptions,
     downloadAllPng,
+    downloadAllZip,
     cancelExport,
     /** Abort any in-flight batch export and remove the .exporting-busy blocker class — call on app teardown. */
     destroy() {
       if (batchAbort) batchAbort.abort();
+      choiceModal?.destroy();
       root.classList.remove('exporting-busy');
       root.classList.remove('exporting');
     },

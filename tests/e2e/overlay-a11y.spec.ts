@@ -207,3 +207,48 @@ test.describe('Overlay: onboarding', () => {
     expect(hidden, 'onboarding overlay must be hidden after dismissed').toBe(true);
   });
 });
+
+/* ═══ 5. Batch export choice ═══ */
+
+test.describe('Overlay: batch export choice', () => {
+  test('export choice is hidden when closed and traps focus when open', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await gotoApp(page);
+    expect(await isHiddenFromA11yTree(page, '#exportChoiceModal')).toBe(true);
+
+    const opener = page.locator('#saveAll');
+    await opener.focus();
+    await opener.click();
+    const modal = page.locator('#exportChoiceModal');
+    await expect(modal).toHaveClass(/\bactive\b/);
+    await expect(modal).toHaveAttribute('role', 'dialog');
+    await expect(modal).toHaveAttribute('aria-modal', 'true');
+    await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? '')).toBe('downloadZipBtn');
+
+    for (let index = 0; index < 6; index++) {
+      await page.keyboard.press('Tab');
+      const focusIsInside = await page.evaluate(() => (
+        document.getElementById('exportChoiceModal')?.contains(document.activeElement) ?? false
+      ));
+      expect(focusIsInside, `Tab ${index + 1}: focus escaped export dialog`).toBe(true);
+    }
+
+    await page.keyboard.press('Escape');
+    await expect(modal).not.toHaveClass(/\bactive\b/);
+    await expect(opener).toBeFocused();
+  });
+
+  test('export choice fits a narrow phone as a bottom sheet', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await gotoApp(page);
+    await page.locator('#modeEditorTab').click();
+    await page.locator('#saveAll').click();
+    const panel = page.locator('#exportChoiceModal .export-choice-panel');
+    await expect(panel).toBeVisible();
+    const box = await panel.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(320);
+    expect(box!.height).toBeLessThanOrEqual(568);
+  });
+});

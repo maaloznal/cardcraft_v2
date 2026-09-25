@@ -64,6 +64,12 @@ export interface DOMRefs {
   // ── Sidebar footer / actions ──
   addCardBtn: HTMLButtonElement | null;
   saveAllBtn: HTMLButtonElement | null;
+  exportChoiceModal: HTMLElement | null;
+  exportChoiceClose: HTMLButtonElement | null;
+  exportChoiceCancel: HTMLButtonElement | null;
+  downloadZipBtn: HTMLButtonElement | null;
+  downloadSeparateBtn: HTMLButtonElement | null;
+  exportChoiceProgress: HTMLElement | null;
   deleteAllBtn: HTMLButtonElement | null;
   confirmOverlay: HTMLElement | null;
   confirmOk: HTMLButtonElement | null;
@@ -146,6 +152,12 @@ export function collectDOMRefs(root: HTMLElement): DOMRefs {
 
     addCardBtn: $<HTMLButtonElement>('#addCardBtn'),
     saveAllBtn: $<HTMLButtonElement>('#saveAll'),
+    exportChoiceModal: $<HTMLElement>('#exportChoiceModal'),
+    exportChoiceClose: $<HTMLButtonElement>('#exportChoiceClose'),
+    exportChoiceCancel: $<HTMLButtonElement>('#exportChoiceCancel'),
+    downloadZipBtn: $<HTMLButtonElement>('#downloadZipBtn'),
+    downloadSeparateBtn: $<HTMLButtonElement>('#downloadSeparateBtn'),
+    exportChoiceProgress: $<HTMLElement>('#exportChoiceProgress'),
     deleteAllBtn: $<HTMLButtonElement>('#deleteAllBtn'),
     confirmOverlay: $<HTMLElement>('#confirmOverlay'),
     confirmOk: $<HTMLButtonElement>('#confirmOk'),

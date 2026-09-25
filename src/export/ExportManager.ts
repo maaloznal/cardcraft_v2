@@ -157,6 +157,12 @@ export async function downloadPng(
   const blob = await generateBlob(node, quality, signal);
   if (!blob) throw new Error('PNG blob generation failed');
   if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+  downloadBlob(blob, filename, 2_000);
+}
+
+/** Trigger a browser download while keeping the object URL alive long enough
+ * for asynchronous Android/MIUI download managers to consume it. */
+export function downloadBlob(blob: Blob, filename: string, revokeDelay = 30_000): void {
   const objectUrl = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.download = filename;
@@ -166,7 +172,7 @@ export async function downloadPng(
   link.remove();
   // Android's download manager may consume the URL asynchronously. Revoking
   // immediately after click is racy on Xiaomi/MIUI, so keep it briefly alive.
-  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 2_000);
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), revokeDelay);
 }
 
 /** Copy a node as PNG to the clipboard (with fallback to download) at the

@@ -28,6 +28,7 @@
   /* UI поверхности */
   --ui-bg: #fafafa;
   --ui-surface: #ffffff;
+  --ui-topbar-bg: rgba(255, 255, 255, 0.88);
   --ui-surface-hover: #f4f4f5;
   --ui-border: #e4e4e7;
   --ui-border-strong: #d4d4d8;
@@ -113,6 +114,33 @@
   --z-popup: 1100;
   --z-toast: 1200;
   --z-tooltip: 1300;
+}
+
+/* The application chrome theme is intentionally separate from card themes.
+   Do not override --card-* or theme variables here: exported cards must look
+   identical in light and dark application modes. */
+:root[data-ui-theme="dark"] {
+  --ui-bg: #09090b;
+  --ui-surface: #18181b;
+  --ui-topbar-bg: rgba(24, 24, 27, 0.9);
+  --ui-surface-hover: #27272a;
+  --ui-border: #3f3f46;
+  --ui-border-strong: #52525b;
+  --ui-text: #fafafa;
+  --ui-text-secondary: #d4d4d8;
+  --ui-text-tertiary: #a1a1aa;
+  --ui-accent: #fafafa;
+  --ui-accent-hover: #e4e4e7;
+  --ui-accent-fg: #18181b;
+  --ui-success: #4ade80;
+  --ui-danger: #fca5a5;
+  --ui-danger-bg: #2b1113;
+  --ui-danger-border: #7f1d1d;
+  --ui-focus: #fafafa;
+  --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --sh-md: 0 8px 20px -8px rgba(0, 0, 0, 0.65);
+  --sh-lg: 0 20px 48px -12px rgba(0, 0, 0, 0.75);
+  --sh-xl: 0 28px 72px -16px rgba(0, 0, 0, 0.85);
 }
 
 /* ================= P5: REDUCED MOTION ================= */

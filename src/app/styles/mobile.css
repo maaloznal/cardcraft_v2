@@ -328,6 +328,16 @@
     box-sizing: border-box;
   }
 
+  /* The main bar and mode bar form one fixed two-row mobile command area.
+     Keeping both fixed avoids the detached floating-tab effect while the
+     page scrolls. The layout below reserves their combined height. */
+  .top-bar {
+    position: fixed;
+    inset: 0 0 auto 0;
+    width: 100%;
+    z-index: 1100;
+  }
+
   .top-bar-design-slot .design-accordion > .sidebar-accordion-header {
     width: 44px;
     min-width: 44px;
@@ -342,16 +352,16 @@
     display: none;
   }
   .top-bar-design-slot .design-accordion-panel {
-    top: calc(var(--top-bar-height) + var(--safe-area-top, 0px));
+    top: calc(var(--top-bar-height) + var(--safe-area-top, 0px) + var(--mobile-switcher-height));
     right: 0;
     width: 100vw;
-    max-height: calc(100dvh - var(--top-bar-height) - var(--safe-area-top, 0px));
+    max-height: calc(100dvh - var(--top-bar-height) - var(--safe-area-top, 0px) - var(--mobile-switcher-height));
     border-left: 0;
     border-right: 0;
     border-radius: 0 0 var(--r-lg) var(--r-lg);
   }
   .app-layout {
-    margin-top: var(--mobile-switcher-height);
+    margin-top: calc(var(--top-bar-height) + var(--safe-area-top, 0px) + var(--mobile-switcher-height));
   }
   /* Inner tabs container (role="tablist") — flex row of tab buttons */
   .mobile-mode-tabs {
@@ -371,6 +381,13 @@
   .mobile-ai-import {
     display: inline-flex;
     color: var(--ui-accent, #2563eb);
+  }
+  .mobile-design-slot {
+    display: block;
+    flex: 0 0 44px;
+  }
+  .mobile-design-slot .design-accordion {
+    width: 44px;
   }
 
   /* data-mobile-mode="preview" → hide the sidebar (slide it out) */
@@ -406,14 +423,24 @@
   /* Top bar — slim on phone, preserve undo/redo + account */
   .top-bar {
     padding: 0 8px;
-    height: var(--top-bar-height);
+    height: calc(var(--top-bar-height) + var(--safe-area-top, 0px));
+  }
+  .top-bar .sidebar-toggle {
+    display: none;
   }
   .brand-name {
     font-size: 14px;
   }
-  /* Card count badge — hide on very narrow screens (<360px) to save space */
+  /* Keep the card count visible on narrow phones. The redundant mobile
+     sidebar toggle is already hidden; undo/redo yield their space only at
+     the smallest width instead of hiding useful project context. */
   @media (max-width: 360px) {
     .card-count-badge {
+      padding-inline: 5px;
+      font-size: 10px;
+    }
+    #undoBtn,
+    #redoBtn {
       display: none;
     }
   }
@@ -432,6 +459,21 @@
     overflow-y: auto;
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
+  }
+
+  @media (max-width: 380px) {
+    .mobile-mode-tab > span,
+    #mobileAiImportBtn > span:last-child {
+      display: none;
+    }
+    .mobile-mode-tabs .mobile-mode-tab,
+    .mobile-ai-import {
+      flex: 0 0 44px;
+      padding: 0;
+    }
+    .mobile-mode-tabs {
+      flex: 0 1 auto;
+    }
   }
 
   /* Small tablets have room for a comfortable full-width editor. Avoid an

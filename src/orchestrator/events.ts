@@ -187,7 +187,7 @@ export function bindSidebarEvents(ctx: OrchestratorContext): void {
 
   // Sidebar buttons
   ctx.listeners.addEl(refs.addCardBtn, 'click', () => cardOps.addCard());
-  ctx.listeners.addEl(refs.saveAllBtn, 'click', () => void exporter.downloadAllPng());
+  ctx.listeners.addEl(refs.saveAllBtn, 'click', () => exporter.openDownloadOptions());
 
   // Delete all — with confirm flow
   // P5: focus trap + restore for accessibility

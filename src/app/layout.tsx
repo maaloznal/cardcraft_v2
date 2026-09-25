@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@fontsource/golos-text";
 import "@fontsource/lora";
@@ -21,16 +22,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Конструктор Текстовых Карточек — 48 стилей",
+  title: "Конструктор Текстовых Карточек — 90 стилей",
   description:
-    "Конструктор текстовых карточек: 48 тем, стилизация слов, экспорт в PNG. Редактируйте, стилизуйте и скачивайте карточки.",
+    "Конструктор текстовых карточек: 90 тем, стилизация слов, экспорт в PNG и ZIP. Редактируйте, стилизуйте и скачивайте карточки.",
   keywords: [
     "карточки",
     "конструктор",
     "PNG",
     "дизайн",
     "стилизация текста",
-    "48 тем",
+    "90 тем",
   ],
   authors: [{ name: "Z.ai Team" }],
   icons: {
@@ -50,10 +51,7 @@ export const viewport: Viewport = {
   maximumScale: 5,
   userScalable: true,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
-  ],
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({
@@ -66,6 +64,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
+        <Script id="cardcraft-ui-theme" strategy="beforeInteractive">
+          {`try{var t=localStorage.getItem('cardcraft-ui-theme')==='dark'?'dark':'light';document.documentElement.dataset.uiTheme=t;document.documentElement.style.colorScheme=t;document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.setAttribute('content',t==='dark'?'#09090b':'#ffffff')})}catch(e){document.documentElement.dataset.uiTheme='light';document.documentElement.style.colorScheme='light'}`}
+        </Script>
         <AuthProvider>
           <SentryProvider>
             <ErrorBoundary>

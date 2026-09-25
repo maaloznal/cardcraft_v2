@@ -29,7 +29,7 @@
   top: 0;
   z-index: 1100;
   height: var(--top-bar-height);
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--ui-topbar-bg);
   backdrop-filter: saturate(180%) blur(12px);
   -webkit-backdrop-filter: saturate(180%) blur(12px);
   border-bottom: 1px solid var(--ui-border);

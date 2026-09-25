@@ -1,8 +1,21 @@
-# ADR-008: Dark Mode — Removed (Not Implemented)
+# ADR-008: Dark Mode — Reintroduced for application chrome
 
 **Date**: 2025-09-11
-**Status**: Accepted
-**Decision**: Remove dead `.dark` CSS tokens; do NOT implement dark mode.
+**Status**: Superseded by the 2026-09 UI-theme decision
+**Decision**: Keep card themes unchanged, but provide an explicit light/dark theme for application chrome.
+
+## 2026-09 update
+
+Dark mode is now a product requirement. It is implemented with
+`data-ui-theme` and the existing `--ui-*` design tokens, not with the old
+unused `.dark` scaffold. The first visit is light; an explicit user choice is
+stored under `cardcraft-ui-theme` and restored before hydration. Card-rendering
+variables (`--card-*` and `[data-theme]`) are deliberately outside the dark
+override so previews and exported PNG files are identical in both UI modes.
+
+The historical decision below remains for context: removing the original dead
+scaffold was correct, while the new implementation is a separate, complete
+feature.
 
 ## Context
 

@@ -112,9 +112,29 @@ export function initCardCraftApp(root: HTMLElement): () => void {
    * The markup remains server-rendered for progressive enhancement, while the
    * stable slot keeps the controls reachable even when the editor is closed. */
   const designSlot = root.querySelector<HTMLElement>('#topBarDesignSlot');
+  const mobileDesignSlot = root.querySelector<HTMLElement>('#mobileDesignSlot');
   const designAccordion = root.querySelector<HTMLElement>('[data-design-accordion]');
-  if (designSlot && designAccordion && designAccordion.parentElement !== designSlot) {
-    designSlot.appendChild(designAccordion);
+  let designMql: MediaQueryList | null = null;
+  let onDesignBreakpointChange: ((event: MediaQueryListEvent) => void) | null = null;
+  const placeDesignControls = (mobile: boolean): void => {
+    const target = mobile ? mobileDesignSlot : designSlot;
+    if (target && designAccordion && designAccordion.parentElement !== target) {
+      target.appendChild(designAccordion);
+    }
+  };
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    designMql = window.matchMedia('(max-width: 767px)');
+    placeDesignControls(designMql.matches);
+    onDesignBreakpointChange = (event: MediaQueryListEvent): void => {
+      placeDesignControls(event.matches);
+    };
+    if (designMql.addEventListener) {
+      designMql.addEventListener('change', onDesignBreakpointChange);
+    } else if (designMql.addListener) {
+      designMql.addListener(onDesignBreakpointChange);
+    }
+  } else {
+    placeDesignControls(false);
   }
 
   /* ---------- 2. DOM refs ---------- */
@@ -359,6 +379,13 @@ export function initCardCraftApp(root: HTMLElement): () => void {
         exclusiveMql.removeEventListener('change', onBreakpointChange);
       } else if (exclusiveMql.removeListener) {
         exclusiveMql.removeListener(onBreakpointChange);
+      }
+    }
+    if (designMql && onDesignBreakpointChange) {
+      if (designMql.removeEventListener) {
+        designMql.removeEventListener('change', onDesignBreakpointChange);
+      } else if (designMql.removeListener) {
+        designMql.removeListener(onDesignBreakpointChange);
       }
     }
     modalAccordion.destroy();

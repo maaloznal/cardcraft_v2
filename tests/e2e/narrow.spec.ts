@@ -27,15 +27,16 @@ test.describe('Narrow phone (320×568)', () => {
     expect(topBar!.width).toBeLessThanOrEqual(320);
   });
 
-  test('B3: card count badge is hidden on narrow screens (<360px)', async ({ page }) => {
-    // The badge is hidden via CSS at max-width: 360px to save horizontal space
-    await expect(page.locator('#cardCountBadge')).not.toBeVisible();
+  test('B3: card count remains visible on narrow screens', async ({ page }) => {
+    await expect(page.locator('#cardCountBadge')).toBeVisible();
   });
 
-  test('B4: main buttons remain accessible (sidebar toggle, undo, redo)', async ({ page }) => {
-    await expect(page.locator('#toggleSidebarBtn')).toBeVisible();
-    await expect(page.locator('#undoBtn')).toBeVisible();
-    await expect(page.locator('#redoBtn')).toBeVisible();
+  test('B4: mobile navigation remains accessible while redundant controls yield space', async ({ page }) => {
+    await expect(page.locator('#modeEditorTab')).toBeVisible();
+    await expect(page.locator('#modePreviewTab')).toBeVisible();
+    await expect(page.locator('#toggleSidebarBtn')).not.toBeVisible();
+    await expect(page.locator('#undoBtn')).not.toBeVisible();
+    await expect(page.locator('#redoBtn')).not.toBeVisible();
   });
 
   test('B5: brand name still visible', async ({ page }) => {
