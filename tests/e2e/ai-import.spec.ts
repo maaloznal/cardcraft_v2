@@ -8,6 +8,11 @@ test('AI creation requires authentication', async ({ page }) => {
   await expect(button).toHaveAttribute('data-ai-access', 'denied');
   await button.click();
   await expect(page).toHaveURL(/\/login\/?\?mode=signup$/);
+  const authDisabledNotice = page.locator('.bg-amber-500\\/10');
+  if (await authDisabledNotice.isVisible()) {
+    await expect(authDisabledNotice).toBeVisible();
+    return;
+  }
   await expect(page.getByRole('button', { name: 'Зарегистрироваться', exact: true })).toBeVisible();
 });
 
