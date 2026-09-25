@@ -195,6 +195,7 @@ test.describe('P4-S2: Settings summary (phone 390×844)', () => {
 
   test('s2-2: summary updates after changing format via selectOption', async ({ page }) => {
     await page.locator('.sidebar-fixed-header > .sidebar-accordion > .sidebar-accordion-header').click();
+    await page.locator('.design-accordion-panel > .sidebar-accordion').nth(0).locator(':scope > .sidebar-accordion-header').click();
     // Use real selectOption (not dispatchEvent)
     await page.locator('#formatSelect').selectOption('aspect-4-5');
     await page.waitForTimeout(300);
@@ -205,6 +206,7 @@ test.describe('P4-S2: Settings summary (phone 390×844)', () => {
 
   test('s2-3: summary updates after changing theme via dropdown', async ({ page }) => {
     await page.locator('.sidebar-fixed-header > .sidebar-accordion > .sidebar-accordion-header').click();
+    await page.locator('.design-accordion-panel > .sidebar-accordion').nth(1).locator(':scope > .sidebar-accordion-header').click();
     // Open theme dropdown
     await page.locator('#themeDropdownTrigger').click();
     await page.waitForTimeout(300);

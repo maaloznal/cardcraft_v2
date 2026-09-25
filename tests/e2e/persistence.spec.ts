@@ -95,3 +95,24 @@ test.describe('Persistence', () => {
     }
   });
 });
+
+test('cards survive a real page reload and completed desktop cards start collapsed', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('flashcard-onboarding-seen', '1');
+  });
+  await page.goto('/');
+  const firstCard = page.locator('#editorCardsList .card-editor-block').first();
+  await firstCard.locator('[data-field="title"]').fill('Карточка после перезагрузки');
+  await expect.poll(async () => page.evaluate(() => {
+    const raw = localStorage.getItem('flashcard-cards');
+    return raw ? JSON.parse(raw)[0]?.title : '';
+  })).toBe('Карточка после перезагрузки');
+
+  await page.reload();
+
+  const restored = page.locator('#editorCardsList .card-editor-block').first();
+  await expect(restored).toHaveClass(/collapsed/);
+  await expect(restored.locator('.card-editor-summary')).toContainText('Карточка после перезагрузки');
+  await restored.locator('.card-collapse-toggle').click();
+  await expect(restored.locator('[data-field="title"]')).toHaveValue('Карточка после перезагрузки');
+});

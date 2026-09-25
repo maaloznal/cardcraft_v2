@@ -56,6 +56,12 @@ export function createKeyboardController(ctx: OrchestratorContext): KeyboardCont
       // Priority: themeDropdown → modalCardThemeDropdown → wordStylePopup → colorModal → confirmOverlay
       if (refs.themeDropdown?.classList.contains('open')) {
         themeDropdownController.close();
+      } else if (ctx.root.querySelector<HTMLElement>('[data-design-accordion]')?.classList.contains('expanded')) {
+        const design = ctx.root.querySelector<HTMLElement>('[data-design-accordion]');
+        if (design) {
+          ctx.sidebarAccordion.collapse(design);
+          design.querySelector<HTMLElement>(':scope > [data-sidebar-toggle]')?.focus();
+        }
       } else if (refs.modalCardThemeDropdown?.classList.contains('open')) {
         modalCardThemeDropdownController.close();
       } else if (refs.wordStylePopup?.classList.contains('active')) {

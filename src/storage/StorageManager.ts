@@ -38,6 +38,7 @@ const KEYS = {
   HEADER_HEIGHT: 'flashcard-header-height',
   EXPORT_QUALITY: 'flashcard-export-quality',
   AI_IMPORT_PREFS: 'flashcard-ai-import-prefs',
+  CLOUD_SYNC_DIRTY_USER: 'flashcard-cloud-sync-dirty-user',
 } as const;
 
 export interface AiImportPreferences {
@@ -199,6 +200,22 @@ export function loadAiImportPreferences(): AiImportPreferences {
     localStorage.removeItem(KEYS.AI_IMPORT_PREFS);
     return {};
   }
+}
+
+/** Remember that a signed-in user's latest local save has not reached Supabase yet. */
+export function markCloudSyncDirty(userId: string): void {
+  localStorage.setItem(KEYS.CLOUD_SYNC_DIRTY_USER, userId);
+}
+
+/** Clear the pending-sync marker only for the user whose push succeeded. */
+export function markCloudSyncClean(userId: string): void {
+  if (localStorage.getItem(KEYS.CLOUD_SYNC_DIRTY_USER) === userId) {
+    localStorage.removeItem(KEYS.CLOUD_SYNC_DIRTY_USER);
+  }
+}
+
+export function getCloudSyncDirtyUser(): string | null {
+  return localStorage.getItem(KEYS.CLOUD_SYNC_DIRTY_USER);
 }
 
 /** Migrate old card format to current structure */

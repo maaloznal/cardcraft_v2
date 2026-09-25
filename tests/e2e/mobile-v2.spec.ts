@@ -157,14 +157,14 @@ test.describe('P0-layout: mobile layout integrity', () => {
     await switchToEditorMode(page);
     // Switcher bounding box
     const switcherBox = await page.locator('#mobileModeSwitcher').boundingBox();
-    // First sidebar element (Дизайн accordion header)
-    const designHeaderBox = await page.locator('[data-sidebar-toggle]').first().boundingBox();
+    // First editor card is now the first sidebar element; Design lives in the top bar.
+    const firstCardBox = await page.locator('#editorCardsList .card-editor-block').first().boundingBox();
     expect(switcherBox).not.toBeNull();
-    expect(designHeaderBox).not.toBeNull();
-    // Switcher bottom should not extend into design header's top (allow 5px tolerance
+    expect(firstCardBox).not.toBeNull();
+    // Switcher bottom should not extend into editor content (allow 5px tolerance
     // for border/sub-pixel rendering)
     const switcherBottom = switcherBox!.y + switcherBox!.height;
-    expect(switcherBottom).toBeLessThanOrEqual(designHeaderBox!.y + 5);
+    expect(switcherBottom).toBeLessThanOrEqual(firstCardBox!.y + 5);
   });
 
   test('layout-4: CSS variables exist for top-bar and switcher heights (no magic 52/56/96)', async ({ page }) => {
@@ -182,48 +182,23 @@ test.describe('P0-layout: mobile layout integrity', () => {
     expect(hasVars.mobileSwitcherHeight.length).toBeGreaterThan(0);
   });
 
-  test('layout-5: expanded Design remains scrollable and can be closed on a narrow phone', async ({ page }) => {
+  test('layout-5: top-bar Design panel fits and can be closed on a narrow phone', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
     await gotoApp(page);
     await switchToEditorMode(page);
 
-    const design = page.locator('.sidebar-fixed-header > .sidebar-accordion').first();
+    const design = page.locator('[data-design-accordion]');
     const designToggle = design.locator(':scope > [data-sidebar-toggle]');
     await designToggle.tap();
     await expect(design).toHaveClass(/\bexpanded\b/);
-
-    const scrollState = await page.locator('#editorSidebar').evaluate(async (sidebar) => {
-      const designSection = sidebar.querySelector<HTMLElement>(
-        '.sidebar-fixed-header > .sidebar-accordion',
-      );
-      if (!designSection) throw new Error('Design section not found');
-      // Scroll to the end of Design (not past it into the card editor).
-      sidebar.scrollTop = Math.max(
-        1,
-        designSection.offsetTop + designSection.scrollHeight - sidebar.clientHeight,
-      );
-      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-      const toggle = sidebar.querySelector<HTMLElement>(
-        '.sidebar-fixed-header > .sidebar-accordion > [data-sidebar-toggle]',
-      );
-      const sidebarRect = sidebar.getBoundingClientRect();
-      const toggleRect = toggle?.getBoundingClientRect();
-      return {
-        overflowY: getComputedStyle(sidebar).overflowY,
-        scrollable: sidebar.scrollHeight > sidebar.clientHeight,
-        scrollTop: sidebar.scrollTop,
-        toggleInsideViewport: Boolean(
-          toggleRect &&
-          toggleRect.top >= sidebarRect.top - 1 &&
-          toggleRect.bottom <= sidebarRect.bottom + 1
-        ),
-      };
-    });
-
-    expect(scrollState.overflowY).toBe('auto');
-    expect(scrollState.scrollable).toBe(true);
-    expect(scrollState.scrollTop).toBeGreaterThan(0);
-    expect(scrollState.toggleInsideViewport).toBe(true);
+    const panel = design.locator(':scope > .design-accordion-panel');
+    const panelBox = await panel.boundingBox();
+    expect(panelBox).not.toBeNull();
+    expect(panelBox!.x).toBeGreaterThanOrEqual(0);
+    expect(panelBox!.y).toBeGreaterThanOrEqual(0);
+    expect(panelBox!.x + panelBox!.width).toBeLessThanOrEqual(320);
+    expect(panelBox!.y + panelBox!.height).toBeLessThanOrEqual(568);
+    await expect(panel).toHaveCSS('overflow-y', 'auto');
     await expect(designToggle).toBeVisible();
 
     await designToggle.tap();
@@ -321,7 +296,7 @@ test.describe('P1-touch: 44×44 touch targets', () => {
     { name: 'add card button', selector: '#addCardBtn' },
     { name: 'download all button', selector: '#saveAll' },
     { name: 'delete all button', selector: '#deleteAllBtn' },
-    { name: 'sidebar accordion header (Дизайн)', selector: '[data-sidebar-toggle]' },
+    { name: 'top-bar accordion header (Дизайн)', selector: '[data-design-accordion] > [data-sidebar-toggle]' },
   ];
 
   for (const el of touchElements) {

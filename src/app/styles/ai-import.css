@@ -75,6 +75,22 @@
   font-size: 11px;
   color: var(--ui-text-secondary);
 }
+
+/* Keep the authenticated/guest action readable without crowding tablet bars. */
+@media (min-width: 768px) and (max-width: 1100px) {
+  .top-bar .btn-ai-import > span:last-child {
+    display: none;
+  }
+  .top-bar .btn-ai-import::after {
+    content: 'Войти для ИИ';
+  }
+  .top-bar .btn-ai-import[data-ai-access='granted']::after {
+    content: 'Создать с ИИ';
+  }
+  .top-bar-design-slot .design-summary {
+    display: none;
+  }
+}
 .ai-role-picker summary {
   padding: 7px 10px;
   border: 1px solid var(--ui-border);

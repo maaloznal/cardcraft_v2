@@ -1,9 +1,24 @@
 import { test, expect } from '@playwright/test';
 import { gotoApp } from './helpers';
 
+test('AI creation requires authentication', async ({ page }) => {
+  await gotoApp(page);
+  const button = page.locator('#aiImportBtn');
+  await expect(button).toContainText('Войти / зарегистрироваться для ИИ');
+  await expect(button).toHaveAttribute('data-ai-access', 'denied');
+  await button.click();
+  await expect(page).toHaveURL(/\/login\/?\?mode=signup$/);
+  await expect(page.getByRole('button', { name: 'Зарегистрироваться', exact: true })).toBeVisible();
+});
+
 test.describe('AI text import dialog', () => {
   test.beforeEach(async ({ page }) => {
     await gotoApp(page);
+    // Dialog behavior is tested independently from authentication. Production
+    // keeps this denied until AuthProvider reports a real Supabase session.
+    await page.locator('#aiImportBtn').evaluate((button) => {
+      (button as HTMLElement).dataset.aiAccess = 'granted';
+    });
     await page.locator('#aiImportBtn').click();
   });
 
@@ -63,6 +78,9 @@ test('AI dialog fits a 390×844 phone viewport', async ({ page }) => {
   await gotoApp(page);
   await expect(page.locator('#aiImportBtn')).toBeHidden();
   await expect(page.locator('#mobileAiImportBtn')).toBeVisible();
+  await page.locator('#mobileAiImportBtn').evaluate((button) => {
+    (button as HTMLElement).dataset.aiAccess = 'granted';
+  });
   await page.locator('#mobileAiImportBtn').click();
   const panel = page.locator('.ai-import-panel');
   await expect(panel).toBeVisible();
@@ -85,6 +103,9 @@ for (const viewport of [
   test(`AI dialog fits a tablet in ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await gotoApp(page);
+    await page.locator('#aiImportBtn').evaluate((button) => {
+      (button as HTMLElement).dataset.aiAccess = 'granted';
+    });
     await page.locator('#aiImportBtn').click();
     const panel = page.locator('.ai-import-panel');
     const box = await panel.boundingBox();

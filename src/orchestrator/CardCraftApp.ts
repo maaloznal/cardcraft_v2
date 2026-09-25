@@ -108,6 +108,15 @@ export function initCardCraftApp(root: HTMLElement): () => void {
   window.addEventListener('error', errorHandler);
   window.addEventListener('unhandledrejection', unhandledRejection);
 
+  /* Move global design controls out of the card editor and into the top bar.
+   * The markup remains server-rendered for progressive enhancement, while the
+   * stable slot keeps the controls reachable even when the editor is closed. */
+  const designSlot = root.querySelector<HTMLElement>('#topBarDesignSlot');
+  const designAccordion = root.querySelector<HTMLElement>('[data-design-accordion]');
+  if (designSlot && designAccordion && designAccordion.parentElement !== designSlot) {
+    designSlot.appendChild(designAccordion);
+  }
+
   /* ---------- 2. DOM refs ---------- */
   const refs = collectDOMRefs(root);
 
@@ -149,9 +158,7 @@ export function initCardCraftApp(root: HTMLElement): () => void {
       // When entering a phone/tablet layout, enforce the exclusive rule by
       // collapsing every expanded subsection after the first one.
       if (isTouchLayoutNow) {
-        const designAccordion = root.querySelector<HTMLElement>(
-          '.sidebar-fixed-header > .sidebar-accordion'
-        );
+        const designAccordion = root.querySelector<HTMLElement>('[data-design-accordion]');
         if (designAccordion) {
           const body = designAccordion.querySelector<HTMLElement>('.sidebar-accordion-body');
           if (body) {
@@ -211,6 +218,15 @@ export function initCardCraftApp(root: HTMLElement): () => void {
   /* ---------- 4. UI-state proxy + listener tracker ---------- */
   const uiState = createUIStateProxy(stateManager);
   const listeners = new ListenerTracker();
+  listeners.addDoc('click', (event) => {
+    if (
+      designAccordion?.classList.contains('expanded')
+      && event.target instanceof Node
+      && !designAccordion.contains(event.target)
+    ) {
+      sidebarAccordion.collapse(designAccordion);
+    }
+  });
 
   /* ---------- 5. Build context (two-phase — see types.ts) ---------- */
   // Cast pattern: build {} as OrchestratorContext, assign core fields first,

@@ -26,6 +26,10 @@
   overflow-y: auto;
   min-height: 60px;
 }
+.editor-sidebar > .sidebar-fixed-header:empty,
+.editor-sidebar > .resize-divider-h {
+  display: none;
+}
 .sidebar-scroll-area {
   flex: 1;
   overflow-y: auto;
@@ -85,14 +89,14 @@
   flex-shrink: 0;
   transition: transform var(--dur) var(--ease);
 }
-.sidebar-accordion.expanded .sidebar-accordion-header svg {
+.sidebar-accordion.expanded > .sidebar-accordion-header > svg:last-child {
   transform: rotate(180deg);
 }
 .sidebar-accordion-body {
   display: none;
   padding: 0 20px 12px;
 }
-.sidebar-accordion.expanded .sidebar-accordion-body {
+.sidebar-accordion.expanded > .sidebar-accordion-body {
   display: block;
   animation: sidebarAccordionIn 0.2s var(--ease);
 }
@@ -103,6 +107,57 @@
 /* Remove section padding inside accordion (accordion provides padding) */
 .sidebar-accordion .sidebar-section {
   padding: 8px 0 4px;
+}
+
+/* Global design accordion — mounted in the top bar, independently from the
+   card editor. The panel is fixed so closing or scrolling the editor never
+   makes design controls unreachable. */
+.top-bar-design-slot {
+  position: relative;
+  min-height: 0;
+  overflow: visible;
+  border: 0;
+  flex-shrink: 0;
+}
+.top-bar-design-slot .design-accordion {
+  border: 0;
+}
+.top-bar-design-slot .design-accordion > .sidebar-accordion-header {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--r-md);
+  background: var(--ui-surface);
+  color: var(--ui-text-secondary);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 13px;
+}
+.top-bar-design-slot .design-icon {
+  width: 16px;
+  height: 16px;
+}
+.top-bar-design-slot .design-accordion.expanded > .sidebar-accordion-header {
+  color: var(--ui-text);
+  border-color: var(--ui-border-strong);
+  background: var(--ui-surface-hover);
+}
+.top-bar-design-slot .design-summary {
+  max-width: 130px;
+}
+.top-bar-design-slot .design-accordion-panel {
+  position: fixed;
+  top: calc(var(--top-bar-height) + 8px);
+  right: 16px;
+  width: min(380px, calc(100vw - 32px));
+  max-height: calc(100dvh - var(--top-bar-height) - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px 12px 12px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--r-lg);
+  background: var(--ui-surface);
+  box-shadow: var(--sh-lg);
 }
 
 

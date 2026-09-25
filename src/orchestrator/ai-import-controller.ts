@@ -51,6 +51,9 @@ export function createAiImportController(ctx: OrchestratorContext) {
   }
 
   function open(): void {
+    const hasAccess = refs.aiImportBtn?.dataset.aiAccess === 'granted'
+      || refs.mobileAiImportBtn?.dataset.aiAccess === 'granted';
+    if (!hasAccess) return;
     modal?.open();
     // The overlay becomes visible through a CSS transition. Focus on the next
     // frame so Chromium/Safari do not discard focus while visibility changes.

@@ -20,6 +20,15 @@ export default function LoginPage() {
 
   const enabled = supabase !== null
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (new URLSearchParams(window.location.search).get('mode') === 'signup') {
+        setMode('register')
+      }
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [])
+
   // Already logged in → redirect to home
   useEffect(() => {
     if (!authLoading && user) {

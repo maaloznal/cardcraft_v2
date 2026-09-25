@@ -210,8 +210,8 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
    * Push current app state to cloud. If `forceInsert` is true, skip the
    * update path and always insert (used for first-sync when cloud is empty).
    */
-  async function pushToCloud(forceInsert = false): Promise<void> {
-    if (!supabase || !currentUser) return;
+  async function pushToCloud(forceInsert = false): Promise<boolean> {
+    if (!supabase || !currentUser) return false;
     syncing = true;
     lastError = null;
     try {
@@ -237,12 +237,15 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
       }
       cachedProject = result;
       lastSyncedAt = new Date(result.updated_at);
+      Storage.markCloudSyncClean(currentUser.id);
       log.info('Pushed to cloud', { version: result.version, cards: payload.cards.length });
+      return true;
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       lastError = msg;
       log.error('Push failed', { error: msg });
       // Silent failure — don't spam the user with toasts on every debounced save
+      return false;
     } finally {
       syncing = false;
     }
@@ -252,6 +255,7 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
   function scheduleCloudPush(): void {
     if (!getEnabled()) return; // no-op when not logged in
     if (isApplyingRemote) return; // skip: we're applying a remote update, push would echo
+    Storage.markCloudSyncDirty(currentUser!.id);
     if (pushTimer) clearTimeout(pushTimer);
     pushTimer = setTimeout(() => {
       void pushToCloud(false);
@@ -383,7 +387,14 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
    * privacy leak). Clearing on sign-out ensures each account starts clean.
    */
   function handleAuthChange(event: string, session: Session | null): void {
-    if (event === 'SIGNED_OUT' || !session?.user) {
+    const user = session?.user;
+    // INITIAL_SESSION without a user is an anonymous page load, not a logout.
+    // Clearing here used to erase guest cards from localStorage on refresh.
+    if (!user && event !== 'SIGNED_OUT') {
+      currentUser = null;
+      return;
+    }
+    if (event === 'SIGNED_OUT') {
       log.info('User signed out — stopping cloud sync + clearing local state');
       currentUser = null;
       cachedProject = null;
@@ -412,8 +423,9 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
       storage.showToast('Вы вышли из аккаунта. Локальные карточки очищены.', 3000);
       return;
     }
-    if (session.user.id !== currentUser?.id) {
-      currentUser = session.user;
+    if (!user) return;
+    if (user.id !== currentUser?.id) {
+      currentUser = user;
       cachedProject = null; // reset cache for new user
       log.info('User signed in', { userId: currentUser.id, email: currentUser.email });
     }
@@ -422,11 +434,20 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
     // Do the initial pull once per session
     if (!initialPullDone && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
       initialPullDone = true;
-      void pullFromCloud().then(({ pulled, reason }) => {
+      const hasUnsyncedLocalChanges = Storage.getCloudSyncDirtyUser() === currentUser.id;
+      const initialSync = hasUnsyncedLocalChanges
+        ? pushToCloud(false).then((pushed) => ({
+            pulled: false,
+            reason: pushed ? 'pushed unsynced local changes' : 'failed to push unsynced local changes',
+          }))
+        : pullFromCloud();
+      void initialSync.then(({ pulled, reason }) => {
         if (pulled) {
           storage.showToast('Карточки синхронизированы с облаком', 2500);
         } else if (reason === 'cloud was empty, pushed local instead') {
           storage.showToast('Локальные карточки сохранены в облако', 2500);
+        } else if (reason === 'pushed unsynced local changes') {
+          storage.showToast('Последние изменения сохранены в облако', 2500);
         }
       });
     }

@@ -27,7 +27,7 @@
 .top-bar {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 1100;
   height: var(--top-bar-height);
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: saturate(180%) blur(12px);

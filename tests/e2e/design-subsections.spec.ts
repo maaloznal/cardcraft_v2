@@ -64,6 +64,16 @@ test.describe('Desktop design subsections (non-exclusive, 1280×800)', () => {
     await expect(fmtToggle).toHaveAttribute('aria-expanded', 'true');
     await expect(themeToggle).toHaveAttribute('aria-expanded', 'true');
   });
+
+  test('D4: closes on Escape and returns focus to the top-bar trigger', async ({ page }) => {
+    const design = page.locator('[data-design-accordion]');
+    const trigger = design.locator(':scope > .sidebar-accordion-header');
+    await trigger.click();
+    await expect(design).toHaveClass(/\bexpanded\b/);
+    await page.keyboard.press('Escape');
+    await expect(design).not.toHaveClass(/\bexpanded\b/);
+    await expect(trigger).toBeFocused();
+  });
 });
 
 /* ═══ Breakpoint transition (chromium, resize) ═══ */

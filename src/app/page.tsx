@@ -3,6 +3,7 @@
 import { useLayoutEffect, useRef } from 'react';
 import { initCardCraftApp, THEME_GROUPS } from '@/orchestrator/CardCraftApp';
 import { AuthButton } from '@/auth/AuthButton';
+import { AiAccessButton } from '@/auth/AiAccessButton';
 import {
   AI_DEFAULT_TARGET_CHARS,
   AI_MAX_TARGET_CHARS,
@@ -98,10 +99,8 @@ export default function Home() {
           </div>
         </div>
         <div className="top-bar-right">
-          <button className="btn-ai-import" id="aiImportBtn" title="Разбить текст на карточки с помощью ИИ" type="button">
-            <span aria-hidden="true">✦</span>
-            <span>Текст → карточки</span>
-          </button>
+          <div className="top-bar-design-slot sidebar-fixed-header" id="topBarDesignSlot" />
+          <AiAccessButton />
           <button className="btn-icon top-bar-btn" id="undoBtn" title="Отменить (Ctrl+Z)" aria-label="Отменить" type="button">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
           </button>
@@ -152,16 +151,7 @@ export default function Home() {
             <span>Просмотр</span>
           </button>
         </div>
-        <button
-          className="mobile-mode-tab mobile-ai-import"
-          id="mobileAiImportBtn"
-          aria-label="Создать карточки с помощью ИИ"
-          title="Создать карточки с помощью ИИ"
-          type="button"
-        >
-          <span aria-hidden="true">✦</span>
-          <span>Создать с ИИ</span>
-        </button>
+        <AiAccessButton mobile />
         <button
           className="mobile-sidebar-close"
           id="closeSidebarBtn"
@@ -184,16 +174,17 @@ export default function Home() {
               the card editor below is raised to the top and immediately visible.
               P2-SUMMARY: header includes a compact summary of current format + theme
               that updates when settings change. Visible when "Дизайн" is collapsed. */}
-          <div className="sidebar-accordion" data-sidebar-accordion>
-            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle aria-expanded="false" aria-describedby="designSummaryText">
+          <div className="sidebar-accordion design-accordion" data-sidebar-accordion data-design-accordion>
+            <button className="sidebar-accordion-header" type="button" data-sidebar-toggle aria-expanded="false" aria-controls="designAccordionPanel" aria-describedby="designSummaryText" aria-label="Дизайн">
+              <svg className="design-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.7 1.7-1.7h2c3 0 5.5-2.5 5.5-5.5C22 6 17.5 2 12 2z"/></svg>
               <span>Дизайн</span>
               <span className="design-summary" id="designSummary" aria-hidden="true"></span>
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              <svg className="accordion-chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
             {/* P3-A11Y: visually hidden text for screen readers — provides
                 accessible description of current design settings */}
             <span id="designSummaryText" className="sr-only" aria-hidden="false"></span>
-            <div className="sidebar-accordion-body">
+            <div className="sidebar-accordion-body design-accordion-panel" id="designAccordionPanel" role="region" aria-label="Настройки дизайна">
 
           {/* 1a. Формат */}
           <div className="sidebar-accordion" data-sidebar-accordion>
@@ -627,7 +618,7 @@ export default function Home() {
         <div className="ai-import-panel">
           <div className="ai-import-header">
             <div>
-              <h2 id="aiImportTitle">Текст → карточки</h2>
+              <h2 id="aiImportTitle">Создать с ИИ</h2>
               <p>ИИ исправит ошибки и распределит текст по полям карточек.</p>
             </div>
             <button className="modal-close" type="button" data-ai-close aria-label="Закрыть">×</button>

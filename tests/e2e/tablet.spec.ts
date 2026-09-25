@@ -138,7 +138,7 @@ test.describe('Compact tablet (720×1024 / focused editor-preview modes)', () =>
     await expect(page.locator('#previewWorkspace')).not.toHaveAttribute('inert', '');
   });
 
-  test('CT3: Design is exclusive, sticky, and does not freeze editor scrolling', async ({ page }) => {
+  test('CT3: top-bar Design is exclusive, fixed, and does not freeze editor scrolling', async ({ page }) => {
     await switchToEditorMode(page);
     const designToggle = page.locator(
       '.sidebar-fixed-header > .sidebar-accordion > .sidebar-accordion-header',
@@ -153,8 +153,8 @@ test.describe('Compact tablet (720×1024 / focused editor-preview modes)', () =>
     await expect(formatToggle).toHaveAttribute('aria-expanded', 'false');
     await expect(themeToggle).toHaveAttribute('aria-expanded', 'true');
 
-    const stickyPosition = await designToggle.evaluate((el) => getComputedStyle(el).position);
-    expect(stickyPosition).toBe('sticky');
+    const panelPosition = await page.locator('.design-accordion-panel').evaluate((el) => getComputedStyle(el).position);
+    expect(panelPosition).toBe('fixed');
     await expect(designToggle).toBeInViewport();
 
     for (let i = 0; i < 6; i++) await page.locator('#addCardBtn').click();
@@ -165,7 +165,13 @@ test.describe('Compact tablet (720×1024 / focused editor-preview modes)', () =>
     await expect.poll(() => sidebar.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
 
     // The persistent close control must remain available even after scrolling
-    // into the cards area; closing must not leave the interface frozen.
+    // into the cards area. Close the independent Design panel first, then the
+    // editor; neither action may leave the interface frozen.
+    const design = page.locator('[data-design-accordion]');
+    if (await design.evaluate((element) => element.classList.contains('expanded'))) {
+      await designToggle.click();
+    }
+    await expect(design).not.toHaveClass(/\bexpanded\b/);
     await expect(page.locator('#closeSidebarBtn')).toBeVisible();
     await page.locator('#closeSidebarBtn').click();
     await expect(page.locator('.cc-root')).toHaveAttribute('data-mobile-mode', 'preview');
