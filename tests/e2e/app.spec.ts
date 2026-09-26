@@ -73,7 +73,11 @@ test.describe('App launch', () => {
     await page.locator('#addCardBtn').click();
     expect(await getPreviewCardCount(page)).toBe(2);
     // Type
-    await page.locator('#editorCardsList .card-editor-block').first().locator('[data-field="title"]').fill('Smoke Test');
+    const firstCard = page.locator('#editorCardsList .card-editor-block').first();
+    if (await firstCard.evaluate((element) => element.classList.contains('collapsed'))) {
+      await firstCard.locator('.card-collapse-toggle').click();
+    }
+    await firstCard.locator('[data-field="title"]').fill('Smoke Test');
     await expect(page.locator('#cardsArea .card-title').first()).toContainText('Smoke Test');
     // Undo
     await page.keyboard.press('Control+z');
