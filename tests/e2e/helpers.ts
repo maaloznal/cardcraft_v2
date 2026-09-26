@@ -36,6 +36,14 @@ export async function getEditorCardCount(page: Page): Promise<number> {
   return page.locator('#editorCardsList .card-editor-block').count();
 }
 
+/** Expand an editor card when a preceding add/navigation action collapsed it. */
+export async function expandEditorCard(page: Page, cardIndex: number): Promise<void> {
+  const card = page.locator('#editorCardsList .card-editor-block').nth(cardIndex);
+  if (await card.evaluate((element) => element.classList.contains('collapsed'))) {
+    await card.locator('.card-collapse-toggle').click();
+  }
+}
+
 /** Helper: get the Nth card's title text in preview */
 export async function getPreviewCardTitle(page: Page, index: number): Promise<string> {
   const titles = page.locator('#cardsArea .card-title');

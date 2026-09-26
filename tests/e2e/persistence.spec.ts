@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
-import { gotoApp, getPreviewCardCount } from './helpers';
+import { expandEditorCard, gotoApp, getPreviewCardCount } from './helpers';
 
 /**
  * E2E: persistence — JSON import + state reload.
@@ -19,6 +19,7 @@ test.describe('Persistence', () => {
     await page.locator('#addCardBtn').click();
     await page.waitForTimeout(300);
     expect(await getPreviewCardCount(page)).toBe(3);
+    await expandEditorCard(page, 0);
     await page.locator('#editorCardsList .card-editor-block').first().locator('[data-field="title"]').fill('Persisted Title');
     // Explicit save via Ctrl+S
     await page.keyboard.press('Control+s');

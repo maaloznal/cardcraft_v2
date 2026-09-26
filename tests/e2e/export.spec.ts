@@ -9,6 +9,7 @@ import {
   setExportQuality,
   switchToEditorMode,
   switchToPreviewMode,
+  expandEditorCard,
 } from './helpers';
 
 /**
@@ -58,6 +59,7 @@ test.describe('Export', () => {
   test('download all offers ZIP and creates one ordered archive', async ({ page }) => {
     await page.locator('#addCardBtn').click();
     const editors = page.locator('#editorCardsList .card-editor-block');
+    await expandEditorCard(page, 0);
     await editors.nth(0).locator('[data-field="title"]').fill('ZIP one');
     await editors.nth(1).locator('[data-field="title"]').fill('ZIP two');
     await setExportQuality(page, 'x2');
@@ -312,6 +314,7 @@ test.describe('Export quality — viewport parity (×3)', () => {
       }
       const editors = mobilePage.locator('#editorCardsList .card-editor-block');
       for (let index = 0; index < 3; index++) {
+        await expandEditorCard(mobilePage, index);
         await editors.nth(index).locator('[data-field="title"]').fill(`Карточка ${index + 1}`);
         await editors.nth(index).locator('[data-field="text"]').fill('Проверка пакетного мобильного экспорта.');
       }
@@ -352,6 +355,7 @@ test.describe('Export quality — viewport parity (×3)', () => {
       await switchToEditorMode(mobilePage);
       await mobilePage.locator('#addCardBtn').click();
       const editors = mobilePage.locator('#editorCardsList .card-editor-block');
+      await expandEditorCard(mobilePage, 0);
       await editors.nth(0).locator('[data-field="title"]').fill('ZIP карточка 1');
       await editors.nth(1).locator('[data-field="title"]').fill('ZIP карточка 2');
 
