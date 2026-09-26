@@ -23,7 +23,7 @@
 }
 .cc-root textarea {
   resize: vertical;
-  min-height: 56px;
+  min-height: 64px;
   line-height: 1.5;
 }
 .cc-root select {
@@ -59,16 +59,17 @@
 .input-wrapper input,
 .input-wrapper textarea {
   flex: 1;
-  padding-right: 28px; /* room for clear button */
+  padding-right: 34px; /* room for the top-corner clear button */
 }
-/* Clear-field button (× icon on the right of each input/textarea) */
+/* Clear-field button — a quiet control in the top-right corner. Keeping it
+   away from the text baseline reduces accidental clicks while selecting. */
 .btn-clear-field {
   position: absolute;
-  top: 50%;
+  top: 6px;
   right: 6px;
-  transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
+  transform: none;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -81,11 +82,6 @@
   opacity: 0;
   transition: opacity var(--dur) var(--ease), color var(--dur) var(--ease), background var(--dur) var(--ease);
   z-index: 2;
-}
-/* For textarea (multiline), pin the clear button to top-right */
-.input-wrapper textarea + .btn-clear-field {
-  top: 8px;
-  transform: none;
 }
 /* Show clear button on hover/focus of the input wrapper */
 .input-wrapper:hover .btn-clear-field,

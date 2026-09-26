@@ -61,6 +61,17 @@ test.describe('Tablet portrait (iPad gen 7, ~834×1194 / split-view)', () => {
     await expect(page.locator('#editorSidebar')).not.toHaveClass(/\bcollapsed\b/);
   });
 
+  test('C2b: tapping the card title toggles the card on tablet', async ({ page }) => {
+    const card = page.locator('#editorCardsList .card-editor-block').first();
+    await card.locator('input[data-field="title"]').fill('Планшетная карточка');
+    await card.locator('.card-collapse-toggle').click();
+    await expect(card).toHaveClass(/\bcollapsed\b/);
+
+    await card.locator('.card-editor-title-group').click();
+    await expect(card).not.toHaveClass(/\bcollapsed\b/);
+    await expect(card.locator('.card-collapse-toggle')).toHaveAttribute('aria-expanded', 'true');
+  });
+
   test('C3: no backdrop dimming in tablet split-view', async ({ page }) => {
     await page.locator('#toggleSidebarBtn').click();
     // Backdrop should be display:none on split-view tablet

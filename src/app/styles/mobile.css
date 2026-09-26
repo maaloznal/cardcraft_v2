@@ -218,6 +218,22 @@
   .cc-root .theme-dropdown-trigger {
     font-size: 16px;
   }
+  .card-editor-body .input-wrapper input,
+  .card-editor-body .input-wrapper textarea {
+    padding-top: 11px;
+    padding-bottom: 11px;
+    padding-right: 52px;
+  }
+  .card-editor-body .input-wrapper textarea {
+    min-height: 76px;
+  }
+  .card-editor-body .input-wrapper .btn-clear-field {
+    top: 2px;
+    right: 2px;
+    transform: none;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--ui-surface) 88%, transparent);
+  }
 }
 
 /* ─── Safe-area insets (notch / home-indicator) ─────────────────── */
@@ -529,6 +545,8 @@
     grid-template-columns: 44px minmax(0, 1fr);
     align-items: center;
     gap: 6px 8px;
+    cursor: pointer;
+    touch-action: manipulation;
   }
   .card-editor-title-group {
     grid-column: 2;

@@ -243,6 +243,55 @@ test.describe('Mobile editor navigation (Xiaomi Mi 11 Lite)', () => {
     expect(await getHorizontalOverflow(page)).toBe(0);
   });
 
+  test('the whole card header toggles the card without removing the visible button', async ({ page }) => {
+    await openXiaomiProject(page, 2);
+    await switchToEditorMode(page);
+
+    const firstCard = page.locator('#editorCardsList .card-editor-block').first();
+    const header = firstCard.locator('.card-editor-header');
+    const toggle = firstCard.locator('.card-collapse-toggle');
+    await expect(firstCard).toHaveClass(/\bcollapsed\b/);
+    await expect(toggle).toBeVisible();
+
+    await header.locator('.card-editor-title-group').click();
+    await expect(firstCard).not.toHaveClass(/\bcollapsed\b/);
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+    await header.locator('.card-editor-title-group').click();
+    await expect(firstCard).toHaveClass(/\bcollapsed\b/);
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  test('clear control stays in the top corner and text areas are slightly taller', async ({ page }) => {
+    await page.setViewportSize({ width: 393, height: 873 });
+    await gotoApp(page);
+    await switchToEditorMode(page);
+
+    const textarea = page.locator('#editorCardsList .card-editor-block').first()
+      .locator('textarea[data-field="text"]');
+    const clear = textarea.locator('xpath=following-sibling::button[@data-action="clear-field"]');
+    await textarea.fill('Текст для очистки');
+    await expect(clear).toBeVisible();
+
+    const geometry = await textarea.locator('xpath=..').evaluate((wrapper) => {
+      const field = wrapper.querySelector('textarea')!.getBoundingClientRect();
+      const button = wrapper.querySelector<HTMLElement>('.btn-clear-field')!.getBoundingClientRect();
+      return {
+        fieldHeight: field.height,
+        topOffset: button.top - field.top,
+        rightOffset: field.right - button.right,
+      };
+    });
+    expect(geometry.fieldHeight).toBeGreaterThanOrEqual(76);
+    expect(geometry.topOffset).toBeGreaterThanOrEqual(0);
+    expect(geometry.topOffset).toBeLessThanOrEqual(4);
+    expect(geometry.rightOffset).toBeGreaterThanOrEqual(0);
+    expect(geometry.rightOffset).toBeLessThanOrEqual(4);
+
+    await clear.click();
+    await expect(textarea).toHaveValue('');
+  });
+
   test('preview edit button opens the matching card and keeps the preview return point', async ({ page }) => {
     await openXiaomiProject(page);
     const sixthPreview = page.locator('#cardsArea .card-wrapper').nth(5);

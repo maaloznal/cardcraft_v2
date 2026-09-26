@@ -305,7 +305,16 @@ export class EditorRenderer {
     this.clickHandler = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const btn = target.closest<HTMLElement>('[data-action]');
-      if (!btn) return;
+      if (!btn) {
+        const header = target.closest<HTMLElement>('.card-editor-header');
+        if (header && window.matchMedia('(max-width: 1023px)').matches) {
+          const block = header.closest<HTMLElement>('.card-editor-block');
+          if (!block) return;
+          block.classList.toggle('collapsed');
+          this.syncCollapseState(block, block.classList.contains('collapsed'));
+        }
+        return;
+      }
       const action = btn.dataset.action || '';
 
       if (action === 'collapse') {

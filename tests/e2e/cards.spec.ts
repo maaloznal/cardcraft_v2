@@ -26,6 +26,19 @@ test.describe('Card operations', () => {
     await expect(page.locator('#cardsArea .card-title').first()).toContainText('Edited Title E2E');
   });
 
+  test('4b. desktop card title does not replace the explicit collapse button', async ({ page }) => {
+    const card = page.locator('#editorCardsList .card-editor-block').first();
+    await card.locator('[data-field="title"]').fill('Desktop Title');
+    await card.locator('.card-collapse-toggle').click();
+    await expect(card).toHaveClass(/\bcollapsed\b/);
+
+    await card.locator('.card-editor-title-group').click();
+    await expect(card).toHaveClass(/\bcollapsed\b/);
+
+    await card.locator('.card-collapse-toggle').click();
+    await expect(card).not.toHaveClass(/\bcollapsed\b/);
+  });
+
   test('5. delete card — removes from editor + preview', async ({ page }) => {
     const before = await getPreviewCardCount(page);
     // Add a card first (so we have at least 2, can delete 1)

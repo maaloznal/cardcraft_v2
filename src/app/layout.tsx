@@ -10,6 +10,9 @@ import "./globals.css";
 import { SentryProvider } from '@/components/SentryProvider';
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from '@/auth/AuthProvider';
+import { PwaRegistrar } from '@/components/PwaRegistrar';
+
+const APP_BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,8 +37,18 @@ export const metadata: Metadata = {
     "90 тем",
   ],
   authors: [{ name: "Z.ai Team" }],
+  applicationName: "Cardcraft",
+  appleWebApp: {
+    capable: true,
+    title: "Cardcraft",
+    statusBarStyle: "default",
+  },
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: [
+      { url: `${APP_BASE_PATH}/pwa-icon-192.png`, sizes: "192x192", type: "image/png" },
+      { url: `${APP_BASE_PATH}/pwa-icon-512.png`, sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: `${APP_BASE_PATH}/pwa-icon-192.png`, sizes: "192x192", type: "image/png" }],
   },
 };
 
@@ -67,6 +80,7 @@ export default function RootLayout({
         <Script id="cardcraft-ui-theme" strategy="beforeInteractive">
           {`try{var t=localStorage.getItem('cardcraft-ui-theme')==='dark'?'dark':'light';document.documentElement.dataset.uiTheme=t;document.documentElement.style.colorScheme=t;document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){m.setAttribute('content',t==='dark'?'#09090b':'#ffffff')})}catch(e){document.documentElement.dataset.uiTheme='light';document.documentElement.style.colorScheme='light'}`}
         </Script>
+        <PwaRegistrar />
         <AuthProvider>
           <SentryProvider>
             <ErrorBoundary>
