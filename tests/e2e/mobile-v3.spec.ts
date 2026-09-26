@@ -187,6 +187,29 @@ test.describe('Mobile editor navigation (Xiaomi Mi 11 Lite)', () => {
       await expect(blocks.nth(index)).toHaveClass(/\bcollapsed\b/);
       await expect(blocks.nth(index).locator('.card-editor-num-badge')).toHaveText(String(index + 1));
       await expect(blocks.nth(index).locator('.card-editor-summary')).toContainText(`Мысль карточки ${index + 1}`);
+      await expect(blocks.nth(index).locator('.card-editor-body')).toHaveCSS('visibility', 'hidden');
+      const geometry = await blocks.nth(index).evaluate((block) => {
+        const blockRect = block.getBoundingClientRect();
+        const headerRect = block.querySelector<HTMLElement>('.card-editor-header')!.getBoundingClientRect();
+        const toggleRect = block.querySelector<HTMLElement>('.card-collapse-toggle')!.getBoundingClientRect();
+        const titleRect = block.querySelector<HTMLElement>('.card-editor-title-group')!.getBoundingClientRect();
+        return {
+          blockTop: blockRect.top,
+          blockBottom: blockRect.bottom,
+          headerTop: headerRect.top,
+          headerBottom: headerRect.bottom,
+          toggleTop: toggleRect.top,
+          toggleBottom: toggleRect.bottom,
+          titleTop: titleRect.top,
+          titleBottom: titleRect.bottom,
+        };
+      });
+      expect(geometry.headerTop).toBeGreaterThanOrEqual(geometry.blockTop);
+      expect(geometry.headerBottom).toBeLessThanOrEqual(geometry.blockBottom);
+      expect(geometry.toggleTop).toBeGreaterThanOrEqual(geometry.blockTop);
+      expect(geometry.toggleBottom).toBeLessThanOrEqual(geometry.blockBottom);
+      expect(geometry.titleTop).toBeGreaterThanOrEqual(geometry.blockTop);
+      expect(geometry.titleBottom).toBeLessThanOrEqual(geometry.blockBottom);
     }
 
     const target = blocks.nth(5);
@@ -210,6 +233,12 @@ test.describe('Mobile editor navigation (Xiaomi Mi 11 Lite)', () => {
       expect(control.left).toBe(true);
       expect(control.right).toBe(true);
       expect(control.width).toBeGreaterThanOrEqual(22);
+    }
+
+    await switchToPreviewMode(page);
+    await switchToEditorMode(page);
+    for (let index = 0; index < 6; index++) {
+      await expect(blocks.nth(index)).toHaveClass(/\bcollapsed\b/);
     }
     expect(await getHorizontalOverflow(page)).toBe(0);
   });
@@ -373,8 +402,12 @@ test.describe('P4-S3: Scroll preservation (phone 390×844)', () => {
     const cards = page.locator('#editorCardsList .card-editor-block');
     const count = await cards.count();
     for (let i = 0; i < count; i++) {
-      await cards.nth(i).locator('input[data-field="title"]').fill(`Card ${i + 1} with a longer title`);
-      await cards.nth(i).locator('textarea[data-field="text"]').fill(`Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.`);
+      const card = cards.nth(i);
+      if (await card.evaluate((element) => element.classList.contains('collapsed'))) {
+        await card.locator('.card-collapse-toggle').click();
+      }
+      await card.locator('input[data-field="title"]').fill(`Card ${i + 1} with a longer title`);
+      await card.locator('textarea[data-field="text"]').fill(`Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.`);
       await page.waitForTimeout(50);
     }
     await page.waitForTimeout(500);

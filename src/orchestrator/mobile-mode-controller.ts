@@ -161,12 +161,29 @@ export function createMobileModeController(ctx: OrchestratorContext): MobileMode
       // Only focus first input on FIRST editor open
       if (!hasOpenedEditor) {
         hasOpenedEditor = true;
+        const focusOwner = document.activeElement;
+        if (focusOwner instanceof HTMLElement && focusOwner.matches('.mobile-mode-tab')) {
+          return;
+        }
         setTimeout(() => {
-          const firstInput = document.querySelector<HTMLElement>(
-            '#editorCardsList input[data-field="title"], #editorCardsList textarea[data-field="text"]',
+          const activeElement = document.activeElement;
+          // Do not steal focus if the user (or assistive technology) has
+          // already moved it to another control while the editor was opening.
+          if (
+            activeElement
+            && activeElement !== document.body
+            && activeElement !== focusOwner
+          ) {
+            return;
+          }
+          const firstEditableInput = document.querySelector<HTMLElement>(
+            '#editorCardsList .card-editor-block:not(.collapsed) input[data-field="title"], ' +
+            '#editorCardsList .card-editor-block:not(.collapsed) textarea[data-field="text"]',
           );
-          if (firstInput && document.activeElement !== firstInput) {
-            firstInput.focus();
+          const focusTarget = firstEditableInput
+            ?? document.querySelector<HTMLElement>('#editorCardsList .card-collapse-toggle');
+          if (focusTarget && document.activeElement !== focusTarget) {
+            focusTarget.focus();
           }
         }, 50);
       }

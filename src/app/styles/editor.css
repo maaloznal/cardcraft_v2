@@ -163,6 +163,8 @@
   flex-direction: column;
   gap: 10px;
   overflow: hidden;
+  visibility: visible;
+  pointer-events: auto;
   transition: max-height var(--dur-slow) var(--ease), opacity var(--dur) var(--ease), margin var(--dur) var(--ease);
   max-height: 2000px;
   opacity: 1;
@@ -170,6 +172,8 @@
 .card-editor-block.collapsed .card-editor-body {
   max-height: 0;
   opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
   margin-top: -10px;
   margin-bottom: -10px;
 }

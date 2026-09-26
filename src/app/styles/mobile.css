@@ -550,6 +550,12 @@
   .card-editor-block.collapsed .card-editor-actions {
     display: none;
   }
+  .card-editor-block.collapsed .card-editor-body {
+    /* Desktop cancels its 10px flex gap with negative margins. Mobile has
+       gap:0 in the collapsed state, so those margins would shrink the card
+       border and leave the 44px header protruding below it. */
+    margin: 0;
+  }
   .card-editor-block.collapsed {
     gap: 0;
   }
