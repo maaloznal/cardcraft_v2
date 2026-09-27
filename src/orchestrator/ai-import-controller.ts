@@ -189,7 +189,7 @@ export function createAiImportController(ctx: OrchestratorContext) {
     if (button) {
       button.disabled = true;
       button.setAttribute('aria-busy', 'true');
-      button.textContent = 'Улучшаю…';
+      button.classList.add('is-loading');
     }
     ctx.storage.showToast('ИИ улучшает карточку…', 60_000, { priority: true });
     try {
@@ -219,6 +219,7 @@ export function createAiImportController(ctx: OrchestratorContext) {
       if (button?.isConnected) {
         button.disabled = false;
         button.removeAttribute('aria-busy');
+        button.classList.remove('is-loading');
         button.innerHTML = originalMarkup;
       }
     }

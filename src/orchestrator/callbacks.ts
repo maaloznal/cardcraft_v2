@@ -48,6 +48,10 @@ export function wireRendererCallbacks(ctx: OrchestratorContext): void {
     } else if (action === 'improve-ai') {
       const cardId = String(data.cardId || '').replace(/^card-node-/, '');
       void ctx.aiImport.improveCard(cardId, data.button instanceof HTMLElement ? data.button : undefined);
+    } else if (action === 'undo-preview') {
+      ctx.history.undo();
+    } else if (action === 'redo-preview') {
+      ctx.history.redo();
     } else if (action === 'delete-preview') {
       // P1-1: resolve index from stable cardId (format: "card-node-<id>")
       const cardId = String(data.cardId || '').replace(/^card-node-/, '');

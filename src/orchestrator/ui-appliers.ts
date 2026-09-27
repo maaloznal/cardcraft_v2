@@ -122,6 +122,7 @@ export function createUIAppliers(ctx: OrchestratorContext): UIAppliers {
       };
       previewRenderer.render(stateManager.getCards(), previewSettings);
       updateCardCountBadge();
+      ctx.history?.updateUndoRedoButtons();
     } catch (err) {
       log.error('Error in renderPreview', { error: err });
     } finally {

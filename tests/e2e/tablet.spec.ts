@@ -124,6 +124,28 @@ test.describe('Tablet portrait (iPad gen 7, ~834×1194 / split-view)', () => {
     const deleteInDownload = await page.locator('.sidebar-primary-actions #deleteAllBtn').count();
     expect(deleteInDownload).toBe(0);
   });
+
+  test('C8: AI action has its own row and secondary card actions are centered', async ({ page }) => {
+    const actions = page.locator('#cardsArea .card-actions').first();
+    const aiAction = actions.locator('[data-action="improve-ai"]');
+    await expect(aiAction).toContainText('Улучшить с ИИ');
+
+    const actionsBox = await actions.boundingBox();
+    const aiBox = await aiAction.boundingBox();
+    expect(actionsBox).not.toBeNull();
+    expect(aiBox).not.toBeNull();
+    expect(aiBox!.width).toBeGreaterThanOrEqual(actionsBox!.width - 1);
+
+    const centerOffset = await actions.evaluate((panel) => {
+      const aiRect = panel.querySelector('.btn-card-ai')!.getBoundingClientRect();
+      const secondary = Array.from(panel.querySelectorAll('.btn-card-action:not(.btn-card-ai)'))
+        .map((button) => button.getBoundingClientRect());
+      const secondaryLeft = Math.min(...secondary.map((rect) => rect.left));
+      const secondaryRight = Math.max(...secondary.map((rect) => rect.right));
+      return Math.abs((secondaryLeft + secondaryRight) / 2 - (aiRect.left + aiRect.right) / 2);
+    });
+    expect(centerOffset).toBeLessThanOrEqual(2);
+  });
 });
 
 test.describe('Compact tablet (720×1024 / focused editor-preview modes)', () => {

@@ -275,8 +275,8 @@ test.describe('P1-touch: 44×44 touch targets', () => {
   // List of ALL interactive elements that should have 44×44 touch target on mobile
   // P1-TOUCH-V2: some elements only appear when there are multiple cards (delete)
   // or when modal is open (modal-close). Tests that need setup have a `setup` fn.
-  // Undo/redo intentionally yield their top-bar space on phone viewports and
-  // are covered by the narrow/Xiaomi visibility regression tests instead.
+  // Top-bar undo/redo yield their space on phones; equivalent history actions
+  // are available below each preview card.
   const touchElements = [
     { name: 'mode editor tab', selector: '#modeEditorTab' },
     { name: 'mode preview tab', selector: '#modePreviewTab' },
@@ -312,6 +312,8 @@ test.describe('P1-touch: 44×44 touch targets', () => {
     await switchToPreviewMode(page);
     const actions = [
       '#cardsArea [data-action="improve-ai"]',
+      '#cardsArea [data-action="undo-preview"]',
+      '#cardsArea [data-action="redo-preview"]',
       '#cardsArea [data-action="edit-preview"]',
       '#cardsArea [data-action="download"]',
       '#cardsArea [data-action="copy"]',
@@ -322,6 +324,44 @@ test.describe('P1-touch: 44×44 touch targets', () => {
       const minDim = Math.min(size.width, size.height);
       expect(minDim, `${sel}: ${size.width}×${size.height}`).toBeGreaterThanOrEqual(44);
     }
+
+    const aiAction = page.locator('#cardsArea [data-action="improve-ai"]').first();
+    const actionsPanel = page.locator('#cardsArea .card-actions').first();
+    await expect(aiAction).toContainText('Улучшить с ИИ');
+    const aiBox = await aiAction.boundingBox();
+    const actionsBox = await actionsPanel.boundingBox();
+    expect(aiBox).not.toBeNull();
+    expect(actionsBox).not.toBeNull();
+    expect(aiBox!.width).toBeGreaterThanOrEqual(actionsBox!.width - 1);
+
+    const secondary = await actionsPanel.locator('.btn-card-action:not(.btn-card-ai)').evaluateAll((buttons) =>
+      buttons.map((button) => {
+        const rect = button.getBoundingClientRect();
+        return { left: rect.left, right: rect.right };
+      }),
+    );
+    const secondaryLeft = Math.min(...secondary.map((rect) => rect.left));
+    const secondaryRight = Math.max(...secondary.map((rect) => rect.right));
+    const actionsCenter = actionsBox!.x + actionsBox!.width / 2;
+    expect(Math.abs((secondaryLeft + secondaryRight) / 2 - actionsCenter)).toBeLessThanOrEqual(2);
+  });
+
+  test('touch: preview undo and redo restore the latest mobile card edit', async ({ page }) => {
+    const title = page.locator('#editorCardsList [data-field="title"]').first();
+    await title.fill('Текст для истории');
+    await expect(page.locator('#cardsArea .card-title').first()).toHaveText('Текст для истории');
+    await page.waitForTimeout(800);
+    await switchToPreviewMode(page);
+
+    const undo = page.locator('#cardsArea [data-action="undo-preview"]').first();
+    await expect(undo).toBeEnabled();
+    await undo.click();
+    await expect(page.locator('#cardsArea .card-title')).toHaveCount(0);
+
+    const redo = page.locator('#cardsArea [data-action="redo-preview"]').first();
+    await expect(redo).toBeEnabled();
+    await redo.click();
+    await expect(page.locator('#cardsArea .card-title').first()).toHaveText('Текст для истории');
   });
 
   test('touch: modal close button >= 44×44 (when modal open)', async ({ page }) => {

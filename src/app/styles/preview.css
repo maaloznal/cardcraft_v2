@@ -24,6 +24,7 @@
 }
 .card-actions {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: 8px;
   width: 100%;
@@ -57,21 +58,83 @@
   transform: scale(0.97);
 }
 .cc-root button.btn-card-ai {
-  flex: 1 0 100%;
-  min-height: 44px;
+  flex: 0 0 auto;
+  width: 32px;
+  padding: 0;
+  position: relative;
   border-color: rgba(124, 58, 237, 0.3);
   color: #6d4aff;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(37, 99, 235, 0.08));
+  background: rgba(124, 58, 237, 0.08);
+}
+.btn-card-ai-label {
+  display: none;
+}
+.cc-root button.btn-card-history {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .cc-root button.btn-card-ai::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 7px);
+    z-index: 20;
+    width: max-content;
+    max-width: 150px;
+    padding: 5px 7px;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--r-sm);
+    background: var(--ui-surface);
+    color: var(--ui-text);
+    box-shadow: var(--sh-sm);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, 3px);
+    transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+  }
+  .cc-root button.btn-card-ai:hover::after,
+  .cc-root button.btn-card-ai:focus-visible::after {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 .cc-root button.btn-card-ai:hover {
   border-color: rgba(124, 58, 237, 0.55);
   color: #5b36db;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.16), rgba(37, 99, 235, 0.12));
+  background: rgba(124, 58, 237, 0.14);
 }
 .cc-root button.btn-card-ai:disabled {
   cursor: progress;
   opacity: 0.68;
   transform: none;
+}
+.cc-root button.btn-card-ai.is-loading svg {
+  animation: cardAiPulse 0.8s ease-in-out infinite alternate;
+}
+@keyframes cardAiPulse {
+  from { opacity: 0.45; transform: scale(0.84) rotate(-8deg); }
+  to { opacity: 1; transform: scale(1.08) rotate(8deg); }
+}
+@media (max-width: 1023px) {
+  .card-actions {
+    justify-content: center;
+  }
+  .cc-root button.btn-card-ai {
+    flex: 1 0 100%;
+    width: 100%;
+    min-height: 44px;
+    gap: 6px;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(37, 99, 235, 0.08));
+  }
+  .btn-card-ai-label {
+    display: inline;
+  }
+  .cc-root button.btn-card-history {
+    display: inline-flex;
+  }
 }
 
 /* ================= CARD (preview, exportable) ================= */

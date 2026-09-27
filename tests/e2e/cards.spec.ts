@@ -56,15 +56,21 @@ test.describe('Card operations', () => {
     expect(spacing.below).toBeGreaterThan(80);
   });
 
-  test('4aa. AI improvement is presented as a separate full-width card action', async ({ page }) => {
+  test('4aa. AI improvement is a compact action beside the other card actions', async ({ page }) => {
     const action = page.locator('#cardsArea .btn-card-ai').first();
     await expect(action).toBeVisible();
-    await expect(action).toContainText('Улучшить с ИИ');
+    await expect(action).toHaveAttribute('title', 'Улучшить с ИИ');
+    await expect(action).toHaveAttribute('data-tooltip', 'Улучшить с ИИ');
+    await expect(action.locator('.btn-card-ai-label')).toBeHidden();
     const actionBox = await action.boundingBox();
-    const actionsBox = await page.locator('#cardsArea .card-actions').first().boundingBox();
+    const editBox = await page.locator('#cardsArea [data-action="edit-preview"]').first().boundingBox();
     expect(actionBox).not.toBeNull();
-    expect(actionsBox).not.toBeNull();
-    expect(actionBox!.width).toBeGreaterThanOrEqual(actionsBox!.width - 1);
+    expect(editBox).not.toBeNull();
+    expect(actionBox!.width).toBeLessThanOrEqual(44);
+    expect(Math.abs(actionBox!.height - editBox!.height)).toBeLessThanOrEqual(1);
+    expect(Math.abs(actionBox!.y - editBox!.y)).toBeLessThanOrEqual(4);
+    await action.hover();
+    await expect.poll(() => action.evaluate((element) => getComputedStyle(element, '::after').opacity)).toBe('1');
 
     await action.click();
     await expect(page).toHaveURL(/\/login\/?\?mode=signup&next=\/editor$/);

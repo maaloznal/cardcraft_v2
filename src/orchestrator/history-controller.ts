@@ -22,6 +22,7 @@
  */
 
 import type { Snapshot } from '@/core/types';
+import { CONFIG } from '@/core/constants';
 import type { OrchestratorContext } from './types';
 
 export interface HistoryController {
@@ -36,11 +37,16 @@ export interface HistoryController {
 
 export function createHistoryController(ctx: OrchestratorContext): HistoryController {
   const { stateManager, historyManager, refs, uiState } = ctx;
+  let controlsTimer: ReturnType<typeof setTimeout> | null = null;
 
   /** Toggle the disabled state of #undoBtn / #redoBtn based on history stack pointers. */
   function updateUndoRedoButtons(): void {
     if (refs.undoBtn) refs.undoBtn.disabled = !historyManager.canUndo;
     if (refs.redoBtn) refs.redoBtn.disabled = !historyManager.canRedo;
+    document.querySelectorAll<HTMLButtonElement>('[data-action="undo-preview"]')
+      .forEach((button) => { button.disabled = !historyManager.canUndo; });
+    document.querySelectorAll<HTMLButtonElement>('[data-action="redo-preview"]')
+      .forEach((button) => { button.disabled = !historyManager.canRedo; });
   }
 
   /** Take a snapshot of current state and push it onto the undo stack immediately (clears redo). */
@@ -52,6 +58,11 @@ export function createHistoryController(ctx: OrchestratorContext): HistoryContro
   /** Debounced variant of pushHistory — merges rapid edits (e.g. typing) into one history entry. */
   function scheduleHistoryPush(): void {
     historyManager.schedulePush(stateManager.snapshot());
+    if (controlsTimer) clearTimeout(controlsTimer);
+    controlsTimer = setTimeout(() => {
+      controlsTimer = null;
+      updateUndoRedoButtons();
+    }, CONFIG.HISTORY_DEBOUNCE_MS + 10);
   }
 
   /**
@@ -101,6 +112,8 @@ export function createHistoryController(ctx: OrchestratorContext): HistoryContro
      * so the stack is shared across the controller's lifetime.
      */
     destroy() {
+      if (controlsTimer) clearTimeout(controlsTimer);
+      controlsTimer = null;
       /* historyManager.clear() is called separately by CardCraftApp.cleanup. */
     },
   };

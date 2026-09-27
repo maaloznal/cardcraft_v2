@@ -314,7 +314,10 @@
      viewport height and creates unwanted vertical scroll.
      top-bar (52 + safe-area-top) + switcher (44) of chrome above app-layout. */
   .app-layout {
-    min-height: calc(100dvh - var(--top-bar-height) - var(--safe-area-top, 0px) - var(--mobile-switcher-height));
+    flex: 0 0 calc(100dvh - var(--top-bar-height) - var(--safe-area-top, 0px) - var(--mobile-switcher-height));
+    height: calc(100dvh - var(--top-bar-height) - var(--safe-area-top, 0px) - var(--mobile-switcher-height));
+    min-height: 0;
+    max-height: calc(100dvh - var(--top-bar-height) - var(--safe-area-top, 0px) - var(--mobile-switcher-height));
   }
 
   /* Show the mobile mode switcher as a sticky bar between top-bar and app-layout.
@@ -415,6 +418,7 @@
   }
   .preview-workspace {
     width: 100%;
+    min-height: 0;
     overflow-y: auto;
   }
 
