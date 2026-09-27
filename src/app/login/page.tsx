@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Image from 'next/image'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -150,19 +149,7 @@ export default function LoginPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="max-w-md w-full p-8 border rounded-lg">
-          <h1 className="flex items-center justify-center gap-3 text-3xl font-bold text-center mb-4">
-            <Image
-              src={`${APP_BASE_PATH}/cardcraft-logo.png`}
-              width={48}
-              height={48}
-              alt=""
-              aria-hidden="true"
-              className="rounded-xl"
-              priority
-              unoptimized
-            />
-            Cardcraft
-          </h1>
+          <h1 className="text-3xl font-bold text-center mb-4">Cardcraft</h1>
           <div className="bg-amber-500/10 border border-amber-500 text-amber-700 dark:text-amber-400 px-4 py-3 rounded">
             Авторизация отключена: Supabase не настроен.
             Обратитесь к администратору.
@@ -187,17 +174,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="max-w-md w-full p-8">
-        <Link href="/" className="flex flex-col items-center gap-3 text-center text-3xl font-bold mb-8 hover:opacity-80">
-          <Image
-            src={`${APP_BASE_PATH}/cardcraft-logo.png`}
-            width={72}
-            height={72}
-            alt="Логотип Cardcraft"
-            className="rounded-2xl"
-            priority
-            unoptimized
-          />
-          <span>Cardcraft</span>
+        <Link href="/" className="block text-center text-3xl font-bold mb-8 hover:opacity-80">
+          Cardcraft
         </Link>
 
         {error && (

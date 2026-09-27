@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import { useLayoutEffect, useRef } from 'react';
 import { initCardCraftApp, THEME_GROUPS } from '@/orchestrator/CardCraftApp';
 import { AuthButton } from '@/auth/AuthButton';
@@ -15,7 +14,6 @@ import {
 import './card-constructor.css';
 
 const initCardConstructor = initCardCraftApp;
-const APP_BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
 const FORMATS = [
   { value: 'auto', label: 'Стандартный — 380×auto' },
@@ -95,16 +93,6 @@ export default function Home() {
             <PanelIcon />
           </button>
           <div className="brand">
-            <Image
-              className="brand-logo"
-              src={`${APP_BASE_PATH}/cardcraft-logo.png`}
-              width={32}
-              height={32}
-              alt=""
-              aria-hidden="true"
-              priority
-              unoptimized
-            />
             <span className="brand-name">Cardcraft</span>
             <span className="card-count-badge" id="cardCountBadge" aria-live="polite">
               1 карточка

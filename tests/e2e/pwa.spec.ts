@@ -42,7 +42,7 @@ test.describe('PWA installability assets', () => {
     }
   });
 
-  test('page exposes the project logo for browsers and Apple home screen', async ({ page }) => {
+  test('page exposes the project icon for browsers and Apple home screen', async ({ page }) => {
     await gotoApp(page);
 
     await expect(page.locator('link[rel="icon"][sizes="32x32"]')).toHaveAttribute('href', '/favicon-32.png');
@@ -50,6 +50,5 @@ test.describe('PWA installability assets', () => {
       'href',
       '/apple-touch-icon-180.png',
     );
-    await expect(page.locator('.brand-logo')).toBeVisible();
   });
 });

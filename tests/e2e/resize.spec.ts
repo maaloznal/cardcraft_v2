@@ -115,4 +115,22 @@ test.describe('P1-resize: desktop sidebar resize', () => {
     const width = await getSidebarWidth(page);
     expect(width).toBeGreaterThanOrEqual(395); // 400 - 5px tolerance
   });
+
+  test('resize-7: maximally expanded sidebar closes completely', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await gotoApp(page);
+    const sidebar = page.locator('#editorSidebar');
+    await expect(sidebar).not.toHaveClass(/\bcollapsed\b/);
+
+    await page.locator('#resizeDividerV').focus();
+    await page.keyboard.press('End');
+    await expect.poll(() => getSidebarWidth(page)).toBeGreaterThanOrEqual(395);
+
+    await page.locator('#toggleSidebarBtn').click();
+    await expect(sidebar).toHaveClass(/\bcollapsed\b/);
+    await expect.poll(async () => {
+      const box = await sidebar.boundingBox();
+      return box ? box.x + box.width : 0;
+    }).toBeLessThanOrEqual(1);
+  });
 });

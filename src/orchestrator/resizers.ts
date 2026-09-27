@@ -128,12 +128,20 @@ export class HorizontalResize {
     // when both pointerdown and mousedown fire for the same interaction.
     let dragSource: 'pointer' | 'mouse' | null = null;
 
+    const applySidebarWidth = (width: number): void => {
+      const cssWidth = `${width}px`;
+      sidebar.style.width = cssWidth;
+      // The collapsed offset must follow the user-resized width. A fixed
+      // -300px margin leaves part of a 300-400px sidebar visible.
+      sidebar.style.setProperty('--sidebar-width', cssWidth);
+    };
+
     // ─── Pointer Events (primary mechanism) ──────────────────────
     const onPointerMove = (e: PointerEvent): void => {
       if (!isDragging || dragSource !== 'pointer') return;
       const dx = e.clientX - startX;
       const newWidth = Math.min(Math.max(MIN_SIDEBAR_WIDTH, startWidth + dx), MAX_SIDEBAR_WIDTH);
-      sidebar.style.width = `${newWidth}px`;
+      applySidebarWidth(newWidth);
       sidebar.style.transition = 'none';
       updateAriaValue(newWidth);
     };
@@ -165,7 +173,7 @@ export class HorizontalResize {
       if (!isDragging || dragSource !== 'mouse') return;
       const dx = e.clientX - startX;
       const newWidth = Math.min(Math.max(MIN_SIDEBAR_WIDTH, startWidth + dx), MAX_SIDEBAR_WIDTH);
-      sidebar.style.width = `${newWidth}px`;
+      applySidebarWidth(newWidth);
       sidebar.style.transition = 'none';
       updateAriaValue(newWidth);
     };
@@ -219,7 +227,7 @@ export class HorizontalResize {
       if (saved) {
         const w = Number(saved);
         if (w >= MIN_SIDEBAR_WIDTH && w <= MAX_SIDEBAR_WIDTH) {
-          sidebar.style.width = `${w}px`;
+          applySidebarWidth(w);
         }
       }
     } catch {
@@ -233,13 +241,13 @@ export class HorizontalResize {
       if (e.key === 'ArrowLeft') delta = -10;
       else if (e.key === 'ArrowRight') delta = 10;
       else if (e.key === 'Home') {
-        sidebar.style.width = `${MIN_SIDEBAR_WIDTH}px`;
+        applySidebarWidth(MIN_SIDEBAR_WIDTH);
         sidebar.style.transition = 'none';
         updateAriaValue(MIN_SIDEBAR_WIDTH);
         e.preventDefault();
         return;
       } else if (e.key === 'End') {
-        sidebar.style.width = `${MAX_SIDEBAR_WIDTH}px`;
+        applySidebarWidth(MAX_SIDEBAR_WIDTH);
         sidebar.style.transition = 'none';
         updateAriaValue(MAX_SIDEBAR_WIDTH);
         e.preventDefault();
@@ -251,7 +259,7 @@ export class HorizontalResize {
         Math.max(MIN_SIDEBAR_WIDTH, currentWidth + delta),
         MAX_SIDEBAR_WIDTH,
       );
-      sidebar.style.width = `${newWidth}px`;
+      applySidebarWidth(newWidth);
       sidebar.style.transition = 'none';
       updateAriaValue(newWidth);
     };
@@ -267,7 +275,9 @@ export class HorizontalResize {
     divider.addEventListener('pointerdown', onPointerDown);
     divider.addEventListener('mousedown', onMouseDown);
     divider.addEventListener('keydown', onKeyDown);
-    updateAriaValue(sidebar.getBoundingClientRect().width);
+    const initialWidth = sidebar.getBoundingClientRect().width;
+    sidebar.style.setProperty('--sidebar-width', `${initialWidth}px`);
+    updateAriaValue(initialWidth);
 
     this.cleanup = (): void => {
       divider.removeEventListener('pointerdown', onPointerDown);

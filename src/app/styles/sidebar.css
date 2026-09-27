@@ -2,6 +2,7 @@
 
 /* ================= SIDEBAR ================= */
 .editor-sidebar {
+  --sidebar-width: 300px;
   width: 300px;
   flex-shrink: 0;
   background: var(--ui-surface);
@@ -16,7 +17,7 @@
   top: var(--top-bar-height);
 }
 .editor-sidebar.collapsed {
-  margin-left: -300px;
+  margin-left: calc(-1 * var(--sidebar-width));
 }
 
 /* Улучшение#1: Независимая прокрутка редактора карточек */
