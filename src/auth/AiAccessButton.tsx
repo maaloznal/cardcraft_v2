@@ -14,16 +14,14 @@ export function AiAccessButton({ mobile = false }: AiAccessButtonProps) {
   const id = mobile ? 'mobileAiImportBtn' : 'aiImportBtn'
   const label = authenticated
     ? 'Создать с ИИ'
-    : mobile
-      ? 'Войти для ИИ'
-      : 'Войти / зарегистрироваться для ИИ'
+    : 'ИИ после входа'
   const description = authenticated
     ? 'Создать карточки с помощью ИИ'
-    : 'Войти или зарегистрироваться для работы с ИИ'
+    : 'Войдите — ИИ-инструменты и 50 000 токенов доступны после бесплатной регистрации'
 
   return (
     <button
-      className={mobile ? 'mobile-mode-tab mobile-ai-import' : 'btn-ai-import'}
+      className={`${mobile ? 'mobile-mode-tab mobile-ai-import' : 'btn-ai-import'}${authenticated ? '' : ' ai-access-locked'}`}
       id={id}
       aria-label={description}
       title={description}
@@ -32,7 +30,7 @@ export function AiAccessButton({ mobile = false }: AiAccessButtonProps) {
       data-ai-access={authenticated ? 'granted' : 'denied'}
       onClick={(event) => {
         if (!loading && event.currentTarget.dataset.aiAccess !== 'granted') {
-          router.push('/login?mode=signup')
+          router.push('/login?mode=signup&next=/editor')
         }
       }}
     >
@@ -42,6 +40,7 @@ export function AiAccessButton({ mobile = false }: AiAccessButtonProps) {
         <path d="m5.5 14-.7 1.8-1.8.7 1.8.7.7 1.8.7-1.8 1.8-.7-1.8-.7-.7-1.8Z" />
       </svg>
       <span>{loading ? 'Проверяем вход…' : label}</span>
+      {!authenticated && !loading && <span className="ai-access-lock" aria-hidden="true">↗</span>}
     </button>
   )
 }

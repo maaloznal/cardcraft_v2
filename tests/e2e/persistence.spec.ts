@@ -100,8 +100,9 @@ test.describe('Persistence', () => {
 test('cards survive a real page reload and completed desktop cards start collapsed', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('flashcard-onboarding-seen', '1');
+    localStorage.setItem('cardcraft-e2e-project-bypass', '1');
   });
-  await page.goto('/');
+  await page.goto('/editor/');
   const firstCard = page.locator('#editorCardsList .card-editor-block').first();
   await firstCard.locator('[data-field="title"]').fill('Карточка после перезагрузки');
   await expect.poll(async () => page.evaluate(() => {

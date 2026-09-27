@@ -125,6 +125,10 @@ Deno.serve(async (request: Request) => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
   if (request.method !== 'POST') return json({ error: 'Метод не поддерживается.' }, 405, cors);
 
+  let admin = null;
+  let reservedUserId = '';
+  let reservedRequestId = '';
+  let reservationActive = false;
   try {
     const authHeader = request.headers.get('authorization');
     const token = authHeader?.replace(/^Bearer\s+/i, '');
@@ -152,22 +156,31 @@ Deno.serve(async (request: Request) => {
       return json({ error: 'Некорректный идентификатор запроса.' }, 400, cors);
     }
 
-    const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
-    const dailyLimit = Math.min(100, Math.max(1, Number(Deno.env.get('AI_DAILY_REQUEST_LIMIT') || 20)));
-    const { data: claim, error: claimError } = await admin.rpc('claim_ai_request', {
-      p_user_id: userData.user.id,
-      p_request_id: requestId,
-      p_daily_limit: dailyLimit,
-    });
-    if (claimError) throw new Error('rate_limit_unavailable');
-    if (claim === 'duplicate') return json({ error: 'Этот запрос уже был обработан.' }, 409, cors);
-    if (claim === 'limit') return json({ error: 'Дневной лимит ИИ-запросов исчерпан.' }, 429, cors);
-
     const apiKey = Deno.env.get('AI_API_KEY');
     const baseUrl = Deno.env.get('AI_BASE_URL');
     const model = Deno.env.get('AI_MODEL');
     const reasoningEnabled = readBooleanSecret('AI_REASONING_ENABLED');
     if (!apiKey || !baseUrl || !model || !/^https:\/\//i.test(baseUrl)) throw new Error('ai_not_configured');
+
+    admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+    const dailyLimit = Math.min(100, Math.max(1, Number(Deno.env.get('AI_DAILY_REQUEST_LIMIT') || 20)));
+    const reservedTokens = Math.min(30_000, Math.max(1_000,
+      Math.ceil(text.length * 1.5) + (reasoningEnabled ? 5_000 : 1_000)));
+    const { data: claim, error: claimError } = await admin.rpc('reserve_ai_request', {
+      p_user_id: userData.user.id,
+      p_request_id: requestId,
+      p_daily_limit: dailyLimit,
+      p_reserved_tokens: reservedTokens,
+    });
+    if (claimError) throw new Error('rate_limit_unavailable');
+    const claimStatus = claim?.status;
+    if (claimStatus === 'duplicate') return json({ error: 'Этот запрос уже был обработан.' }, 409, cors);
+    if (claimStatus === 'limit') return json({ error: 'Дневной лимит ИИ-запросов исчерпан.' }, 429, cors);
+    if (claimStatus === 'insufficient') return json({ error: 'Недостаточно токенов для этого запроса.', tokenBalance: claim?.balance ?? 0 }, 402, cors);
+    if (claimStatus !== 'accepted') throw new Error('rate_limit_unavailable');
+    reservedUserId = userData.user.id;
+    reservedRequestId = requestId;
+    reservationActive = true;
     const segments = segmentText(text, targetChars);
     const userPayload = JSON.stringify({ mode, role, targetChars, segments });
     const abort = new AbortController();
@@ -196,9 +209,39 @@ Deno.serve(async (request: Request) => {
     const providerBody = await providerResponse.json();
     const parsed = parseModelJson(providerBody?.choices?.[0]?.message?.content);
     const cards = validateCards(parsed, segments.map((segment) => segment.id), targetChars);
-    await admin.from('ai_requests').update({ status: 'completed' }).eq('request_id', requestId);
-    return json({ version: 1, mode, role, targetChars, cards }, 200, cors);
+    const reportedTokens = Number(providerBody?.usage?.total_tokens);
+    const fallbackTokens = Math.ceil((userPayload.length + JSON.stringify(parsed).length) / 3);
+    const consumedTokens = Number.isFinite(reportedTokens) && reportedTokens >= 0
+      ? Math.ceil(reportedTokens)
+      : fallbackTokens;
+    const { data: finalized, error: finalizeError } = await admin.rpc('finalize_ai_request', {
+      p_user_id: userData.user.id,
+      p_request_id: requestId,
+      p_consumed_tokens: consumedTokens,
+    });
+    if (finalizeError) throw new Error('usage_finalize_failed');
+    reservationActive = false;
+    return json({
+      version: 1,
+      mode,
+      role,
+      targetChars,
+      cards,
+      usage: { totalTokens: consumedTokens, tokenBalance: Number(finalized?.balance ?? 0) },
+    }, 200, cors);
   } catch (error) {
+    if (reservationActive && admin && reservedUserId && reservedRequestId) {
+      try {
+        await admin.rpc('release_ai_request', {
+          p_user_id: reservedUserId,
+          p_request_id: reservedRequestId,
+        });
+      } catch {
+        // The original request error remains authoritative. A pending row can
+        // be reconciled by an operator without exposing balance writes client-side.
+      }
+      reservationActive = false;
+    }
     const message = error instanceof Error ? error.message : '';
     if (message === 'ai_not_configured' || message === 'server_not_configured') {
       return json({ error: 'ИИ-функция ещё не настроена владельцем.' }, 503, cors);

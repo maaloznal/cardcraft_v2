@@ -7,13 +7,14 @@ export const dynamic = 'force-static';
 
 export default function manifest(): MetadataRoute.Manifest {
   const appRoot = `${APP_BASE_PATH}/`;
+  const editorRoot = `${APP_BASE_PATH}/editor/`;
 
   return {
     id: appRoot,
     name: 'Cardcraft — конструктор карточек',
     short_name: 'Cardcraft',
     description: 'Создание, оформление и экспорт текстовых карточек для социальных сетей.',
-    start_url: appRoot,
+    start_url: editorRoot,
     scope: appRoot,
     display: 'standalone',
     background_color: '#f7f7f8',

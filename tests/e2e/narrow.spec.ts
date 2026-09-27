@@ -39,11 +39,10 @@ test.describe('Narrow phone (320×568)', () => {
     await expect(page.locator('#redoBtn')).not.toBeVisible();
   });
 
-  test('B5: brand name still visible', async ({ page }) => {
-    const brand = page.locator('.brand-name');
-    await expect(brand).toBeVisible();
-    const text = await brand.textContent();
-    expect(text).toContain('Cardcraft');
+  test('B5: project switcher remains visible', async ({ page }) => {
+    const switcher = page.locator('.project-badge');
+    await expect(switcher).toBeVisible();
+    await expect(switcher).toContainText('Локальный черновик');
   });
 
   test('B6: no element exceeds viewport width (excluding off-screen sidebar)', async ({ page }) => {

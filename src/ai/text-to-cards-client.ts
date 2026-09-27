@@ -54,5 +54,9 @@ export async function requestTextCards(
   if (!response.ok) {
     throw new Error(typeof body?.error === 'string' ? body.error : 'Не удалось обработать текст.');
   }
-  return parseAiCardsResponse(body);
+  const result = parseAiCardsResponse(body);
+  if (result.usage) {
+    window.dispatchEvent(new CustomEvent('cardcraft:tokens-updated', { detail: result.usage }));
+  }
+  return result;
 }

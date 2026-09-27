@@ -17,8 +17,11 @@ test.describe('Application color theme', () => {
   });
 
   test('persists dark mode across reload without changing the card theme', async ({ page }) => {
-    await page.addInitScript(() => localStorage.setItem('flashcard-onboarding-seen', '1'));
-    await page.goto('/');
+    await page.addInitScript(() => {
+      localStorage.setItem('flashcard-onboarding-seen', '1');
+      localStorage.setItem('cardcraft-e2e-project-bypass', '1');
+    });
+    await page.goto('/editor/');
     await expect(page.locator('#cardsArea .card')).toHaveCount(1);
     const card = page.locator('#cardsArea .card').first();
     const beforeTheme = await card.getAttribute('data-theme');

@@ -4,7 +4,7 @@ import { useAuth } from './AuthProvider'
 import Link from 'next/link'
 
 export function AuthButton() {
-  const { user, loading, signOut, enabled } = useAuth()
+  const { user, loading, enabled } = useAuth()
 
   if (!enabled) {
     return null
@@ -22,25 +22,23 @@ export function AuthButton() {
 
   if (user) {
     return (
-      <button
+      <Link
+        href="/account"
         className="btn-icon top-bar-btn"
-        onClick={signOut}
-        title="Выйти"
-        aria-label="Выйти"
-        type="button"
+        title="Личный кабинет"
+        aria-label="Личный кабинет"
       >
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-          <polyline points="16 17 21 12 16 7"/>
-          <line x1="21" y1="12" x2="9" y2="12"/>
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 21a8 8 0 0 1 16 0" />
         </svg>
-      </button>
+      </Link>
     )
   }
 
   return (
     <Link
-      href="/login"
+      href="/login?next=/editor"
       className="btn-icon top-bar-btn"
       title="Войти"
       aria-label="Войти"

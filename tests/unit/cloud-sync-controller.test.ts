@@ -20,7 +20,7 @@ const mocks = vi.hoisted(() => {
     channelFactory: vi.fn(() => channel),
     removeChannel: vi.fn().mockResolvedValue('ok'),
     unsubscribe: vi.fn(),
-    getDefaultProject: vi.fn(() => new Promise<never>(() => undefined)),
+    getProject: vi.fn(() => new Promise<never>(() => undefined)),
   };
 });
 
@@ -38,9 +38,7 @@ vi.mock('@/lib/supabase/client', () => ({
 }));
 
 vi.mock('@/lib/sync/cloudSync', () => ({
-  DEFAULT_PROJECT_NAME: 'default',
-  getDefaultProject: mocks.getDefaultProject,
-  insertDefaultProject: vi.fn(),
+  getProject: mocks.getProject,
   updateProject: vi.fn(),
 }));
 
@@ -81,11 +79,14 @@ describe('CloudSyncController auth lifecycle', () => {
     const session = {
       user: { id: 'user-pending', email: 'pending@example.com' },
     } as unknown as Session;
+    localStorage.setItem('cardcraft-active-project-v1', JSON.stringify({
+      id: 'project-pending', name: 'Project', ownerId: 'user-pending', remote: true,
+    }));
 
     mocks.getAuthCallback()?.('SIGNED_IN', session);
     controller.scheduleCloudPush();
 
-    expect(localStorage.getItem('flashcard-cloud-sync-dirty-user')).toBe('user-pending');
+    expect(localStorage.getItem('flashcard-cloud-sync-dirty-user')).toContain('user-pending:project-pending');
     controller.destroy();
   });
 

@@ -18,8 +18,11 @@ export async function gotoApp(page: Page): Promise<void> {
     sessionStorage.clear();
     // P22: dismiss onboarding overlay so it doesn't intercept clicks in tests
     localStorage.setItem('flashcard-onboarding-seen', '1');
+    // Project creation has its own dedicated tests. Existing editor suites use
+    // the legacy unscoped storage keys so their assertions stay focused.
+    localStorage.setItem('cardcraft-e2e-project-bypass', '1');
   });
-  await page.goto('/');
+  await page.goto('/editor/');
   // Wait for init — at least 1 card in editor + preview
   await expect
     .poll(() => page.locator('#cardsArea .card-wrapper, #editorCardsList .card-editor-block').count())

@@ -322,6 +322,7 @@ export function bindSidebarEvents(ctx: OrchestratorContext): void {
 
   // Save on unload (synchronous, no debounce)
   window.addEventListener('beforeunload', storage.saveOnUnload);
+  window.addEventListener('cardcraft:before-project-switch', storage.saveOnUnload);
 }
 
 /* ─── bindEditorEvents ───────────────────────────────────────── */
@@ -638,5 +639,6 @@ export function bindAll(ctx: OrchestratorContext): () => void {
   return () => {
     ctx.listeners.destroy();
     window.removeEventListener('beforeunload', ctx.storage.saveOnUnload);
+    window.removeEventListener('cardcraft:before-project-switch', ctx.storage.saveOnUnload);
   };
 }

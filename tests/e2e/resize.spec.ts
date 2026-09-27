@@ -40,8 +40,9 @@ test.describe('P1-resize: desktop sidebar resize', () => {
     const page = await context.newPage();
     await page.addInitScript(() => {
       localStorage.setItem('flashcard-onboarding-seen', '1');
+      localStorage.setItem('cardcraft-e2e-project-bypass', '1');
     });
-    await page.goto('/');
+    await page.goto('/editor/');
     await expect.poll(() => page.locator('#editorCardsList .card-editor-block').count()).toBeGreaterThanOrEqual(1);
     await expect(page.locator('#editorSidebar')).not.toHaveClass(/\bcollapsed\b/);
 

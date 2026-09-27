@@ -4,10 +4,11 @@ import { gotoApp } from './helpers';
 test('AI creation requires authentication', async ({ page }) => {
   await gotoApp(page);
   const button = page.locator('#aiImportBtn');
-  await expect(button).toContainText('Войти / зарегистрироваться для ИИ');
+  await expect(button).toContainText('ИИ после входа');
+  await expect(button).toHaveAttribute('title', /50 000 токенов/);
   await expect(button).toHaveAttribute('data-ai-access', 'denied');
   await button.click();
-  await expect(page).toHaveURL(/\/login\/?\?mode=signup$/);
+  await expect(page).toHaveURL(/\/login\/?\?mode=signup&next=\/editor$/);
   const authDisabledNotice = page.locator('.bg-amber-500\\/10');
   if (await authDisabledNotice.isVisible()) {
     await expect(authDisabledNotice).toBeVisible();

@@ -19,9 +19,10 @@ test.describe('P22: Onboarding', () => {
     await page.addInitScript(() => {
       localStorage.clear();
       sessionStorage.clear();
+      localStorage.setItem('cardcraft-e2e-project-bypass', '1');
       // Do NOT set onboarding-seen flag — simulate first visit
     });
-    await page.goto('/');
+    await page.goto('/editor/');
     await page.waitForTimeout(2000);
     await expect(page.locator('#onboardingOverlay')).toHaveClass(/active/);
   });
@@ -30,8 +31,9 @@ test.describe('P22: Onboarding', () => {
     await page.addInitScript(() => {
       localStorage.clear();
       sessionStorage.clear();
+      localStorage.setItem('cardcraft-e2e-project-bypass', '1');
     });
-    await page.goto('/');
+    await page.goto('/editor/');
     await page.waitForTimeout(2000);
     // Skip onboarding
     await page.locator('#closeOnboardingBtn').click();
@@ -46,13 +48,14 @@ test.describe('P22: Onboarding', () => {
   test('onboarding does NOT show on reload after Skip', async ({ page }) => {
     // Use a fresh context (no addInitScript) so reload preserves localStorage
     // Clear storage on first load, then test persistence
-    await page.goto('/');
+    await page.goto('/editor/');
     await page.evaluate(() => {
       localStorage.clear();
       sessionStorage.clear();
+      localStorage.setItem('cardcraft-e2e-project-bypass', '1');
     });
     // Reload to apply cleared storage (app boots fresh)
-    await page.goto('/');
+    await page.goto('/editor/');
     await page.waitForTimeout(2000);
     // Onboarding should show (first visit)
     await expect(page.locator('#onboardingOverlay')).toHaveClass(/active/);
@@ -62,7 +65,7 @@ test.describe('P22: Onboarding', () => {
     // Navigate again (not reload — goto triggers full load but preserves localStorage)
     // Use evaluate to set flag explicitly (Skip already sets it, but addInitScript is not used here)
     await page.evaluate(() => localStorage.setItem('flashcard-onboarding-seen', '1'));
-    await page.goto('/');
+    await page.goto('/editor/');
     await page.waitForTimeout(2000);
     // Onboarding should NOT show (flag is set, no initScript to clear it)
     await expect(page.locator('#onboardingOverlay')).not.toHaveClass(/active/);
@@ -72,8 +75,9 @@ test.describe('P22: Onboarding', () => {
     await page.addInitScript(() => {
       localStorage.clear();
       sessionStorage.clear();
+      localStorage.setItem('cardcraft-e2e-project-bypass', '1');
     });
-    await page.goto('/');
+    await page.goto('/editor/');
     await page.waitForTimeout(2000);
     await page.locator('#onboardingStartBtn').click();
     await page.waitForTimeout(500);
@@ -88,8 +92,9 @@ test.describe('P22: Onboarding', () => {
       localStorage.clear();
       sessionStorage.clear();
       localStorage.setItem('flashcard-onboarding-seen', '1');
+      localStorage.setItem('cardcraft-e2e-project-bypass', '1');
     });
-    await page.goto('/');
+    await page.goto('/editor/');
     await page.waitForTimeout(2000);
     // Onboarding should NOT be visible
     await expect(page.locator('#onboardingOverlay')).not.toHaveClass(/active/);
@@ -114,8 +119,9 @@ test.describe('P23: Shortcuts panel', () => {
       localStorage.clear();
       sessionStorage.clear();
       localStorage.setItem('flashcard-onboarding-seen', '1');
+      localStorage.setItem('cardcraft-e2e-project-bypass', '1');
     });
-    await page.goto('/');
+    await page.goto('/editor/');
     await page.waitForTimeout(2000);
   });
 

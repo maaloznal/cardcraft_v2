@@ -34,6 +34,10 @@ export interface AiCardsResponse {
   role: AiRole;
   targetChars: number;
   cards: AiCardDraft[];
+  usage?: {
+    totalTokens: number;
+    tokenBalance: number;
+  };
 }
 
 const FIELD_LIMITS: Record<keyof AiCardDraft, number> = {
@@ -90,7 +94,16 @@ export function parseAiCardsResponse(value: unknown): AiCardsResponse {
     }
     return card;
   });
-  return { version: 1, mode: input.mode, role: input.role, targetChars, cards };
+  let usage: AiCardsResponse['usage'];
+  if (input.usage && typeof input.usage === 'object') {
+    const rawUsage = input.usage as Record<string, unknown>;
+    const totalTokens = Number(rawUsage.totalTokens);
+    const tokenBalance = Number(rawUsage.tokenBalance);
+    if (Number.isFinite(totalTokens) && totalTokens >= 0 && Number.isFinite(tokenBalance) && tokenBalance >= 0) {
+      usage = { totalTokens, tokenBalance };
+    }
+  }
+  return { version: 1, mode: input.mode, role: input.role, targetChars, cards, ...(usage ? { usage } : {}) };
 }
 
 export function aiDraftToCard(draft: AiCardDraft, theme?: string): Card {

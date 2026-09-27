@@ -15,6 +15,7 @@ import {
   MAX_CHAR_LIMIT,
 } from '../core/constants';
 import { THEME_GROUPS } from '../themes/themeData';
+import { PROJECT_STATE_KEYS, projectStorageKey } from '../projects/project-storage';
 
 const VALID_THEME_VALUES = [
   ...new Set([
@@ -40,6 +41,12 @@ const KEYS = {
   AI_IMPORT_PREFS: 'flashcard-ai-import-prefs',
   CLOUD_SYNC_DIRTY_USER: 'flashcard-cloud-sync-dirty-user',
 } as const;
+
+const PROJECT_STATE_KEY_SET = new Set<string>(PROJECT_STATE_KEYS);
+
+function storageKey(key: string): string {
+  return PROJECT_STATE_KEY_SET.has(key) ? projectStorageKey(key) : key;
+}
 
 export interface AiImportPreferences {
   role?: string;
@@ -81,20 +88,20 @@ export function save(state: Partial<SavedState>): void {
         if (!out.theme) delete out.theme;
         return out;
       });
-      localStorage.setItem(KEYS.CARDS, JSON.stringify(cleaned));
+      localStorage.setItem(storageKey(KEYS.CARDS), JSON.stringify(cleaned));
     }
-    if (state.theme !== undefined) localStorage.setItem(KEYS.THEME, state.theme);
-    if (state.format !== undefined) localStorage.setItem(KEYS.FORMAT, state.format);
-    if (state.showCardNumbers !== undefined) localStorage.setItem(KEYS.SHOW_NUMBERS, String(state.showCardNumbers));
-    if (state.showProgressBar !== undefined) localStorage.setItem(KEYS.SHOW_PROGRESS, String(state.showProgressBar));
-    if (state.progressBarStyle !== undefined) localStorage.setItem(KEYS.PROGRESS_STYLE, state.progressBarStyle);
-    if (state.listStyleType !== undefined) localStorage.setItem(KEYS.LIST_STYLE, state.listStyleType);
-    if (state.gradientAngle !== undefined) localStorage.setItem(KEYS.GRADIENT_ANGLE, String(state.gradientAngle));
-    if (state.charLimitEnabled !== undefined) localStorage.setItem(KEYS.CHAR_LIMIT, String(state.charLimitEnabled));
-    if (state.charLimit !== undefined) localStorage.setItem(KEYS.CHAR_LIMIT_VALUE, String(state.charLimit));
-    if (state.sidebarWidth !== undefined && state.sidebarWidth !== null) localStorage.setItem(KEYS.SIDEBAR_WIDTH, String(state.sidebarWidth));
-    if (state.headerHeight !== undefined && state.headerHeight !== null) localStorage.setItem(KEYS.HEADER_HEIGHT, String(state.headerHeight));
-    if (state.exportQuality !== undefined) localStorage.setItem(KEYS.EXPORT_QUALITY, state.exportQuality);
+    if (state.theme !== undefined) localStorage.setItem(storageKey(KEYS.THEME), state.theme);
+    if (state.format !== undefined) localStorage.setItem(storageKey(KEYS.FORMAT), state.format);
+    if (state.showCardNumbers !== undefined) localStorage.setItem(storageKey(KEYS.SHOW_NUMBERS), String(state.showCardNumbers));
+    if (state.showProgressBar !== undefined) localStorage.setItem(storageKey(KEYS.SHOW_PROGRESS), String(state.showProgressBar));
+    if (state.progressBarStyle !== undefined) localStorage.setItem(storageKey(KEYS.PROGRESS_STYLE), state.progressBarStyle);
+    if (state.listStyleType !== undefined) localStorage.setItem(storageKey(KEYS.LIST_STYLE), state.listStyleType);
+    if (state.gradientAngle !== undefined) localStorage.setItem(storageKey(KEYS.GRADIENT_ANGLE), String(state.gradientAngle));
+    if (state.charLimitEnabled !== undefined) localStorage.setItem(storageKey(KEYS.CHAR_LIMIT), String(state.charLimitEnabled));
+    if (state.charLimit !== undefined) localStorage.setItem(storageKey(KEYS.CHAR_LIMIT_VALUE), String(state.charLimit));
+    if (state.sidebarWidth !== undefined && state.sidebarWidth !== null) localStorage.setItem(storageKey(KEYS.SIDEBAR_WIDTH), String(state.sidebarWidth));
+    if (state.headerHeight !== undefined && state.headerHeight !== null) localStorage.setItem(storageKey(KEYS.HEADER_HEIGHT), String(state.headerHeight));
+    if (state.exportQuality !== undefined) localStorage.setItem(storageKey(KEYS.EXPORT_QUALITY), state.exportQuality);
   } catch (e) {
     const err = e as Error;
     if (err.name === 'QuotaExceededError') {
@@ -114,7 +121,7 @@ export function save(state: Partial<SavedState>): void {
 export function load(): Partial<SavedState> {
   const result: Partial<SavedState> = {};
 
-  const savedCards = localStorage.getItem(KEYS.CARDS);
+  const savedCards = localStorage.getItem(storageKey(KEYS.CARDS));
   if (savedCards) {
     try {
       const parsed = JSON.parse(savedCards) as Card[];
@@ -123,52 +130,52 @@ export function load(): Partial<SavedState> {
       }
     } catch {
       // Corrupted — clear and continue
-      localStorage.removeItem(KEYS.CARDS);
-      localStorage.removeItem(KEYS.THEME);
-      localStorage.removeItem(KEYS.FORMAT);
+      localStorage.removeItem(storageKey(KEYS.CARDS));
+      localStorage.removeItem(storageKey(KEYS.THEME));
+      localStorage.removeItem(storageKey(KEYS.FORMAT));
     }
   }
 
-  const theme = localStorage.getItem(KEYS.THEME);
+  const theme = localStorage.getItem(storageKey(KEYS.THEME));
   if (theme && isValidTheme(theme, VALID_THEME_VALUES)) {
     result.theme = theme;
   }
 
-  const format = localStorage.getItem(KEYS.FORMAT);
+  const format = localStorage.getItem(storageKey(KEYS.FORMAT));
   if (format && isValidFormat(format, ALLOWED_FORMATS)) {
     result.format = format;
   }
 
-  const showNumbers = localStorage.getItem(KEYS.SHOW_NUMBERS);
+  const showNumbers = localStorage.getItem(storageKey(KEYS.SHOW_NUMBERS));
   if (showNumbers !== null) result.showCardNumbers = showNumbers === 'true';
 
-  const showProgress = localStorage.getItem(KEYS.SHOW_PROGRESS);
+  const showProgress = localStorage.getItem(storageKey(KEYS.SHOW_PROGRESS));
   if (showProgress !== null) result.showProgressBar = showProgress === 'true';
 
-  const progressStyle = localStorage.getItem(KEYS.PROGRESS_STYLE);
+  const progressStyle = localStorage.getItem(storageKey(KEYS.PROGRESS_STYLE));
   if (progressStyle) result.progressBarStyle = progressStyle;
 
-  const listStyle = localStorage.getItem(KEYS.LIST_STYLE);
+  const listStyle = localStorage.getItem(storageKey(KEYS.LIST_STYLE));
   if (listStyle) result.listStyleType = listStyle;
 
-  const gradientAngle = localStorage.getItem(KEYS.GRADIENT_ANGLE);
+  const gradientAngle = localStorage.getItem(storageKey(KEYS.GRADIENT_ANGLE));
   if (gradientAngle) result.gradientAngle = Number(gradientAngle) || 135;
 
-  const charLimit = localStorage.getItem(KEYS.CHAR_LIMIT);
+  const charLimit = localStorage.getItem(storageKey(KEYS.CHAR_LIMIT));
   if (charLimit !== null) result.charLimitEnabled = charLimit === 'true';
 
-  const charLimitValue = Number(localStorage.getItem(KEYS.CHAR_LIMIT_VALUE));
+  const charLimitValue = Number(localStorage.getItem(storageKey(KEYS.CHAR_LIMIT_VALUE)));
   result.charLimit = Number.isFinite(charLimitValue) && charLimitValue >= MIN_CHAR_LIMIT
     ? Math.min(MAX_CHAR_LIMIT, Math.round(charLimitValue))
     : DEFAULT_CHAR_LIMIT;
 
-  const sidebarWidth = localStorage.getItem(KEYS.SIDEBAR_WIDTH);
+  const sidebarWidth = localStorage.getItem(storageKey(KEYS.SIDEBAR_WIDTH));
   if (sidebarWidth) result.sidebarWidth = Number(sidebarWidth);
 
-  const headerHeight = localStorage.getItem(KEYS.HEADER_HEIGHT);
+  const headerHeight = localStorage.getItem(storageKey(KEYS.HEADER_HEIGHT));
   if (headerHeight) result.headerHeight = Number(headerHeight);
 
-  const exportQuality = localStorage.getItem(KEYS.EXPORT_QUALITY);
+  const exportQuality = localStorage.getItem(storageKey(KEYS.EXPORT_QUALITY));
   // P-EXPORT-Q: sanitize-on-load — a corrupted/garbage value falls back to the
   // default (x3) instead of producing a wrong-resolution PNG. Existing users
   // without the key get the default too (no migration breakage).
@@ -183,7 +190,7 @@ export function load(): Partial<SavedState> {
 
 /** Remove every cardcraft-related key from localStorage (used by 'delete all' + reset flows). */
 export function clear(): void {
-  Object.values(KEYS).forEach((key) => localStorage.removeItem(key));
+  Object.values(KEYS).forEach((key) => localStorage.removeItem(storageKey(key)));
 }
 
 export function saveAiImportPreferences(preferences: AiImportPreferences): void {
@@ -202,20 +209,39 @@ export function loadAiImportPreferences(): AiImportPreferences {
   }
 }
 
-/** Remember that a signed-in user's latest local save has not reached Supabase yet. */
-export function markCloudSyncDirty(userId: string): void {
-  localStorage.setItem(KEYS.CLOUD_SYNC_DIRTY_USER, userId);
+/** Remember which project has local changes that have not reached Supabase yet. */
+export function markCloudSyncDirty(userId: string, projectId: string): void {
+  const key = `${userId}:${projectId}`;
+  const pending = readCloudSyncDirtyProjects();
+  pending.add(key);
+  localStorage.setItem(KEYS.CLOUD_SYNC_DIRTY_USER, JSON.stringify([...pending]));
 }
 
-/** Clear the pending-sync marker only for the user whose push succeeded. */
-export function markCloudSyncClean(userId: string): void {
-  if (localStorage.getItem(KEYS.CLOUD_SYNC_DIRTY_USER) === userId) {
+/** Clear the pending-sync marker only for the project whose push succeeded. */
+export function markCloudSyncClean(userId: string, projectId: string): void {
+  const pending = readCloudSyncDirtyProjects();
+  pending.delete(`${userId}:${projectId}`);
+  if (pending.size === 0) {
     localStorage.removeItem(KEYS.CLOUD_SYNC_DIRTY_USER);
+  } else {
+    localStorage.setItem(KEYS.CLOUD_SYNC_DIRTY_USER, JSON.stringify([...pending]));
   }
 }
 
-export function getCloudSyncDirtyUser(): string | null {
-  return localStorage.getItem(KEYS.CLOUD_SYNC_DIRTY_USER);
+export function isCloudSyncDirty(userId: string, projectId: string): boolean {
+  return readCloudSyncDirtyProjects().has(`${userId}:${projectId}`);
+}
+
+function readCloudSyncDirtyProjects(): Set<string> {
+  const raw = localStorage.getItem(KEYS.CLOUD_SYNC_DIRTY_USER);
+  if (!raw) return new Set();
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return new Set(Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === 'string') : []);
+  } catch {
+    // Compatibility with the old single-value marker.
+    return new Set([raw]);
+  }
 }
 
 /** Migrate old card format to current structure */

@@ -9,6 +9,12 @@ import { useAuth } from '@/auth/AuthProvider'
 type Mode = 'login' | 'register'
 const APP_BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
 
+function getSafeNextPath(): '/' | '/editor' | '/account' {
+  if (typeof window === 'undefined') return '/editor'
+  const value = new URLSearchParams(window.location.search).get('next')
+  return value === '/' || value === '/account' || value === '/editor' ? value : '/editor'
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
@@ -33,7 +39,7 @@ export default function LoginPage() {
   // Already logged in → redirect to home
   useEffect(() => {
     if (!authLoading && user) {
-      router.replace('/')
+      router.replace(getSafeNextPath())
     }
   }, [user, authLoading, router])
 
@@ -65,7 +71,8 @@ export default function LoginPage() {
       // in Supabase's uri_allow_list and falls back to site_url → 404.
       // Using `window.location.origin + window.location.pathname` keeps the
       // basePath segment so the redirect target matches the allow_list entry.
-      const redirectTo = `${window.location.origin}${APP_BASE_PATH}/`
+      const nextPath = getSafeNextPath()
+      const redirectTo = `${window.location.origin}${APP_BASE_PATH}${nextPath === '/' ? '/' : `${nextPath}/`}`
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo },
@@ -110,7 +117,7 @@ export default function LoginPage() {
           throw error
         }
         // Success — AuthProvider will pick up session; redirect
-        router.push('/')
+        router.push(getSafeNextPath())
         router.refresh()
       } else {
         // Register
@@ -133,7 +140,7 @@ export default function LoginPage() {
           setPassword('')
         } else if (data.session) {
           // Auto-confirmed (email confirmation disabled) → redirect
-          router.push('/')
+          router.push(getSafeNextPath())
           router.refresh()
         }
       }
@@ -154,8 +161,8 @@ export default function LoginPage() {
             Авторизация отключена: Supabase не настроен.
             Обратитесь к администратору.
           </div>
-          <Link href="/" className="block text-center mt-6 text-sm underline">
-            ← На главную
+          <Link href="/editor" className="block text-center mt-6 text-sm underline">
+            ← В редактор
           </Link>
         </div>
       </div>
@@ -177,6 +184,10 @@ export default function LoginPage() {
         <Link href="/" className="block text-center text-3xl font-bold mb-8 hover:opacity-80">
           Cardcraft
         </Link>
+
+        <p className="text-center text-sm text-muted-foreground -mt-5 mb-7">
+          Проекты в облаке и 50 000 токенов для ИИ после регистрации
+        </p>
 
         {error && (
           <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded mb-4 text-sm">

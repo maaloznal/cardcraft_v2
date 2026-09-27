@@ -43,6 +43,14 @@ describe('text-to-cards contract', () => {
     }).cards).toEqual([draft]);
   });
 
+  it('accepts validated server-side token usage without trusting malformed values', () => {
+    const response = { version: 1, mode: 'preserve', role: 'content-strategist', targetChars: 350, cards: [draft] };
+    expect(parseAiCardsResponse({ ...response, usage: { totalTokens: 1200, tokenBalance: 48800 } }).usage)
+      .toEqual({ totalTokens: 1200, tokenBalance: 48800 });
+    expect(parseAiCardsResponse({ ...response, usage: { totalTokens: -1, tokenBalance: 'oops' } }).usage)
+      .toBeUndefined();
+  });
+
   it('rejects oversized and malformed fields', () => {
     const response = { version: 1, mode: 'preserve', role: 'content-strategist', targetChars: 350 };
     expect(() => parseAiCardsResponse({ ...response, cards: [{ ...draft, title: 'x'.repeat(201) }] })).toThrow();

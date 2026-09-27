@@ -6,6 +6,8 @@ import "@fontsource/lora";
 import "@fontsource/manrope";
 // P9.3: removed @fontsource/plus-jakarta-sans — not used by any theme
 import "./globals.css";
+import "./styles/projects-account.css";
+import "./styles/welcome.css";
 // P4: Sentry client init — client component wrapper for Turbopack dev
 import { SentryProvider } from '@/components/SentryProvider';
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -25,7 +27,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Конструктор Текстовых Карточек — 90 стилей",
+  title: {
+    default: "Cardcraft — текстовые карточки для соцсетей",
+    template: "%s · Cardcraft",
+  },
   description:
     "Конструктор текстовых карточек: 90 тем, стилизация слов, экспорт в PNG и ZIP. Редактируйте, стилизуйте и скачивайте карточки.",
   keywords: [
@@ -36,7 +41,7 @@ export const metadata: Metadata = {
     "стилизация текста",
     "90 тем",
   ],
-  authors: [{ name: "Z.ai Team" }],
+  authors: [{ name: "Cardcraft" }],
   applicationName: "Cardcraft",
   appleWebApp: {
     capable: true,

@@ -4,7 +4,7 @@
  *
  * Responsibilities:
  *   1. Subscribe to supabase.auth.onAuthStateChange
- *   2. On SIGNED_IN: pull default project from cloud
+ *   2. On SIGNED_IN: pull the currently selected project from cloud
  *      - If cloud has data: replace local state with cloud state (after
  *        asking the user, if local has unsaved changes)
  *      - If cloud is empty: push current local state to cloud (first sync)
@@ -26,12 +26,11 @@
 import { supabase } from '@/lib/supabase/client';
 import type { Session, User, RealtimeChannel } from '@supabase/supabase-js';
 import {
-  getDefaultProject,
-  insertDefaultProject,
+  getProject,
   updateProject,
-  DEFAULT_PROJECT_NAME,
   type Project,
 } from '@/lib/sync/cloudSync';
+import { getActiveProject } from '@/projects/project-storage';
 import type { SavedState } from '@/storage/StorageManager';
 import * as Storage from '@/storage/StorageManager';
 import type { OrchestratorContext } from './types';
@@ -49,10 +48,9 @@ export interface SyncStatus {
   syncing: boolean;         // a push/pull is in flight
   lastSyncedAt: Date | null;
   error: string | null;
-  projectId: string | null; // id of the user's default project (cached)
+  projectId: string | null; // id of the user's active project (cached)
   projectVersion: number | null; // last known cloud version
 }
-
 export interface CloudSyncController {
   scheduleCloudPush(): void;
   pullFromCloud(): Promise<{ pulled: boolean; reason?: string }>;
@@ -69,7 +67,7 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
   let realtimeChannel: RealtimeChannel | null = null;
   let realtimeUserId: string | null = null;
   let currentUser: User | null = null;
-  let cachedProject: Project | null = null; // cache of the default project (id + version)
+  let cachedProject: Project | null = null; // cache of the active project (id + version)
   let syncing = false;
   let lastSyncedAt: Date | null = null;
   let lastError: string | null = null;
@@ -79,7 +77,14 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
   let isApplyingRemote = false;
 
   function getEnabled(): boolean {
-    return supabase !== null && currentUser !== null;
+    const project = getActiveProject();
+    return supabase !== null && currentUser !== null
+      && Boolean(project?.remote && project.ownerId === currentUser.id);
+  }
+
+  function getActiveProjectId(): string | null {
+    const project = getActiveProject();
+    return currentUser && project?.remote && project.ownerId === currentUser.id ? project.id : null;
   }
 
   function getSyncStatus(): SyncStatus {
@@ -168,8 +173,7 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
   }
 
   /**
-   * Pull the user's default project from cloud and apply to local state.
-   * If cloud is empty, push current local state to cloud instead (first sync).
+   * Pull the user's active project from cloud and apply it to local state.
    */
   async function pullFromCloud(): Promise<{ pulled: boolean; reason?: string }> {
     if (!supabase || !currentUser) {
@@ -179,12 +183,11 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
     lastError = null;
     try {
       log.info('Pulling from cloud', { userId: currentUser.id });
-      const project = await getDefaultProject(currentUser.id);
+      const activeProjectId = getActiveProjectId();
+      if (!activeProjectId) return { pulled: false, reason: 'no active cloud project' };
+      const project = await getProject(activeProjectId, currentUser.id);
       if (!project) {
-        // Cloud empty — push current local state to seed the user's cloud project
-        log.info('Cloud empty — pushing local state as initial sync');
-        await pushToCloud(true);
-        return { pulled: false, reason: 'cloud was empty, pushed local instead' };
+        return { pulled: false, reason: 'active project was not found' };
       }
       cachedProject = project;
       const payload = project.data as SavedState;
@@ -210,34 +213,30 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
    * Push current app state to cloud. If `forceInsert` is true, skip the
    * update path and always insert (used for first-sync when cloud is empty).
    */
-  async function pushToCloud(forceInsert = false): Promise<boolean> {
+  async function pushToCloud(_forceInsert = false): Promise<boolean> {
     if (!supabase || !currentUser) return false;
+    const activeProjectId = getActiveProjectId();
+    if (!activeProjectId) return false;
     syncing = true;
     lastError = null;
     try {
       const payload = buildCloudPayload();
       // If we don't have a cached project id, fetch it first
-      if (!cachedProject && !forceInsert) {
-        const existing = await getDefaultProject(currentUser.id);
+      if (!cachedProject || cachedProject.id !== activeProjectId) {
+        const existing = await getProject(activeProjectId, currentUser.id);
         cachedProject = existing;
       }
 
-      let result: Project;
-      if (cachedProject && !forceInsert) {
-        // Update existing project
-        result = await updateProject(
-          cachedProject.id,
-          currentUser.id,
-          payload,
-          cachedProject.version,
-        );
-      } else {
-        // Insert new (first sync or forceInsert)
-        result = await insertDefaultProject(currentUser.id, payload);
-      }
+      if (!cachedProject) return false;
+      const result: Project = await updateProject(
+        cachedProject.id,
+        currentUser.id,
+        payload,
+        cachedProject.version,
+      );
       cachedProject = result;
       lastSyncedAt = new Date(result.updated_at);
-      Storage.markCloudSyncClean(currentUser.id);
+      Storage.markCloudSyncClean(currentUser.id, activeProjectId);
       log.info('Pushed to cloud', { version: result.version, cards: payload.cards.length });
       return true;
     } catch (e) {
@@ -255,15 +254,32 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
   function scheduleCloudPush(): void {
     if (!getEnabled()) return; // no-op when not logged in
     if (isApplyingRemote) return; // skip: we're applying a remote update, push would echo
-    Storage.markCloudSyncDirty(currentUser!.id);
+    const activeProjectId = getActiveProjectId();
+    if (!activeProjectId) return;
+    Storage.markCloudSyncDirty(currentUser!.id, activeProjectId);
     if (pushTimer) clearTimeout(pushTimer);
     pushTimer = setTimeout(() => {
       void pushToCloud(false);
     }, CLOUD_PUSH_DEBOUNCE_MS);
   }
 
+  async function flushCloudPush(): Promise<void> {
+    if (pushTimer) {
+      clearTimeout(pushTimer);
+      pushTimer = null;
+    }
+    await pushToCloud(false);
+  }
+
+  const handleFlushRequest = (event: Event): void => {
+    const done = (event as CustomEvent<{ done?: () => void }>).detail?.done;
+    void flushCloudPush().finally(() => done?.());
+  };
+
+  window.addEventListener('cardcraft:flush-cloud-sync', handleFlushRequest);
+
   /**
-   * Subscribe to Supabase Realtime for changes to the user's default project.
+   * Subscribe to Supabase Realtime for changes to the user's active project.
    * On UPDATE events where new.version > cachedProject.version, fetch the
    * latest state and apply it locally (without pushing back). This enables
    * cross-device sync without page reloads: edit on phone → appears on desktop.
@@ -308,13 +324,13 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
             const oldRecord = payload.old as Project | undefined;
             log.debug('Realtime event received', { eventType, newVersion: newRecord?.version });
 
-            // Only care about our 'default' project
-            if (newRecord && newRecord.name !== DEFAULT_PROJECT_NAME && oldRecord?.name !== DEFAULT_PROJECT_NAME) {
+            const activeProjectId = getActiveProjectId();
+            if (!activeProjectId || (newRecord?.id !== activeProjectId && oldRecord?.id !== activeProjectId)) {
               return;
             }
 
             if (eventType === 'DELETE') {
-              log.info('Default project deleted remotely — keeping local state');
+              log.info('Active project deleted remotely — keeping local state');
               cachedProject = null;
               return;
             }
@@ -352,7 +368,9 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
     // Fetch fresh to get the latest committed state (the realtime payload may
     // be slightly stale if multiple updates were coalesced on the server)
     try {
-      const fresh = await getDefaultProject(currentUser.id);
+      const activeProjectId = getActiveProjectId();
+      if (!activeProjectId) return;
+      const fresh = await getProject(activeProjectId, currentUser.id);
       if (!fresh) {
         log.warn('Realtime event but project no longer exists in cloud');
         return;
@@ -434,7 +452,9 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
     // Do the initial pull once per session
     if (!initialPullDone && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
       initialPullDone = true;
-      const hasUnsyncedLocalChanges = Storage.getCloudSyncDirtyUser() === currentUser.id;
+      const activeProjectId = getActiveProjectId();
+      const hasUnsyncedLocalChanges = Boolean(activeProjectId)
+        && Storage.isCloudSyncDirty(currentUser.id, activeProjectId!);
       const initialSync = hasUnsyncedLocalChanges
         ? pushToCloud(false).then((pushed) => ({
             pulled: false,
@@ -444,8 +464,6 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
       void initialSync.then(({ pulled, reason }) => {
         if (pulled) {
           storage.showToast('Карточки синхронизированы с облаком', 2500);
-        } else if (reason === 'cloud was empty, pushed local instead') {
-          storage.showToast('Локальные карточки сохранены в облако', 2500);
         } else if (reason === 'pushed unsynced local changes') {
           storage.showToast('Последние изменения сохранены в облако', 2500);
         }
@@ -497,6 +515,7 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
     pullFromCloud,
     getSyncStatus,
     destroy() {
+      window.removeEventListener('cardcraft:flush-cloud-sync', handleFlushRequest);
       if (pushTimer) clearTimeout(pushTimer);
       pushTimer = null;
       if (remoteApplyTimer) clearTimeout(remoteApplyTimer);
@@ -517,6 +536,3 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
     },
   };
 }
-
-// Re-export for consumers
-export { DEFAULT_PROJECT_NAME };

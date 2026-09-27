@@ -12,7 +12,7 @@ test.describe('PWA installability assets', () => {
     expect(response.ok()).toBe(true);
     const manifest = await response.json();
     expect(manifest.display).toBe('standalone');
-    expect(manifest.start_url).toBe('/');
+    expect(manifest.start_url).toBe('/editor/');
     expect(manifest.scope).toBe('/');
     expect(manifest.icons).toEqual(expect.arrayContaining([
       expect.objectContaining({ sizes: '192x192', type: 'image/png' }),
