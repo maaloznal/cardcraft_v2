@@ -77,6 +77,22 @@ test.describe('AI text import dialog', () => {
     await expect(page.locator('#aiImportModal')).not.toHaveClass(/active/);
     await expect(page.locator('#aiImportBtn')).toBeFocused();
   });
+
+  test('desktop dialog stays inside the viewport and above the top bar', async ({ page }) => {
+    const panel = page.locator('.ai-import-panel');
+    const overlay = page.locator('.ai-import-overlay');
+    const box = await panel.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.y).toBeGreaterThanOrEqual(24);
+    expect(box!.y + box!.height).toBeLessThanOrEqual(720 - 24);
+
+    const layers = await page.evaluate(() => ({
+      overlay: Number.parseInt(getComputedStyle(document.querySelector('.ai-import-overlay')!).zIndex, 10),
+      topBar: Number.parseInt(getComputedStyle(document.querySelector('.top-bar')!).zIndex, 10),
+    }));
+    expect(layers.overlay).toBeGreaterThan(layers.topBar);
+    await expect(overlay).toHaveClass(/active/);
+  });
 });
 
 test('AI dialog fits a 390×844 phone viewport', async ({ page }) => {

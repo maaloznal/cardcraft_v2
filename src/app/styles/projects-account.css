@@ -101,7 +101,7 @@
 .project-badge span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .project-badge::-webkit-details-marker { display: none; }
 .project-switcher { position: relative; display: flex; align-items: center; gap: 4px; min-width: 0; }
-.project-switcher-details { min-width: 0; }
+.project-switcher-details { min-width: 0; flex: 1 1 auto; }
 .project-switcher-details[open] .project-badge { color: #fff; background: #6d4aff; }
 .project-switcher-details[open] .project-badge svg { transform: rotate(180deg); }
 .project-switcher-menu {
@@ -156,9 +156,11 @@
 
 .account-shell { margin: 0 auto; overflow: hidden; }
 .account-header { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; padding: clamp(22px, 4vw, 38px); border-bottom: 1px solid var(--border-color, #e4e4e7); }
+.account-header-main { min-width: 0; flex: 1 1 auto; }
 .account-header h1 { margin: 4px 0; font-size: clamp(1.65rem, 4vw, 2.35rem); }
 .account-header p { margin: 0; color: var(--text-secondary, #71717a); }
 .account-back { color: #7c3aed; font-size: 0.83rem; font-weight: 700; text-decoration: none; }
+.account-brand { flex: 0 0 auto; color: var(--text-primary, #18181b); font-size: 1rem; font-weight: 820; letter-spacing: -0.04em; text-decoration: none; }
 .account-body { display: grid; gap: 30px; padding: clamp(22px, 4vw, 38px); }
 .account-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .account-stat { border: 1px solid var(--border-color, #e4e4e7); border-radius: 16px; padding: 17px; }
@@ -175,10 +177,13 @@
 .account-project-meta { min-width: 0; }
 .account-project-meta strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .account-project-meta small { color: var(--text-secondary, #71717a); }
-.account-project-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
-.account-secondary { color: inherit; background: var(--bg-primary, #f4f4f5); }
+.account-project-actions { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; width: min(100%, 350px); }
+.account-project-actions > button { width: 100%; min-width: 0; white-space: nowrap; }
+.account-secondary { color: inherit; background: var(--bg-primary, #f4f4f5); text-decoration: none; }
 .account-danger { color: #b91c1c; background: #fef2f2; }
 .account-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-top: 1px solid var(--border-color, #e4e4e7); padding-top: 22px; }
+.account-footer-actions { display: flex; flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+.account-footer-actions a { display: inline-flex; align-items: center; justify-content: center; }
 .account-note { margin: 0; max-width: 540px; color: var(--text-secondary, #71717a); font-size: 0.82rem; line-height: 1.45; }
 .account-loading { min-height: 60vh; display: grid; place-items: center; }
 
@@ -188,12 +193,26 @@
   .project-create-form > div, .account-project-create { flex-direction: column; }
   .project-create-form button, .account-project-create button { width: 100%; }
   .project-badge { max-width: 34vw; }
-  .account-header { flex-direction: column-reverse; }
+  .account-header { gap: 12px; }
   .account-stats { grid-template-columns: 1fr; }
   .account-profile { grid-template-columns: 1fr; }
   .account-project-row { grid-template-columns: 1fr; }
-  .account-project-actions { justify-content: flex-start; }
+  .account-project-actions { width: 100%; }
+  .account-project-actions > button { padding-inline: 8px; font-size: 0.78rem; }
   .account-actions { align-items: stretch; flex-direction: column; }
+  .account-footer-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
+  .account-footer-actions > * { width: 100%; padding-inline: 8px; }
+}
+
+@media (max-width: 480px) {
+  .cc-root .top-bar { gap: 6px; }
+  .cc-root .top-bar-left { min-width: 0; flex: 1 1 auto; }
+  .cc-root .top-bar-right { flex: 0 0 auto; gap: 4px; }
+  .cc-root .brand { width: 100%; min-width: 0; gap: 6px; }
+  .cc-root .project-switcher { min-width: 0; flex: 1 1 auto; }
+  .cc-root .project-switcher-details { min-width: 0; flex: 1 1 auto; }
+  .cc-root .project-badge { width: 100%; max-width: none; }
+  .cc-root .card-count-badge { flex: 0 0 auto; }
 }
 
 @media (max-width: 360px) {

@@ -101,6 +101,33 @@ export function ProjectBadge() {
   const authenticated = Boolean(user && enabled);
   const visibleProjects = getVisibleProjects(projects, showAll);
 
+  const closeMenu = useCallback(() => {
+    const details = detailsRef.current;
+    if (details) details.open = false;
+    setShowCreate(false);
+    setShowAll(false);
+    setError('');
+  }, []);
+
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      const details = detailsRef.current;
+      if (details?.open && !details.contains(event.target as Node)) closeMenu();
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && detailsRef.current?.open) {
+        closeMenu();
+        detailsRef.current?.querySelector<HTMLElement>('summary')?.focus();
+      }
+    };
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [closeMenu]);
+
   const openCreate = () => {
     detailsRef.current?.setAttribute('open', '');
     setShowCreate(true);
@@ -156,7 +183,8 @@ export function ProjectBadge() {
   return (
     <div className="project-switcher">
       <details className="project-switcher-details" ref={detailsRef} onToggle={(event) => {
-        if (!event.currentTarget.open) {
+        const open = event.currentTarget.open;
+        if (!open) {
           setShowCreate(false);
           setShowAll(false);
           setError('');

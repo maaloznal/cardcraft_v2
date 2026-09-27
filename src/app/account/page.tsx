@@ -128,12 +128,12 @@ export default function AccountPage() {
     <main className="account-page">
       <div className="account-shell">
         <header className="account-header">
-          <div>
-            <span className="project-gate-kicker">Cardcraft</span>
+          <div className="account-header-main">
+            <Link href="/editor" className="account-back">← В редактор</Link>
             <h1>Личный кабинет</h1>
             <p>Токены, профиль и ваши проекты — в одном месте.</p>
           </div>
-          <Link href="/editor" className="account-back">← В редактор</Link>
+          <Link href="/editor" className="account-brand" aria-label="Cardcraft — вернуться в редактор">Cardcraft</Link>
         </header>
         <div className="account-body">
           {error && <p className="project-error" role="alert">{error}</p>}
@@ -188,7 +188,11 @@ export default function AccountPage() {
 
           <footer className="account-actions">
             <p className="account-note">На старте аккаунту начисляется {number.format(INITIAL_TOKEN_BALANCE)} токенов. Списание выполняется сервером по фактическому расходу ИИ.</p>
-            <button className="account-danger" type="button" onClick={() => void logout()} disabled={busy}>Выйти</button>
+            <div className="account-footer-actions">
+              <Link className="account-secondary" href="/docs">Документация</Link>
+              <Link className="account-secondary" href="/">На главную</Link>
+              <button className="account-danger" type="button" onClick={() => void logout()} disabled={busy}>Выйти</button>
+            </div>
           </footer>
         </div>
       </div>

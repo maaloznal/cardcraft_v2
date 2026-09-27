@@ -82,3 +82,54 @@ test.describe('Narrow phone (320×568)', () => {
     expect(overflow.count).toBe(0);
   });
 });
+
+test.describe('Xiaomi Mi 11 Lite class viewport (393×873)', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 393, height: 873 });
+    await gotoApp(page);
+  });
+
+  test('project controls and card count do not overlap', async ({ page }) => {
+    // The add button is authenticated-only. Inject its real class into the
+    // same layout to keep this geometry regression test independent of auth.
+    await page.locator('.project-switcher').evaluate((switcher) => {
+      const button = document.createElement('button');
+      button.className = 'project-create-top';
+      button.type = 'button';
+      button.textContent = '＋';
+      button.setAttribute('aria-label', 'Создать новый проект');
+      switcher.append(button);
+    });
+
+    const badge = await page.locator('.project-badge').boundingBox();
+    const create = await page.locator('.project-create-top').boundingBox();
+    const count = await page.locator('#cardCountBadge').boundingBox();
+    expect(badge).not.toBeNull();
+    expect(create).not.toBeNull();
+    expect(count).not.toBeNull();
+
+    const intersects = (a: NonNullable<typeof badge>, b: NonNullable<typeof badge>) =>
+      a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+    expect(intersects(badge!, create!)).toBe(false);
+    expect(intersects(badge!, count!)).toBe(false);
+    expect(intersects(create!, count!)).toBe(false);
+    expect(count!.x + count!.width).toBeLessThanOrEqual(393);
+    await expect(page.locator('#undoBtn')).toBeHidden();
+    await expect(page.locator('#redoBtn')).toBeHidden();
+  });
+
+  test('project menu closes on an outside tap and Escape', async ({ page }) => {
+    const details = page.locator('.project-switcher-details');
+    const badge = page.locator('.project-badge');
+    await badge.click();
+    await expect(details).toHaveAttribute('open', '');
+
+    await page.locator('.preview-workspace').click({ position: { x: 20, y: 120 } });
+    await expect(details).not.toHaveAttribute('open', '');
+
+    await badge.click();
+    await page.keyboard.press('Escape');
+    await expect(details).not.toHaveAttribute('open', '');
+    await expect(badge).toBeFocused();
+  });
+});

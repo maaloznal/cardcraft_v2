@@ -450,7 +450,7 @@
   /* Keep the card count visible on narrow phones. The redundant mobile
      sidebar toggle is already hidden; undo/redo yield their space only at
      the smallest width instead of hiding useful project context. */
-  @media (max-width: 360px) {
+  @media (max-width: 480px) {
     .card-count-badge {
       padding-inline: 5px;
       font-size: 10px;
