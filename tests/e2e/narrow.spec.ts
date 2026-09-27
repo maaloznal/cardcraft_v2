@@ -89,9 +89,9 @@ test.describe('Xiaomi Mi 11 Lite class viewport (393×873)', () => {
     await gotoApp(page);
   });
 
-  test('project controls and card count do not overlap', async ({ page }) => {
-    // The add button is authenticated-only. Inject its real class into the
-    // same layout to keep this geometry regression test independent of auth.
+  test('project name and card count do not overlap; separate add shortcut is hidden', async ({ page }) => {
+    // The add button is authenticated-only. Inject its real class so the CSS
+    // behavior remains testable without coupling this geometry test to auth.
     await page.locator('.project-switcher').evaluate((switcher) => {
       const button = document.createElement('button');
       button.className = 'project-create-top';
@@ -101,18 +101,15 @@ test.describe('Xiaomi Mi 11 Lite class viewport (393×873)', () => {
       switcher.append(button);
     });
 
+    await expect(page.locator('.project-create-top')).toBeHidden();
     const badge = await page.locator('.project-badge').boundingBox();
-    const create = await page.locator('.project-create-top').boundingBox();
     const count = await page.locator('#cardCountBadge').boundingBox();
     expect(badge).not.toBeNull();
-    expect(create).not.toBeNull();
     expect(count).not.toBeNull();
 
     const intersects = (a: NonNullable<typeof badge>, b: NonNullable<typeof badge>) =>
       a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
-    expect(intersects(badge!, create!)).toBe(false);
     expect(intersects(badge!, count!)).toBe(false);
-    expect(intersects(create!, count!)).toBe(false);
     expect(count!.x + count!.width).toBeLessThanOrEqual(393);
     await expect(page.locator('#undoBtn')).toBeHidden();
     await expect(page.locator('#redoBtn')).toBeHidden();

@@ -7,6 +7,7 @@ import {
   isAiRole,
   isAiTextMode,
   normalizeAiTargetChars,
+  parseAiCardImproveResponse,
   parseAiCardsResponse,
 } from '@/ai/text-to-cards-contract';
 
@@ -56,6 +57,22 @@ describe('text-to-cards contract', () => {
     expect(() => parseAiCardsResponse({ ...response, cards: [{ ...draft, title: 'x'.repeat(201) }] })).toThrow();
     expect(() => parseAiCardsResponse({ ...response, mode: 'unknown', cards: [draft] })).toThrow();
     expect(() => parseAiCardsResponse({ ...response, targetChars: 180, cards: [{ ...draft, text: 'x'.repeat(181) }] })).toThrow();
+  });
+
+  it('validates a single-card improvement response', () => {
+    expect(parseAiCardImproveResponse({
+      version: 1,
+      action: 'improve-card',
+      card: draft,
+      usage: { totalTokens: 240, tokenBalance: 49_760 },
+    })).toEqual({
+      version: 1,
+      action: 'improve-card',
+      card: draft,
+      usage: { totalTokens: 240, tokenBalance: 49_760 },
+    });
+    expect(() => parseAiCardImproveResponse({ version: 1, action: 'improve-card', card: { ...draft, title: '' , text: '' } })).toThrow();
+    expect(() => parseAiCardImproveResponse({ version: 1, action: 'wrong', card: draft })).toThrow();
   });
 
   it('creates a safe application card with a new id and empty styles', () => {

@@ -114,6 +114,10 @@ test('AI dialog fits a 390×844 phone viewport', async ({ page }) => {
   await expect(page.locator('#aiGenerateBtn')).toHaveCSS('min-height', '44px');
   await expect(page.locator('#aiRolePicker summary')).toBeVisible();
   await expect(page.locator('#aiThemeSelect')).toBeVisible();
+  await page.locator('#aiRolePicker summary').click();
+  await expect(page.locator('#aiRolePicker')).toHaveAttribute('open', '');
+  await page.locator('.ai-import-header').click({ position: { x: 12, y: 12 } });
+  await expect(page.locator('#aiRolePicker')).not.toHaveAttribute('open', '');
   await page.keyboard.press('Escape');
   await expect(page.locator('#mobileAiImportBtn')).toBeFocused();
 });

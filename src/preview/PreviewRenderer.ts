@@ -265,7 +265,9 @@ export class PreviewRenderer {
     // Build top content (progress + tag + title + subtitle + text + list).
     // Only render the wrapper div if it has any children — avoids empty
     // flex items that take up gap space (16px) for no reason.
-    const topContentInner = `${progressHtml}${tagHtml}${emptyHint}${card.title ? `<h2 class="card-title" ${titleStyle} data-field="title" data-card-id="${safeCardId}">${applyWordStylesToText(card.title, card.wordStyles, 'title')}</h2>` : ''}${card.subtitle ? `<p class="card-subtitle" ${subtitleStyle} data-field="subtitle" data-card-id="${safeCardId}">${applyWordStylesToText(card.subtitle, card.wordStyles, 'subtitle').replace(/\n/g, '<br>')}</p>` : ''}${card.text ? `<p class="card-text" ${textStyle} data-field="text" data-card-id="${safeCardId}">${applyWordStylesToText(card.text, card.wordStyles, 'text').replace(/\n/g, '<br>')}</p>` : ''}${listHtml}`;
+    const cardCopyInner = `${emptyHint}${card.title ? `<h2 class="card-title" ${titleStyle} data-field="title" data-card-id="${safeCardId}">${applyWordStylesToText(card.title, card.wordStyles, 'title')}</h2>` : ''}${card.subtitle ? `<p class="card-subtitle" ${subtitleStyle} data-field="subtitle" data-card-id="${safeCardId}">${applyWordStylesToText(card.subtitle, card.wordStyles, 'subtitle').replace(/\n/g, '<br>')}</p>` : ''}${card.text ? `<p class="card-text" ${textStyle} data-field="text" data-card-id="${safeCardId}">${applyWordStylesToText(card.text, card.wordStyles, 'text').replace(/\n/g, '<br>')}</p>` : ''}${listHtml}`;
+    const cardCopy = cardCopyInner.trim() ? `<div class="card-copy">${cardCopyInner}</div>` : '';
+    const topContentInner = `${progressHtml}${tagHtml}${cardCopy}`;
     const topContent = topContentInner.trim()
       ? `<div class="card-top-content" style="display:flex;flex-direction:column;gap:16px;">${topContentInner}</div>`
       : '';
@@ -285,6 +287,7 @@ export class PreviewRenderer {
         ${bottomContent}
       </div>
       <div class="card-actions">
+        <button class="btn-card-action btn-card-ai" data-action="improve-ai" data-card-id="card-node-${safeCardId}" title="Улучшить текст и структуру этой карточки с ИИ" aria-label="Улучшить карточку ${index + 1} с ИИ"><svg aria-hidden="true" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.4 3.6L7 8l3.6 1.4L12 13l1.4-3.6L17 8l-3.6-1.4L12 3Z"/><path d="m18.5 13-.8 2.2-2.2.8 2.2.8.8 2.2.8-2.2 2.2-.8-2.2-.8-.8-2.2Z"/></svg><span>Улучшить с ИИ</span></button>
         <button class="btn-card-action" data-action="edit-preview" data-card-id="card-node-${safeCardId}" title="Редактировать карточку ${index + 1}" aria-label="Редактировать карточку ${index + 1}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
         <button class="btn-card-action" data-action="download" data-card-id="card-node-${safeCardId}" data-filename="card-${index + 1}.png" title="Скачать" aria-label="Скачать"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
         <button class="btn-card-action" data-action="copy" data-card-id="card-node-${safeCardId}" title="Копировать" aria-label="Копировать"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
@@ -304,8 +307,16 @@ export class PreviewRenderer {
     const cfg = FIELD_CONFIG[field];
     if (!cfg) return;
 
-    const containerSel = cfg.container === 'top' ? '.card-top-content' : '.card-bottom-content';
-    const container = cardNode.querySelector<HTMLElement>(containerSel);
+    const containerSel = cfg.container === 'top' ? '.card-copy' : '.card-bottom-content';
+    let container = cardNode.querySelector<HTMLElement>(containerSel);
+    if (!container && cfg.container === 'top') {
+      const topContent = cardNode.querySelector<HTMLElement>('.card-top-content');
+      if (topContent) {
+        container = document.createElement('div');
+        container.className = 'card-copy';
+        topContent.appendChild(container);
+      }
+    }
     if (!container) return;
 
     const el = document.createElement(cfg.tag);
@@ -361,7 +372,15 @@ export class PreviewRenderer {
     }
 
     const existingList = cardNode.querySelector<HTMLElement>('.card-list');
-    const topContent = cardNode.querySelector<HTMLElement>('.card-top-content');
+    let topContent = cardNode.querySelector<HTMLElement>('.card-copy');
+    if (!topContent) {
+      const topWrapper = cardNode.querySelector<HTMLElement>('.card-top-content');
+      if (topWrapper) {
+        topContent = document.createElement('div');
+        topContent.className = 'card-copy';
+        topWrapper.appendChild(topContent);
+      }
+    }
 
     if (existingList) {
       if (listHtml) existingList.innerHTML = listHtml;
@@ -396,7 +415,15 @@ export class PreviewRenderer {
     if (hasContent && existingHint) {
       existingHint.remove();
     } else if (!hasContent && !existingHint) {
-      const topContent = cardNode.querySelector<HTMLElement>('.card-top-content');
+      let topContent = cardNode.querySelector<HTMLElement>('.card-copy');
+      if (!topContent) {
+        const topWrapper = cardNode.querySelector<HTMLElement>('.card-top-content');
+        if (topWrapper) {
+          topContent = document.createElement('div');
+          topContent.className = 'card-copy';
+          topWrapper.appendChild(topContent);
+        }
+      }
       if (topContent) {
         const hint = document.createElement('div');
         hint.className = 'card-empty-hint';
@@ -414,11 +441,12 @@ export class PreviewRenderer {
       const btn = target.closest<HTMLElement>('[data-action]');
       if (!btn) return;
       const action = btn.dataset.action || '';
-      if (action === 'edit-preview' || action === 'download' || action === 'copy') {
+      if (action === 'edit-preview' || action === 'download' || action === 'copy' || action === 'improve-ai') {
         e.stopPropagation();
         this.actionHandler?.(action, {
           cardId: btn.dataset.cardId || '',
           filename: btn.dataset.filename || '',
+          button: btn,
         });
       } else if (action === 'delete-preview') {
         e.stopPropagation();

@@ -24,7 +24,9 @@
 }
 .card-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+  width: 100%;
 }
 
 /* Card action buttons (under preview cards) */
@@ -53,6 +55,23 @@
 }
 .cc-root button.btn-card-action:active {
   transform: scale(0.97);
+}
+.cc-root button.btn-card-ai {
+  flex: 1 0 100%;
+  min-height: 44px;
+  border-color: rgba(124, 58, 237, 0.3);
+  color: #6d4aff;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(37, 99, 235, 0.08));
+}
+.cc-root button.btn-card-ai:hover {
+  border-color: rgba(124, 58, 237, 0.55);
+  color: #5b36db;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.16), rgba(37, 99, 235, 0.12));
+}
+.cc-root button.btn-card-ai:disabled {
+  cursor: progress;
+  opacity: 0.68;
+  transform: none;
 }
 
 /* ================= CARD (preview, exportable) ================= */
@@ -88,6 +107,30 @@
 .card[data-format="vk"] {
   min-height: 200px;
   justify-content: space-between;
+}
+.card-top-content,
+.card-bottom-content,
+.card-copy {
+  width: 100%;
+  min-width: 0;
+}
+.card-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.card[data-format="aspect-4-5"] .card-top-content,
+.card[data-format="telegram"] .card-top-content,
+.card[data-format="aspect-9-16"] .card-top-content,
+.card[data-format="whatsapp"] .card-top-content {
+  flex: 1 1 auto;
+}
+.card[data-format="aspect-4-5"] .card-copy,
+.card[data-format="telegram"] .card-copy,
+.card[data-format="aspect-9-16"] .card-copy,
+.card[data-format="whatsapp"] .card-copy {
+  margin-block: auto;
+  padding-block: clamp(12px, 4%, 28px);
 }
 
 /* Hover — карточка приподнимается */
@@ -149,7 +192,10 @@
   line-height: 1.35;
   color: var(--text-primary);
   margin: 0;
-  word-break: break-word;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  text-wrap: balance;
 }
 .card-subtitle {
   font-size: 16px;
@@ -157,14 +203,20 @@
   line-height: 1.45;
   color: var(--accent-color);
   margin: 0;
-  word-break: break-word;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  text-wrap: balance;
 }
 .card-text {
   font-size: 15px;
   line-height: 1.55;
   color: var(--text-secondary);
   margin: 0;
-  word-break: break-word;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  text-wrap: pretty;
 }
 .card-list {
   list-style: none;
@@ -195,8 +247,10 @@
 }
 .card-list-text {
   display: block;
-  word-break: break-word;
-  overflow-wrap: anywhere;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  text-wrap: pretty;
   line-height: 1.5;
 }
 .card-footer-text {
@@ -206,7 +260,10 @@
   font-weight: 600;
   line-height: 1.4;
   color: var(--accent-color);
-  word-break: break-word;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  text-wrap: balance;
 }
 .accent-btn {
   background-color: var(--btn-accent-bg);
@@ -218,7 +275,10 @@
   font-weight: 700;
   font-size: 14px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-  word-break: break-word;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  text-wrap: balance;
 }
 
 /* Styled word marker */

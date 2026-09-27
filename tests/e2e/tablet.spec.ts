@@ -79,6 +79,18 @@ test.describe('Tablet portrait (iPad gen 7, ~834×1194 / split-view)', () => {
     expect(backdropVisible).toBe(false);
   });
 
+  test('C3b: project creation shortcut is consolidated into the project menu', async ({ page }) => {
+    await page.locator('.project-switcher').evaluate((switcher) => {
+      const button = document.createElement('button');
+      button.className = 'project-create-top';
+      button.type = 'button';
+      button.textContent = '＋';
+      switcher.append(button);
+    });
+    await expect(page.locator('.project-create-top')).toBeHidden();
+    await expect(page.locator('.project-badge')).toBeVisible();
+  });
+
   test('C4: no horizontal overflow on tablet', async ({ page }) => {
     const overflow = await getHorizontalOverflow(page);
     expect(overflow).toBe(0);

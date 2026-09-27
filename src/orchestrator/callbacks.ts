@@ -45,6 +45,9 @@ export function wireRendererCallbacks(ctx: OrchestratorContext): void {
     } else if (action === 'copy') {
       const node = document.getElementById(String(data.cardId));
       if (node) void ctx.exporter.copyCardToClipboard(node);
+    } else if (action === 'improve-ai') {
+      const cardId = String(data.cardId || '').replace(/^card-node-/, '');
+      void ctx.aiImport.improveCard(cardId, data.button instanceof HTMLElement ? data.button : undefined);
     } else if (action === 'delete-preview') {
       // P1-1: resolve index from stable cardId (format: "card-node-<id>")
       const cardId = String(data.cardId || '').replace(/^card-node-/, '');

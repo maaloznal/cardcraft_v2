@@ -12,6 +12,11 @@ test.describe('Application color theme', () => {
     await toggle.click();
     await expect(html).toHaveAttribute('data-ui-theme', 'dark');
     await expect(toggle).toHaveAttribute('aria-label', 'Включить светлую тему');
+    await expect(page.locator('.project-badge')).toHaveCSS('color', 'rgb(250, 250, 250)');
+    await page.locator('.project-badge').click();
+    await expect(page.locator('.project-switcher-menu')).toHaveCSS('color', 'rgb(250, 250, 250)');
+    await expect(page.locator('.project-switcher-menu')).toHaveCSS('background-color', 'rgb(24, 24, 27)');
+    await page.keyboard.press('Escape');
     await toggle.click();
     await expect(html).toHaveAttribute('data-ui-theme', 'light');
   });

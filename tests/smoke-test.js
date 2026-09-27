@@ -215,7 +215,7 @@
       subtitleInput.dispatchEvent(new Event('input', { bubbles: true }));
       assert('Подзаголовок создан с 1 буквой', q('.card-subtitle')?.textContent === 'А');
       // Порядок: title, subtitle, text (если есть)
-      var topClasses = Array.from(q('.card-top-content').children).map(function(c){return c.className;});
+      var topClasses = Array.from(q('.card-copy').children).map(function(c){return c.className;});
       assert('Подзаголовок после заголовка', topClasses.indexOf('card-subtitle') > topClasses.indexOf('card-title'));
     }
 

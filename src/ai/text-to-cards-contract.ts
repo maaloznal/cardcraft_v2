@@ -40,7 +40,7 @@ export interface AiCardsResponse {
   };
 }
 
-const FIELD_LIMITS: Record<keyof AiCardDraft, number> = {
+export const AI_CARD_FIELD_LIMITS: Record<keyof AiCardDraft, number> = {
   title: 200,
   subtitle: 500,
   text: 1000,
@@ -82,7 +82,7 @@ export function parseAiCardsResponse(value: unknown): AiCardsResponse {
     if (!raw || typeof raw !== 'object') throw new Error(`Карточка ${index + 1} повреждена.`);
     const source = raw as Record<string, unknown>;
     const card = {} as AiCardDraft;
-    for (const [field, limit] of Object.entries(FIELD_LIMITS) as Array<[keyof AiCardDraft, number]>) {
+    for (const [field, limit] of Object.entries(AI_CARD_FIELD_LIMITS) as Array<[keyof AiCardDraft, number]>) {
       const fieldValue = source[field];
       if (typeof fieldValue !== 'string' || fieldValue.length > limit) {
         throw new Error(`Поле «${field}» в карточке ${index + 1} некорректно.`);
@@ -104,6 +104,47 @@ export function parseAiCardsResponse(value: unknown): AiCardsResponse {
     }
   }
   return { version: 1, mode: input.mode, role: input.role, targetChars, cards, ...(usage ? { usage } : {}) };
+}
+
+export interface AiCardImproveResponse {
+  version: 1;
+  action: 'improve-card';
+  card: AiCardDraft;
+  usage?: AiCardsResponse['usage'];
+}
+
+export function parseAiCardDraft(value: unknown): AiCardDraft {
+  if (!value || typeof value !== 'object') throw new Error('Сервер вернул повреждённую карточку.');
+  const source = value as Record<string, unknown>;
+  const card = {} as AiCardDraft;
+  for (const [field, limit] of Object.entries(AI_CARD_FIELD_LIMITS) as Array<[keyof AiCardDraft, number]>) {
+    const fieldValue = source[field];
+    if (typeof fieldValue !== 'string' || fieldValue.length > limit) {
+      throw new Error(`Поле «${field}» в улучшенной карточке некорректно.`);
+    }
+    card[field] = fieldValue;
+  }
+  if (countAiCardCharacters(card) === 0) throw new Error('ИИ вернул пустую карточку.');
+  return card;
+}
+
+export function parseAiCardImproveResponse(value: unknown): AiCardImproveResponse {
+  if (!value || typeof value !== 'object') throw new Error('Некорректный ответ сервера.');
+  const input = value as Record<string, unknown>;
+  if (input.version !== 1 || input.action !== 'improve-card') {
+    throw new Error('Сервер вернул неподдерживаемый формат улучшения.');
+  }
+  const card = parseAiCardDraft(input.card);
+  let usage: AiCardsResponse['usage'];
+  if (input.usage && typeof input.usage === 'object') {
+    const rawUsage = input.usage as Record<string, unknown>;
+    const totalTokens = Number(rawUsage.totalTokens);
+    const tokenBalance = Number(rawUsage.tokenBalance);
+    if (Number.isFinite(totalTokens) && totalTokens >= 0 && Number.isFinite(tokenBalance) && tokenBalance >= 0) {
+      usage = { totalTokens, tokenBalance };
+    }
+  }
+  return { version: 1, action: 'improve-card', card, ...(usage ? { usage } : {}) };
 }
 
 export function aiDraftToCard(draft: AiCardDraft, theme?: string): Card {

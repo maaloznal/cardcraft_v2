@@ -26,6 +26,50 @@ test.describe('Card operations', () => {
     await expect(page.locator('#cardsArea .card-title').first()).toContainText('Edited Title E2E');
   });
 
+  test('4a. story card keeps copy balanced and away from the upper edge', async ({ page }) => {
+    const editor = page.locator('#editorCardsList .card-editor-block').first();
+    await editor.locator('[data-field="title"]').fill('Продуманный заголовок для красивой карточки');
+    await editor.locator('[data-field="text"]').fill('Основной текст переносится аккуратно и сохраняет ровный визуальный ритм без случайных разрывов обычных слов.');
+    await page.locator('#formatSelect').evaluate((select) => {
+      const element = select as HTMLSelectElement;
+      element.value = 'aspect-9-16';
+      element.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    const card = page.locator('#cardsArea .card').first();
+    const copy = card.locator('.card-copy');
+    await expect(card).toHaveAttribute('data-format', 'aspect-9-16');
+    await expect(copy).toBeVisible();
+    await expect(card.locator('.card-title')).toHaveCSS('text-wrap', 'balance');
+    await expect(card.locator('.card-text')).toHaveCSS('text-wrap', 'pretty');
+    await expect(card.locator('.card-text')).toHaveCSS('word-break', 'normal');
+
+    const spacing = await page.evaluate(() => {
+      const cardRect = document.querySelector('#cardsArea .card')!.getBoundingClientRect();
+      const copyRect = document.querySelector('#cardsArea .card-copy')!.getBoundingClientRect();
+      return {
+        above: copyRect.top - cardRect.top,
+        below: cardRect.bottom - copyRect.bottom,
+      };
+    });
+    expect(spacing.above).toBeGreaterThan(80);
+    expect(spacing.below).toBeGreaterThan(80);
+  });
+
+  test('4aa. AI improvement is presented as a separate full-width card action', async ({ page }) => {
+    const action = page.locator('#cardsArea .btn-card-ai').first();
+    await expect(action).toBeVisible();
+    await expect(action).toContainText('Улучшить с ИИ');
+    const actionBox = await action.boundingBox();
+    const actionsBox = await page.locator('#cardsArea .card-actions').first().boundingBox();
+    expect(actionBox).not.toBeNull();
+    expect(actionsBox).not.toBeNull();
+    expect(actionBox!.width).toBeGreaterThanOrEqual(actionsBox!.width - 1);
+
+    await action.click();
+    await expect(page).toHaveURL(/\/login\/?\?mode=signup&next=\/editor$/);
+  });
+
   test('4b. desktop card title does not replace the explicit collapse button', async ({ page }) => {
     const card = page.locator('#editorCardsList .card-editor-block').first();
     await card.locator('[data-field="title"]').fill('Desktop Title');

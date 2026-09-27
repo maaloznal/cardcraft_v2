@@ -1,4 +1,4 @@
-import { requestTextCards } from '@/ai/text-to-cards-client';
+import { requestCardImprovement, requestTextCards } from '@/ai/text-to-cards-client';
 import {
   AI_DEFAULT_TARGET_CHARS,
   AI_MAX_CARDS,
@@ -27,6 +27,7 @@ export function createAiImportController(ctx: OrchestratorContext) {
       })
     : null;
   let requestAbort: AbortController | null = null;
+  const cardImprovementRequests = new Map<string, AbortController>();
   let drafts: AiCardDraft[] = [];
   const validThemes = new Set(THEME_GROUPS.flatMap((group) => group.themes.map((theme) => theme.value)));
   const savedPreferences = Storage.loadAiImportPreferences();
@@ -158,8 +159,79 @@ export function createAiImportController(ctx: OrchestratorContext) {
     }
   }
 
+  async function improveCard(cardId: string, trigger?: HTMLElement): Promise<void> {
+    const accessButton = refs.aiImportBtn ?? refs.mobileAiImportBtn;
+    if (accessButton?.dataset.aiAccess !== 'granted') {
+      accessButton?.click();
+      return;
+    }
+    if (cardImprovementRequests.has(cardId)) return;
+    const cardIndex = ctx.stateManager.getCards().findIndex((card) => card.id === cardId);
+    const card = ctx.stateManager.getCard(cardIndex);
+    if (!card) return;
+    const draft = {
+      title: card.title,
+      subtitle: card.subtitle,
+      text: card.text,
+      listItems: card.listItems,
+      footer: card.footer,
+      cta: card.cta,
+    };
+    if (!Object.values(draft).some((value) => value.trim())) {
+      ctx.storage.showToast('Сначала добавьте текст в карточку.', 3000, { priority: true });
+      return;
+    }
+
+    const abort = new AbortController();
+    cardImprovementRequests.set(cardId, abort);
+    const button = trigger instanceof HTMLButtonElement ? trigger : null;
+    const originalMarkup = button?.innerHTML ?? '';
+    if (button) {
+      button.disabled = true;
+      button.setAttribute('aria-busy', 'true');
+      button.textContent = 'Улучшаю…';
+    }
+    ctx.storage.showToast('ИИ улучшает карточку…', 60_000, { priority: true });
+    try {
+      const result = await requestCardImprovement(draft, abort.signal);
+      const currentIndex = ctx.stateManager.getCards().findIndex((item) => item.id === cardId);
+      if (currentIndex < 0) return;
+      for (const [field, value] of Object.entries(result.card)) {
+        ctx.stateManager.dispatch({
+          type: 'UPDATE_CARD_FIELD',
+          payload: { idx: currentIndex, field: field as keyof typeof result.card, value },
+        });
+      }
+      // Word-level styles point to the previous wording and must not leak onto
+      // unrelated words returned by the model. Section styles and theme stay.
+      ctx.stateManager.dispatch({ type: 'SET_CARD_WORD_STYLES', payload: { idx: currentIndex, wordStyles: {} } });
+      ctx.uiAppliers.renderEditor();
+      ctx.uiAppliers.renderPreview();
+      ctx.history.pushHistory();
+      ctx.storage.scheduleSave({ silent: true });
+      ctx.storage.showToast('Карточка улучшена. Изменение можно отменить.', 4000, { priority: true });
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === 'AbortError')) {
+        ctx.storage.showToast(error instanceof Error ? error.message : 'Не удалось улучшить карточку.', 4500, { priority: true });
+      }
+    } finally {
+      cardImprovementRequests.delete(cardId);
+      if (button?.isConnected) {
+        button.disabled = false;
+        button.removeAttribute('aria-busy');
+        button.innerHTML = originalMarkup;
+      }
+    }
+  }
+
   ctx.listeners.addEl(refs.aiImportBtn, 'click', open);
   ctx.listeners.addEl(refs.mobileAiImportBtn, 'click', open);
+  ctx.listeners.addDoc('pointerdown', (event) => {
+    const picker = refs.aiRolePicker;
+    if (picker?.open && event.target instanceof Node && !picker.contains(event.target)) {
+      picker.open = false;
+    }
+  });
   ctx.listeners.addEl(refs.aiSourceText, 'input', () => {
     resetResult();
     setError();
@@ -212,9 +284,12 @@ export function createAiImportController(ctx: OrchestratorContext) {
 
   return {
     open,
+    improveCard,
     close: () => modal?.close(),
     destroy() {
       requestAbort?.abort();
+      cardImprovementRequests.forEach((request) => request.abort());
+      cardImprovementRequests.clear();
       modal?.destroy();
     },
   };

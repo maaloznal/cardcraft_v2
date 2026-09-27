@@ -5,7 +5,10 @@ import {
   isAiRole,
   isAiTextMode,
   parseAiCardsResponse,
+  parseAiCardImproveResponse,
   type AiCardsResponse,
+  type AiCardDraft,
+  type AiCardImproveResponse,
   type AiTextMode,
   type AiRole,
 } from './text-to-cards-contract';
@@ -14,6 +17,42 @@ export interface AiTextRequestOptions {
   mode: AiTextMode;
   role: AiRole;
   targetChars: number;
+}
+
+export async function requestCardImprovement(
+  card: AiCardDraft,
+  signal?: AbortSignal,
+): Promise<AiCardImproveResponse> {
+  if (!Object.values(card).some((value) => value.trim())) {
+    throw new Error('Сначала добавьте текст в карточку.');
+  }
+  if (!supabase) throw new Error('ИИ-функция недоступна: Supabase не настроен.');
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session) throw new Error('Войдите в аккаунт, чтобы улучшать карточки с ИИ.');
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !anonKey) throw new Error('Supabase не настроен.');
+
+  const response = await fetch(`${supabaseUrl.replace(/\/$/, '')}/functions/v1/improve-card`, {
+    method: 'POST',
+    signal,
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: anonKey,
+      Authorization: `Bearer ${data.session.access_token}`,
+    },
+    body: JSON.stringify({ card, requestId: crypto.randomUUID() }),
+  });
+  const body = await response.json().catch(() => null) as Record<string, unknown> | null;
+  if (!response.ok) {
+    throw new Error(typeof body?.error === 'string' ? body.error : 'Не удалось улучшить карточку.');
+  }
+  const result = parseAiCardImproveResponse(body);
+  if (result.usage) {
+    window.dispatchEvent(new CustomEvent('cardcraft:tokens-updated', { detail: result.usage }));
+  }
+  return result;
 }
 
 export async function requestTextCards(

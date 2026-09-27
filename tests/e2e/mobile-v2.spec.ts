@@ -275,9 +275,9 @@ test.describe('P1-touch: 44×44 touch targets', () => {
   // List of ALL interactive elements that should have 44×44 touch target on mobile
   // P1-TOUCH-V2: some elements only appear when there are multiple cards (delete)
   // or when modal is open (modal-close). Tests that need setup have a `setup` fn.
+  // Undo/redo intentionally yield their top-bar space on phone viewports and
+  // are covered by the narrow/Xiaomi visibility regression tests instead.
   const touchElements = [
-    { name: 'undo button', selector: '#undoBtn' },
-    { name: 'redo button', selector: '#redoBtn' },
     { name: 'mode editor tab', selector: '#modeEditorTab' },
     { name: 'mode preview tab', selector: '#modePreviewTab' },
     { name: 'close sidebar button', selector: '#closeSidebarBtn' },
@@ -311,6 +311,7 @@ test.describe('P1-touch: 44×44 touch targets', () => {
   test('touch: card actions (download/copy/delete under preview) >= 44×44', async ({ page }) => {
     await switchToPreviewMode(page);
     const actions = [
+      '#cardsArea [data-action="improve-ai"]',
       '#cardsArea [data-action="edit-preview"]',
       '#cardsArea [data-action="download"]',
       '#cardsArea [data-action="copy"]',
