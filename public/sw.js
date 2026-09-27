@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cardcraft-shell-v1';
+const CACHE_NAME = 'cardcraft-shell-v2';
 const APP_ROOT = new URL('./', self.registration.scope).href;
 
 self.addEventListener('install', (event) => {

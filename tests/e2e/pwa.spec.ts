@@ -24,13 +24,32 @@ test.describe('PWA installability assets', () => {
   test('service worker and install icons are served locally', async ({ request }) => {
     const worker = await request.get('/sw.js');
     expect(worker.ok()).toBe(true);
-    expect(await worker.text()).toContain("cardcraft-shell-v1");
+    expect(await worker.text()).toContain("cardcraft-shell-v2");
 
-    for (const icon of ['/pwa-icon-192.png', '/pwa-icon-512.png', '/pwa-icon-maskable-512.png']) {
+    for (const icon of [
+      '/favicon-32.png',
+      '/favicon-48.png',
+      '/apple-touch-icon-180.png',
+      '/cardcraft-logo.png',
+      '/pwa-icon-192.png',
+      '/pwa-icon-512.png',
+      '/pwa-icon-maskable-512.png',
+    ]) {
       const response = await request.get(icon);
       expect(response.ok(), icon).toBe(true);
       expect(response.headers()['content-type']).toContain('image/png');
       expect((await response.body()).byteLength, icon).toBeGreaterThan(1000);
     }
+  });
+
+  test('page exposes the project logo for browsers and Apple home screen', async ({ page }) => {
+    await gotoApp(page);
+
+    await expect(page.locator('link[rel="icon"][sizes="32x32"]')).toHaveAttribute('href', '/favicon-32.png');
+    await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute(
+      'href',
+      '/apple-touch-icon-180.png',
+    );
+    await expect(page.locator('.brand-logo')).toBeVisible();
   });
 });
