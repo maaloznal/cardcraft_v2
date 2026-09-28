@@ -23,7 +23,7 @@ async function gotoLanding(page: import('@playwright/test').Page): Promise<void>
 
 test.describe('Navigation + Docs scrollspy (last changes)', () => {
 
-  test('landing nav: dark background, white text, white CTA pill', async ({ page }) => {
+  test('landing nav: Apple.com frosted glass, dark text, blue CTA', async ({ page }) => {
     await gotoLanding(page);
     const nav = page.locator('.welcome-nav');
 
@@ -31,22 +31,27 @@ test.describe('Navigation + Docs scrollspy (last changes)', () => {
     const position = await nav.evaluate((el) => getComputedStyle(el).position);
     expect(position).toBe('sticky');
 
-    // Dark background (--ui-accent #18181b)
+    // Frosted glass: translucent white background
     const bg = await nav.evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(bg).toBe('rgb(24, 24, 27)');
+    expect(bg).toContain('255'); // white-based
+    expect(bg).toContain('0.7');  // semi-transparent
 
-    // White text
+    // Hairline bottom border
+    const border = await nav.evaluate((el) => getComputedStyle(el).borderBottomWidth);
+    expect(parseFloat(border)).toBeGreaterThan(0);
+
+    // Apple near-black text (#1d1d1f)
     const brandColor = await page.locator('.welcome-brand').evaluate((el) => getComputedStyle(el).color);
-    expect(brandColor).toBe('rgb(255, 255, 255)');
+    expect(brandColor).toBe('rgb(29, 29, 31)');
 
     const linkColor = await page.locator('.welcome-nav-link').first().evaluate((el) => getComputedStyle(el).color);
-    expect(linkColor).toBe('rgb(255, 255, 255)');
+    expect(linkColor).toBe('rgb(29, 29, 31)');
 
-    // CTA: white pill with dark text (inverted for contrast)
+    // CTA: Apple-blue pill with white text
     const ctaBg = await page.locator('.welcome-nav-cta').first().evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(ctaBg).toBe('rgb(255, 255, 255)');
+    expect(ctaBg).toBe('rgb(0, 113, 227)');
     const ctaColor = await page.locator('.welcome-nav-cta').first().evaluate((el) => getComputedStyle(el).color);
-    expect(ctaColor).toBe('rgb(24, 24, 27)');
+    expect(ctaColor).toBe('rgb(255, 255, 255)');
   });
 
   test('landing nav: stays sticky when scrolling to dark section', async ({ page }) => {

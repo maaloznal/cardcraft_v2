@@ -19,43 +19,46 @@
   text-rendering: optimizeLegibility;
 }
 
-/* ─── Navigation ─── */
-/* Sticky nav with a dark background (--ui-accent near-black) and white text.
-   Simple, readable, no glassmorphism, no gradient. */
+/* ─── Navigation (Apple.com style) ─── */
+/* Frosted glass: translucent white + saturate + blur. Dark text.
+   Thin bottom hairline border. 44px height. Minimalist. */
 .welcome-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 1024px;
+  max-width: 980px;
   margin: 0 auto;
-  padding: 0 max(22px, calc((100% - 1024px) / 2 + 22px));
-  height: 48px;
+  padding: 0 22px;
+  height: 44px;
   box-sizing: border-box;
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
-  background: var(--ui-accent);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 .welcome-brand {
   font-size: 0.9375rem;
   font-weight: 600;
   letter-spacing: -0.01em;
-  color: #ffffff;
+  color: #1d1d1f;
   text-decoration: none;
   transition: opacity var(--dur) var(--ease);
 }
 .welcome-brand:hover {
-  opacity: 0.7;
+  opacity: 0.65;
 }
 .welcome-nav-links {
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 24px;
 }
 .welcome-nav-link {
-  color: #ffffff;
-  font-size: 0.8125rem;
+  color: #1d1d1f;
+  font-size: 0.75rem;
   font-weight: 400;
   text-decoration: none;
   transition: opacity var(--dur) var(--ease);
@@ -64,43 +67,43 @@
   align-items: center;
 }
 .welcome-nav-link:hover {
-  opacity: 0.7;
+  opacity: 0.65;
 }
 .welcome-nav-link:focus-visible {
-  outline: 2px solid #ffffff;
+  outline: 2px solid #0071e3;
   outline-offset: 4px;
   border-radius: var(--r-sm);
   opacity: 1;
 }
-/* CTA: white pill on the dark bar — maximum contrast. */
+/* CTA: Apple-blue pill. */
 .welcome-nav-cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 32px;
-  padding: 0 16px;
+  min-height: 28px;
+  padding: 0 14px;
   border-radius: 980px;
-  background: #ffffff;
-  color: var(--ui-accent);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  background: #0071e3;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 400;
   text-decoration: none;
-  transition: opacity var(--dur) var(--ease);
+  transition: background var(--dur) var(--ease);
 }
 .welcome-nav-cta:hover {
-  opacity: 0.8;
+  background: #0077ed;
 }
 .welcome-nav-cta:focus-visible {
-  outline: 2px solid #ffffff;
+  outline: 2px solid #0071e3;
   outline-offset: 3px;
 }
 /* Mobile nav: CTA + burger (<768px) */
 .welcome-nav-mobile {
   display: none;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
-/* Burger: plain white icon, no border/background. */
+/* Burger: plain icon. */
 .welcome-nav-burger {
   display: inline-flex;
   align-items: center;
@@ -110,15 +113,15 @@
   border: none;
   border-radius: var(--r-md);
   background: transparent;
-  color: #ffffff;
+  color: #1d1d1f;
   cursor: pointer;
   transition: opacity var(--dur) var(--ease);
 }
 .welcome-nav-burger:hover {
-  opacity: 0.7;
+  opacity: 0.65;
 }
 .welcome-nav-burger:focus-visible {
-  outline: 2px solid #ffffff;
+  outline: 2px solid #0071e3;
   outline-offset: 2px;
 }
 
