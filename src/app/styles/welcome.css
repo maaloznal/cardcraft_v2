@@ -45,8 +45,8 @@
 .welcome-demo { position: relative; min-height: 520px; perspective: 900px; }
 
 /* ═══ Carousel (hero demo cards) ═══ */
-/* Card background = page background (#f8fafc). No border clipping — separation
-   comes from shadow + rotation. Cards are lifted, not stretched. */
+/* Front card: solid white background (readable), no border, separated from the
+   page by shadow alone. Decorative back/middle cards peek behind it. */
 .wc-carousel { position: relative; width: 100%; height: 100%; min-height: 440px; overflow: hidden; touch-action: pan-y; }
 .wc-track { display: flex; width: 100%; height: 100%; will-change: transform; cursor: grab; }
 .wc-track:active { cursor: grabbing; }
@@ -56,9 +56,8 @@
 .wc-stack-middle { position: absolute; inset: 24px 8% 40px 5%; border-radius: 32px; box-shadow: 0 20px 50px rgba(31, 41, 74, 0.18); pointer-events: none; }
 .wc-stack-back { transform: translate(28px, -38px) rotate(8deg); background: linear-gradient(145deg, #23b4ed, #2d6fec); opacity: 0.7; }
 .wc-stack-middle { transform: translate(10px, -16px) rotate(3deg); background: linear-gradient(145deg, #e0d3ff, #b996ff); opacity: 0.92; }
-/* Front card: transparent background (page shows through) + strong shadow
-   for depth. No border, no fill — the shadow does the separation work. */
-.wc-stack-front { position: relative; display: flex; flex-direction: column; justify-content: space-between; height: 100%; padding: clamp(28px, 4vw, 44px); border-radius: 32px; box-shadow: 0 32px 64px rgba(31, 41, 74, 0.22), 0 12px 24px rgba(31, 41, 74, 0.12); transform: rotate(-2deg) translateY(-6px); color: #172033; background: transparent; z-index: 1; }
+/* Front card: solid white background, NO border, shadow for depth. */
+.wc-stack-front { position: relative; display: flex; flex-direction: column; justify-content: space-between; height: 100%; padding: clamp(28px, 4vw, 44px); border: 0; border-radius: 32px; box-shadow: 0 32px 64px rgba(31, 41, 74, 0.22), 0 12px 24px rgba(31, 41, 74, 0.12); transform: rotate(-2deg) translateY(-6px); color: #172033; background: #ffffff; z-index: 1; }
 .wc-index { color: #7453f5; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.12em; }
 .wc-title { margin: auto 0 16px; font-size: clamp(1.6rem, 2.8vw, 2.6rem); line-height: 1.05; letter-spacing: -0.04em; overflow-wrap: balance; }
 .wc-desc { margin: 0 0 28px; color: #647084; font-size: clamp(0.92rem, 1.1vw, 1rem); line-height: 1.55; max-width: 420px; }
@@ -226,16 +225,22 @@
   .welcome-nav { width: calc(100% - 24px); padding: 16px 0; }
   .welcome-nav > div > a:not(.welcome-nav-primary) { display: none; }
   .welcome-nav-primary { padding: 9px 12px; }
-  /* Hero: tighter, smaller carousel */
+  /* Hero: tighter, smaller carousel, more breathing room below */
   .welcome-hero { width: calc(100% - 24px); gap: 28px; padding: 36px 0 60px; }
   .welcome-hero h1 { font-size: clamp(2.1rem, 11vw, 3rem); }
   .welcome-actions { display: grid; }
-  .welcome-demo { min-height: 380px; }
-  .wc-carousel { min-height: 340px; }
-  .wc-slide { padding: 16px 3% 28px 5%; }
-  .wc-title { font-size: 1.6rem; }
-  .wc-stack-front { padding: 24px; border-radius: 24px; }
-  .wc-stack-back, .wc-stack-middle { border-radius: 24px; }
+  .welcome-hero-copy small { font-size: 0.76rem; }
+  /* Carousel: smaller, decorative cards tucked in so they don't overflow on
+     narrow screens. Front card stays white + shadow for separation. */
+  .welcome-demo { min-height: 360px; margin-bottom: 20px; }
+  .wc-carousel { min-height: 320px; }
+  .wc-slide { padding: 16px 2% 24px 4%; }
+  .wc-title { font-size: 1.5rem; line-height: 1.1; }
+  .wc-desc { font-size: 0.86rem; margin-bottom: 20px; }
+  .wc-stack-front { padding: 22px; border-radius: 22px; transform: rotate(-1.5deg) translateY(-4px); }
+  /* Tuck decorative cards closer so rotate+translate doesn't push past viewport */
+  .wc-stack-back { transform: translate(16px, -24px) rotate(6deg); border-radius: 22px; }
+  .wc-stack-middle { transform: translate(6px, -10px) rotate(2deg); border-radius: 22px; }
   /* Sections: tighter width + padding */
   .welcome-section { width: calc(100% - 24px); padding: 60px 0; }
   .welcome-feature-card { padding: 22px; }
