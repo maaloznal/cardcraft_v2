@@ -145,6 +145,9 @@ test.describe('Tablet portrait (iPad gen 7, ~834×1194 / split-view)', () => {
       return Math.abs((secondaryLeft + secondaryRight) / 2 - (aiRect.left + aiRect.right) / 2);
     });
     expect(centerOffset).toBeLessThanOrEqual(2);
+
+    await actions.locator('[data-action="palette-preview"]').click();
+    await expect(page.locator('#colorModal')).toHaveClass(/active/);
   });
 });
 

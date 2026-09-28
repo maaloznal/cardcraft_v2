@@ -53,4 +53,30 @@ test.describe('Color modal', () => {
     await page.keyboard.press('Escape');
     await expect(page.locator('#wordStylePopup')).not.toHaveClass(/active/);
   });
+
+  test('18e. arbitrary selected phrase opens the text style popup', async ({ page }) => {
+    const input = page.locator('#editorCardsList .card-editor-block').first().locator('[data-field="title"]');
+    await input.fill('Можно выделить целую фразу на карточке');
+    const title = page.locator('#cardsArea .card-title').first();
+    await expect(title).toContainText('Можно выделить целую фразу на карточке');
+
+    await title.evaluate((element) => {
+      const textNode = element.firstChild;
+      if (!textNode) throw new Error('Preview title has no text node');
+      const range = document.createRange();
+      range.setStart(textNode, 6);
+      range.setEnd(textNode, 27);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+      element.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'mouse' }));
+    });
+
+    await expect(page.locator('#wordStylePopup')).toHaveClass(/active/);
+    await expect(page.locator('#wordStylePopup')).toContainText('выделить целую фразу');
+    await page.locator('#wordStylePopup [data-format="bold"]').click();
+    const styledPhrase = title.locator('.cc-styled-word');
+    await expect(styledPhrase).toHaveText('выделить целую фразу');
+    await expect(styledPhrase).toHaveCSS('font-weight', '700');
+  });
 });

@@ -10,7 +10,7 @@
  * HorizontalResize — resizes the #editorSidebar width (drag horizontally).
  *   Divider: #resizeDividerV (vertical divider, drag horizontally).
  *   Affects: #editorSidebar width.
- *   Constraint: min 260px, max 520px.
+ *   Constraint: min 320px, max 400px.
  *   Persists: 'flashcard-sidebar-width' in localStorage.
  *   Disabled when sidebar is collapsed.
  *
@@ -24,8 +24,8 @@ const MIN_SECTION_HEIGHT = 60;
 // P1-RESIZE-V2: aligned with CSS (mobile.css tablet sets max-width: 400px
 // via clamp(280px, 38vw, 340px) + max-width: 400px). Previously TS allowed
 // up to 520px but CSS clamped to 400 — drag appeared to do nothing beyond 400.
-// Now both agree: 260-400px.
-const MIN_SIDEBAR_WIDTH = 260;
+// Keep enough room for the card number and header actions without overlap.
+const MIN_SIDEBAR_WIDTH = 320;
 const MAX_SIDEBAR_WIDTH = 400;
 
 export class VerticalResize {

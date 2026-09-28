@@ -315,6 +315,7 @@ test.describe('P1-touch: 44×44 touch targets', () => {
       '#cardsArea [data-action="undo-preview"]',
       '#cardsArea [data-action="redo-preview"]',
       '#cardsArea [data-action="edit-preview"]',
+      '#cardsArea [data-action="palette-preview"]',
       '#cardsArea [data-action="download"]',
       '#cardsArea [data-action="copy"]',
       '#cardsArea [data-action="delete-preview"]',
@@ -344,6 +345,9 @@ test.describe('P1-touch: 44×44 touch targets', () => {
     const secondaryRight = Math.max(...secondary.map((rect) => rect.right));
     const actionsCenter = actionsBox!.x + actionsBox!.width / 2;
     expect(Math.abs((secondaryLeft + secondaryRight) / 2 - actionsCenter)).toBeLessThanOrEqual(2);
+
+    await actionsPanel.locator('[data-action="palette-preview"]').click();
+    await expect(page.locator('#colorModal')).toHaveClass(/active/);
   });
 
   test('touch: preview undo and redo restore the latest mobile card edit', async ({ page }) => {

@@ -60,14 +60,17 @@ export function applyWordStylesToText(
 
   if (applicable.length === 0) return escapeHtml(text);
 
-  // Find all word occurrences with word-boundary checks
+  // A single word keeps word-boundary matching. A phrase or a selection that
+  // contains punctuation/spacing is matched exactly, allowing users to style
+  // any explicitly selected range instead of being limited to one word.
   const ranges: { start: number; end: number; styleStr: string }[] = [];
   applicable.forEach(({ word, styleStr }) => {
+    const needsWordBoundaries = Array.from(word).every((char) => isWordChar(char));
     let idx = 0;
     while ((idx = text.indexOf(word, idx)) !== -1) {
       const before = text[idx - 1];
       const after = text[idx + word.length];
-      if ((!before || !isWordChar(before)) && (!after || !isWordChar(after))) {
+      if (!needsWordBoundaries || ((!before || !isWordChar(before)) && (!after || !isWordChar(after)))) {
         ranges.push({ start: idx, end: idx + word.length, styleStr });
       }
       idx += word.length;
@@ -93,11 +96,12 @@ export function applyWordStylesToText(
 /** Check if a word exists as a whole word in the given text */
 export function containsWholeWord(text: string, word: string): boolean {
   if (!word) return false;
+  const needsWordBoundaries = Array.from(word).every((char) => isWordChar(char));
   let idx = 0;
   while ((idx = text.indexOf(word, idx)) !== -1) {
     const before = text[idx - 1];
     const after = text[idx + word.length];
-    if ((!before || !isWordChar(before)) && (!after || !isWordChar(after))) return true;
+    if (!needsWordBoundaries || ((!before || !isWordChar(before)) && (!after || !isWordChar(after)))) return true;
     idx += word.length;
   }
   return false;

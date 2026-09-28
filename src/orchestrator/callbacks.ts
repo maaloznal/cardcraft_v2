@@ -39,6 +39,10 @@ export function wireRendererCallbacks(ctx: OrchestratorContext): void {
       const cardId = String(data.cardId || '').replace(/^card-node-/, '');
       const cardIndex = stateManager.getCards().findIndex((card) => card.id === cardId);
       if (cardIndex >= 0) ctx.mobileMode.openCard(cardIndex);
+    } else if (action === 'palette-preview') {
+      const cardId = String(data.cardId || '').replace(/^card-node-/, '');
+      const cardIndex = stateManager.getCards().findIndex((card) => card.id === cardId);
+      if (cardIndex >= 0) ctx.modal.openColorModal(cardIndex);
     } else if (action === 'download') {
       const node = document.getElementById(String(data.cardId));
       if (node) void ctx.exporter.generateAndDownloadPng(node, String(data.filename || 'card.png'));

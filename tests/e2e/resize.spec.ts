@@ -103,7 +103,8 @@ test.describe('P1-resize: desktop sidebar resize', () => {
     await page.keyboard.press('Home');
     await page.waitForTimeout(200);
     const width = await getSidebarWidth(page);
-    expect(width).toBeLessThanOrEqual(265); // 260 + 5px tolerance
+    expect(width).toBeGreaterThanOrEqual(315); // 320 - 5px tolerance
+    expect(width).toBeLessThanOrEqual(325); // 320 + 5px tolerance
   });
 
   test('resize-6: keyboard End sets max width', async ({ page }) => {

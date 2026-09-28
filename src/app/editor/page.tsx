@@ -439,9 +439,9 @@ function CardEditor() {
           tabIndex={0}
           aria-label="Изменить ширину панели редактора"
           aria-orientation="vertical"
-          aria-valuemin={260}
+          aria-valuemin={320}
           aria-valuemax={400}
-          aria-valuenow={300}
+          aria-valuenow={320}
         />
 
         <div className="sidebar-backdrop" id="sidebarBackdrop" />
@@ -710,15 +710,15 @@ function CardEditor() {
         </div>
       </div>
 
-      <div className="word-style-popup" id="wordStylePopup" role="dialog" aria-modal="true" aria-label="Настройка слова">
+      <div className="word-style-popup" id="wordStylePopup" role="dialog" aria-modal="true" aria-label="Настройка выделенного текста">
         <div className="word-popup-header" id="wordPopupHeader" />
         <button
           className="word-clear-btn"
           id="wordClearBtn"
           type="button"
-          title="Убрать все стили с этого слова"
+          title="Убрать все стили с выделенного текста"
         >
-          Сбросить стиль слова
+          Сбросить стиль выделения
         </button>
         <div className="popup-section">
           <div className="popup-section-title">
@@ -764,7 +764,7 @@ function CardEditor() {
         </div>
         <div className="popup-section">
           <div className="popup-section-title">
-            <span>Стили слов</span>
+            <span>Стили выделений</span>
           </div>
           <div className="popup-section-content">
             <div id="wordStyleList" className="word-style-list" />

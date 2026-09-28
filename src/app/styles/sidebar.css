@@ -2,8 +2,8 @@
 
 /* ================= SIDEBAR ================= */
 .editor-sidebar {
-  --sidebar-width: 300px;
-  width: 300px;
+  --sidebar-width: 320px;
+  width: 320px;
   flex-shrink: 0;
   background: var(--ui-surface);
   border-right: 1px solid var(--ui-border);

@@ -42,6 +42,7 @@ export class PreviewRenderer {
   /** Tracked listeners for cleanup (StrictMode double-mount safety) */
   private clickHandler: ((e: MouseEvent) => void) | null = null;
   private dblclickHandler: ((e: MouseEvent) => void) | null = null;
+  private pointerUpHandler: ((e: PointerEvent) => void) | null = null;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -57,8 +58,10 @@ export class PreviewRenderer {
   destroy(): void {
     if (this.clickHandler) this.container.removeEventListener('click', this.clickHandler);
     if (this.dblclickHandler) this.container.removeEventListener('dblclick', this.dblclickHandler);
+    if (this.pointerUpHandler) this.container.removeEventListener('pointerup', this.pointerUpHandler);
     this.clickHandler = null;
     this.dblclickHandler = null;
+    this.pointerUpHandler = null;
     this.actionHandler = null;
   }
 
@@ -287,13 +290,16 @@ export class PreviewRenderer {
         ${bottomContent}
       </div>
       <div class="card-actions">
+        <div class="card-actions-main">
+          <button class="btn-card-action btn-card-history" data-action="undo-preview" title="Отменить изменение" aria-label="Отменить изменение" disabled><svg aria-hidden="true" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>
+          <button class="btn-card-action btn-card-history" data-action="redo-preview" title="Вернуть изменение" aria-label="Вернуть изменение" disabled><svg aria-hidden="true" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+          <button class="btn-card-action" data-action="edit-preview" data-card-id="card-node-${safeCardId}" title="Редактировать карточку ${index + 1}" aria-label="Редактировать карточку ${index + 1}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+          <button class="btn-card-action" data-action="palette-preview" data-card-id="card-node-${safeCardId}" title="Персональные стили карточки ${index + 1}" aria-label="Персональные стили карточки ${index + 1}"><svg aria-hidden="true" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg></button>
+          <button class="btn-card-action" data-action="download" data-card-id="card-node-${safeCardId}" data-filename="card-${index + 1}.png" title="Скачать" aria-label="Скачать"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+          <button class="btn-card-action" data-action="copy" data-card-id="card-node-${safeCardId}" title="Копировать" aria-label="Копировать"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+          <button class="btn-card-action btn-card-action-danger" data-action="delete-preview" data-card-id="card-node-${safeCardId}" title="Удалить" aria-label="Удалить"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
+        </div>
         <button class="btn-card-action btn-card-ai" data-action="improve-ai" data-card-id="card-node-${safeCardId}" data-tooltip="Улучшить с ИИ" title="Улучшить с ИИ" aria-label="Улучшить карточку ${index + 1} с ИИ"><svg aria-hidden="true" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.4 3.6L7 8l3.6 1.4L12 13l1.4-3.6L17 8l-3.6-1.4L12 3Z"/><path d="m18.5 13-.8 2.2-2.2.8 2.2.8.8 2.2.8-2.2 2.2-.8-2.2-.8-.8-2.2Z"/></svg><span class="btn-card-ai-label">Улучшить с ИИ</span></button>
-        <button class="btn-card-action btn-card-history" data-action="undo-preview" title="Отменить изменение" aria-label="Отменить изменение" disabled><svg aria-hidden="true" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>
-        <button class="btn-card-action btn-card-history" data-action="redo-preview" title="Вернуть изменение" aria-label="Вернуть изменение" disabled><svg aria-hidden="true" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
-        <button class="btn-card-action" data-action="edit-preview" data-card-id="card-node-${safeCardId}" title="Редактировать карточку ${index + 1}" aria-label="Редактировать карточку ${index + 1}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
-        <button class="btn-card-action" data-action="download" data-card-id="card-node-${safeCardId}" data-filename="card-${index + 1}.png" title="Скачать" aria-label="Скачать"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
-        <button class="btn-card-action" data-action="copy" data-card-id="card-node-${safeCardId}" title="Копировать" aria-label="Копировать"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-        <button class="btn-card-action btn-card-action-danger" data-action="delete-preview" data-card-id="card-node-${safeCardId}" title="Удалить" aria-label="Удалить"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
       </div>
     `;
     return wrapper;
@@ -443,7 +449,7 @@ export class PreviewRenderer {
       const btn = target.closest<HTMLElement>('[data-action]');
       if (!btn) return;
       const action = btn.dataset.action || '';
-      if (action === 'edit-preview' || action === 'download' || action === 'copy' || action === 'improve-ai' || action === 'undo-preview' || action === 'redo-preview') {
+      if (action === 'edit-preview' || action === 'palette-preview' || action === 'download' || action === 'copy' || action === 'improve-ai' || action === 'undo-preview' || action === 'redo-preview') {
         e.stopPropagation();
         this.actionHandler?.(action, {
           cardId: btn.dataset.cardId || '',
@@ -460,6 +466,15 @@ export class PreviewRenderer {
       }
     };
     this.container.addEventListener('click', this.clickHandler);
+
+    // A drag/long-press selection can contain a phrase or any other range.
+    // Only accept a selection whose endpoints both belong to the same card
+    // field, so text from neighbouring fields can never be styled by mistake.
+    this.pointerUpHandler = (e: PointerEvent) => {
+      const delay = e.pointerType === 'touch' ? 120 : 0;
+      window.setTimeout(() => this.openSelectedText(e.clientX, e.clientY), delay);
+    };
+    this.container.addEventListener('pointerup', this.pointerUpHandler);
 
     // Dblclick delegation for word styling
     this.dblclickHandler = (e: MouseEvent) => {
@@ -484,6 +499,30 @@ export class PreviewRenderer {
       e.stopPropagation();
     };
     this.container.addEventListener('dblclick', this.dblclickHandler);
+  }
+
+  private openSelectedText(fallbackX: number, fallbackY: number): void {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed || selection.rangeCount === 0) return;
+    const range = selection.getRangeAt(0);
+    const start = (range.startContainer.nodeType === Node.ELEMENT_NODE
+      ? range.startContainer as Element
+      : range.startContainer.parentElement)?.closest<HTMLElement>('[data-field]');
+    const end = (range.endContainer.nodeType === Node.ELEMENT_NODE
+      ? range.endContainer as Element
+      : range.endContainer.parentElement)?.closest<HTMLElement>('[data-field]');
+    if (!start || start !== end || !this.container.contains(start)) return;
+
+    const text = selection.toString().trim();
+    if (!text) return;
+    const rect = range.getBoundingClientRect();
+    this.actionHandler?.('dblclick', {
+      text,
+      field: start.dataset.field || '',
+      cardId: start.dataset.cardId || '',
+      x: rect.left || fallbackX,
+      y: (rect.bottom || fallbackY) + 6,
+    });
   }
 }
 

@@ -25,9 +25,23 @@
 .card-actions {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  justify-content: center;
+  position: relative;
   gap: 8px;
   width: 100%;
+  min-height: 36px;
+}
+.card-actions-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+  width: max-content;
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
 }
 
 /* Card action buttons (under preview cards) */
@@ -58,10 +72,12 @@
   transform: scale(0.97);
 }
 .cc-root button.btn-card-ai {
+  position: absolute;
+  right: 0;
+  top: 0;
   flex: 0 0 auto;
   width: 32px;
   padding: 0;
-  position: relative;
   border-color: rgba(124, 58, 237, 0.3);
   color: #6d4aff;
   background: rgba(124, 58, 237, 0.08);
@@ -120,9 +136,21 @@
 }
 @media (max-width: 1023px) {
   .card-actions {
+    display: flex;
+    flex-direction: column;
     justify-content: center;
   }
+  .card-actions-main {
+    order: 2;
+    position: static;
+    transform: none;
+    width: 100%;
+    flex-wrap: wrap;
+  }
   .cc-root button.btn-card-ai {
+    position: relative;
+    inset: auto;
+    order: 1;
     flex: 1 0 100%;
     width: 100%;
     min-height: 44px;

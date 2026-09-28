@@ -56,19 +56,33 @@ test.describe('Card operations', () => {
     expect(spacing.below).toBeGreaterThan(80);
   });
 
-  test('4aa. AI improvement is a compact action beside the other card actions', async ({ page }) => {
+  test('4aa. desktop actions are centered, styles are duplicated, and AI stays at the far edge', async ({ page }) => {
     const action = page.locator('#cardsArea .btn-card-ai').first();
+    const actions = page.locator('#cardsArea .card-actions').first();
+    const mainActions = actions.locator('.card-actions-main');
+    const stylesAction = mainActions.locator('[data-action="palette-preview"]');
     await expect(action).toBeVisible();
+    await expect(stylesAction).toBeVisible();
     await expect(action).toHaveAttribute('title', 'Улучшить с ИИ');
     await expect(action).toHaveAttribute('data-tooltip', 'Улучшить с ИИ');
     await expect(action.locator('.btn-card-ai-label')).toBeHidden();
     const actionBox = await action.boundingBox();
-    const editBox = await page.locator('#cardsArea [data-action="edit-preview"]').first().boundingBox();
+    const editBox = await mainActions.locator('[data-action="edit-preview"]').boundingBox();
+    const cardBox = await page.locator('#cardsArea .card').first().boundingBox();
+    const mainBox = await mainActions.boundingBox();
     expect(actionBox).not.toBeNull();
     expect(editBox).not.toBeNull();
+    expect(cardBox).not.toBeNull();
+    expect(mainBox).not.toBeNull();
     expect(actionBox!.width).toBeLessThanOrEqual(44);
     expect(Math.abs(actionBox!.height - editBox!.height)).toBeLessThanOrEqual(1);
     expect(Math.abs(actionBox!.y - editBox!.y)).toBeLessThanOrEqual(4);
+    expect(Math.abs((mainBox!.x + mainBox!.width / 2) - (cardBox!.x + cardBox!.width / 2))).toBeLessThanOrEqual(2);
+    expect(actionBox!.x).toBeGreaterThan(mainBox!.x + mainBox!.width);
+
+    await stylesAction.click();
+    await expect(page.locator('#colorModal')).toHaveClass(/active/);
+    await page.locator('#closeModalBtn').click();
     await action.hover();
     await expect.poll(() => action.evaluate((element) => getComputedStyle(element, '::after').opacity)).toBe('1');
 

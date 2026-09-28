@@ -180,12 +180,12 @@ export class WordEditorManager {
       .map((k) => ({ key: k, word: splitOnce(k, '::')[1] || k }));
 
     if (entries.length === 0) {
-      this.wordList.innerHTML = '<div class="word-list-empty">Стилизованных слов нет</div>';
+      this.wordList.innerHTML = '<div class="word-list-empty">Стилизованных выделений нет</div>';
       return;
     }
 
     this.wordList.innerHTML =
-      '<div class="word-list-title">Стили слов поля:</div>' +
+      '<div class="word-list-title">Стили выделений поля:</div>' +
       entries
         .map(
           (e) =>
