@@ -30,8 +30,12 @@
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
+  /* Glassmorphism: frosted glass — translucent light surface over content.
+     --ui-topbar-bg is rgba(255,255,255,0.88) in light / rgba(24,24,27,0.9) in dark. */
   background: var(--ui-topbar-bg);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--ui-border);
 }
 .welcome-brand {
   font-size: 1.125rem;
@@ -46,7 +50,12 @@
   gap: var(--space-6);
 }
 .welcome-nav-link {
-  color: var(--ui-text-secondary);
+  /* Nav links sit on a translucent glass surface (--ui-topbar-bg 0.88 alpha)
+     composited over arbitrary section content. --ui-text-secondary (#52525b)
+     gives only 2.7:1 there — below WCAG AA. Use --ui-text (#18181b) for a
+     guaranteed 12.6:1 contrast that stays readable over both light and dark
+     sections scrolling behind the frosted header. */
+  color: var(--ui-text);
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
@@ -56,7 +65,7 @@
   align-items: center;
 }
 .welcome-nav-link:hover {
-  color: var(--ui-text);
+  color: var(--ui-accent);
 }
 .welcome-nav-link:focus-visible {
   outline: 2px solid var(--ui-focus);
