@@ -138,7 +138,7 @@ export default function AccountPage() {
         <div className="account-body">
           {error && <p className="project-error" role="alert">{error}</p>}
           <section className="account-stats" aria-label="Статистика аккаунта">
-            <div className="account-stat"><span>Доступно токенов</span><strong>{number.format(account.token_balance)}</strong></div>
+            <div className="account-stat"><span>Доступно токенов</span><strong>{account.unlimited_tokens ? 'Без ограничений' : number.format(account.token_balance)}</strong></div>
             <div className="account-stat"><span>Использовано</span><strong>{number.format(account.tokens_used)}</strong></div>
             <div className="account-stat"><span>Проектов</span><strong>{number.format(projects.length)}</strong></div>
           </section>
@@ -187,7 +187,11 @@ export default function AccountPage() {
           </section>
 
           <footer className="account-actions">
-            <p className="account-note">На старте аккаунту начисляется {number.format(INITIAL_TOKEN_BALANCE)} токенов. Списание выполняется сервером по фактическому расходу ИИ.</p>
+            <p className="account-note">
+              {account.unlimited_tokens
+                ? 'Для этого тестового аккаунта расход токенов учитывается в статистике, но доступный баланс не уменьшается.'
+                : `На старте аккаунту начисляется ${number.format(INITIAL_TOKEN_BALANCE)} токенов. Списание выполняется сервером по фактическому расходу ИИ.`}
+            </p>
             <div className="account-footer-actions">
               <Link className="account-secondary" href="/docs">Документация</Link>
               <Link className="account-secondary" href="/">На главную</Link>

@@ -6,6 +6,7 @@ export interface UserAccount {
   user_id: string;
   token_balance: number;
   tokens_used: number;
+  unlimited_tokens: boolean;
   created_at: string;
   updated_at: string;
 }
