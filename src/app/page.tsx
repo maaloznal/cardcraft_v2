@@ -205,17 +205,41 @@ export default function WelcomePage() {
       </section>
 
       <section className="welcome-registration">
-        <div>
+        <div className="welcome-registration-copy">
           <span className="welcome-eyebrow">Бесплатный аккаунт</span>
           <h2>Работайте с сериями, а не с одним черновиком</h2>
           <p>Создавайте неограниченное количество проектов, переключайтесь между ними и храните карточки отдельно.</p>
+          <Link className="welcome-primary welcome-registration-cta" href="/login?mode=signup&next=/editor">Зарегистрироваться</Link>
         </div>
-        <ul>
-          <li><strong>50 000</strong><span>стартовых ИИ-токенов</span></li>
-          <li><strong>∞</strong><span>проектов</span></li>
-          <li><strong>1</strong><span>аккаунт на всех устройствах</span></li>
+        <ul className="welcome-registration-stats">
+          <li>
+            <span className="welcome-registration-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </span>
+            <span className="welcome-registration-stat">
+              <strong>50 000</strong>
+              <small>стартовых ИИ-токенов</small>
+            </span>
+          </li>
+          <li>
+            <span className="welcome-registration-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            </span>
+            <span className="welcome-registration-stat">
+              <strong>∞</strong>
+              <small>проектов</small>
+            </span>
+          </li>
+          <li>
+            <span className="welcome-registration-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9 9 0 0 0-6.36 2.64L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9 9 0 0 0 6.36-2.64L21 16"/><path d="M21 21v-5h-5"/></svg>
+            </span>
+            <span className="welcome-registration-stat">
+              <strong>1</strong>
+              <small>аккаунт на всех устройствах</small>
+            </span>
+          </li>
         </ul>
-        <Link className="welcome-primary" href="/login?mode=signup&next=/editor">Зарегистрироваться</Link>
       </section>
 
       <footer className="welcome-footer">
