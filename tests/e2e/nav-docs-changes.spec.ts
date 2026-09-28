@@ -23,7 +23,7 @@ async function gotoLanding(page: import('@playwright/test').Page): Promise<void>
 
 test.describe('Navigation + Docs scrollspy (last changes)', () => {
 
-  test('landing nav: Apple-style frosted glass, minimalist text, blue CTA', async ({ page }) => {
+  test('landing nav: dark background, white text, white CTA pill', async ({ page }) => {
     await gotoLanding(page);
     const nav = page.locator('.welcome-nav');
 
@@ -31,32 +31,22 @@ test.describe('Navigation + Docs scrollspy (last changes)', () => {
     const position = await nav.evaluate((el) => getComputedStyle(el).position);
     expect(position).toBe('sticky');
 
-    // Frosted glass background (translucent white + blur), NOT gradient.
-    // Note: backdrop-filter reports "none" in headless Chromium (no GPU),
-    // so we verify the translucent background instead — that's what makes
-    // the glass effect work when a real browser composites it.
+    // Dark background (--ui-accent #18181b)
     const bg = await nav.evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(bg).toContain('255'); // white-based
-    expect(bg).toContain('0.7');  // semi-transparent
+    expect(bg).toBe('rgb(24, 24, 27)');
 
-    // Apple near-black text (#1d1d1f)
+    // White text
     const brandColor = await page.locator('.welcome-brand').evaluate((el) => getComputedStyle(el).color);
-    expect(brandColor).toBe('rgb(29, 29, 31)');
+    expect(brandColor).toBe('rgb(255, 255, 255)');
 
     const linkColor = await page.locator('.welcome-nav-link').first().evaluate((el) => getComputedStyle(el).color);
-    expect(linkColor).toBe('rgb(29, 29, 31)');
+    expect(linkColor).toBe('rgb(255, 255, 255)');
 
-    // CTA: Apple-blue (#0071e3) filled pill with white text
+    // CTA: white pill with dark text (inverted for contrast)
     const ctaBg = await page.locator('.welcome-nav-cta').first().evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(ctaBg).toBe('rgb(0, 113, 227)');
+    expect(ctaBg).toBe('rgb(255, 255, 255)');
     const ctaColor = await page.locator('.welcome-nav-cta').first().evaluate((el) => getComputedStyle(el).color);
-    expect(ctaColor).toBe('rgb(255, 255, 255)');
-
-    // Minimalist font sizes (small, light weight)
-    const brandSize = await page.locator('.welcome-brand').evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
-    expect(brandSize).toBeLessThanOrEqual(15); // small
-    const linkWeight = await page.locator('.welcome-nav-link').first().evaluate((el) => getComputedStyle(el).fontWeight);
-    expect(parseInt(linkWeight)).toBeLessThanOrEqual(400); // light
+    expect(ctaColor).toBe('rgb(24, 24, 27)');
   });
 
   test('landing nav: stays sticky when scrolling to dark section', async ({ page }) => {
