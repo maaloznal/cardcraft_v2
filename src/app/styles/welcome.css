@@ -27,18 +27,15 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 980px;
-  margin: 0 auto;
+  margin: 0;
   padding: 0 22px;
   height: 44px;
   box-sizing: border-box;
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 .welcome-brand {
   font-size: 0.9375rem;

@@ -31,10 +31,9 @@ test.describe('Navigation + Docs scrollspy (last changes)', () => {
     const position = await nav.evaluate((el) => getComputedStyle(el).position);
     expect(position).toBe('sticky');
 
-    // Frosted glass: translucent white background
+    // Opaque white background (not translucent)
     const bg = await nav.evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(bg).toContain('255'); // white-based
-    expect(bg).toContain('0.7');  // semi-transparent
+    expect(bg).toBe('rgb(255, 255, 255)');
 
     // Hairline bottom border
     const border = await nav.evaluate((el) => getComputedStyle(el).borderBottomWidth);
