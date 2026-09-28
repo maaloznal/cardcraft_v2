@@ -1,24 +1,30 @@
 'use client';
 
 /**
- * WelcomeCarousel — interactive swipeable card carousel for the landing hero.
+ * WelcomeCarousel — accessible scroll-snap card carousel for the hero.
  *
- * Features:
- *   - Drag-to-swipe via Pointer Events (mouse + touch unified)
- *   - Keyboard navigation (← →)
- *   - Clickable pagination dots
- *   - CSS transform transitions with momentum-ish feel
- *   - Accessible: aria-roledescription, aria-label, sr-only live region
+ * Design decisions (per approved architecture):
+ *   - Native CSS scroll-snap (no JS transform-based slide track)
+ *   - NO transform: rotate(), NO perspective, NO decorative stacked cards
+ *   - Cards sit flat with a stable aspect ratio
+ *   - A peek of the next card (~10–15% width) is visible to signal swipeability
+ *   - Prev/Next arrow buttons (desktop, ≥44px targets, disabled at bounds)
+ *   - Pagination dots (clickable, labelled, roving tabindex)
+ *   - Keyboard: ← → on the carousel region
+ *   - Touch + mouse wheel via native scroll
+ *   - prefers-reduced-motion: scrolling still works, transition is instant
  *
- * No external dependencies — vanilla TS + CSS transforms.
- * The carousel is desktop-first; on mobile it falls back to a simple
- * horizontal scroll snap (handled in CSS).
+ * Accessibility:
+ *   - role="region" aria-roledescription="carousel"
+ *   - each slide: aria-roledescription="slide", aria-label="N of M"
+ *   - non-active slides: aria-hidden only affects AT, not scrolling
+ *   - sr-only live region announces the active slide
  */
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export interface CarouselCard {
-  index: string; // e.g. "01 / 03"
+  index: string;
   title: string;
   description: string;
 }
@@ -27,20 +33,29 @@ interface WelcomeCarouselProps {
   cards: CarouselCard[];
 }
 
-const SWIPE_THRESHOLD = 60; // px — minimum drag distance to advance
-
 export default function WelcomeCarousel({ cards }: WelcomeCarouselProps) {
   const [active, setActive] = useState(0);
-  const [dragX, setDragX] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [cardWidth, setCardWidth] = useState(0);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const startX = useRef(0);
+  const scrollerRef = useRef<HTMLDivElement>(null);
 
   const goTo = useCallback(
     (idx: number) => {
-      const next = (idx + cards.length) % cards.length;
-      setActive(next);
+      const clamped = Math.max(0, Math.min(idx, cards.length - 1));
+      const scroller = scrollerRef.current;
+      if (!scroller) {
+        setActive(clamped);
+        return;
+      }
+      const slide = scroller.children[clamped] as HTMLElement | undefined;
+      if (slide) {
+        // scrollIntoView respects prefers-reduced-motion (instant vs smooth).
+        const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        slide.scrollIntoView({
+          behavior: prefersReduced ? 'auto' : 'smooth',
+          inline: 'start',
+          block: 'nearest',
+        });
+      }
+      setActive(clamped);
     },
     [cards.length],
   );
@@ -48,63 +63,47 @@ export default function WelcomeCarousel({ cards }: WelcomeCarouselProps) {
   const next = useCallback(() => goTo(active + 1), [active, goTo]);
   const prev = useCallback(() => goTo(active - 1), [active, goTo]);
 
-  // Measure card width for drag math (stored in state — reading during render
-  // is legal; the effect keeps it in sync on mount + resize).
+  // Track the active slide by observing scroll position (IntersectionObserver).
   useEffect(() => {
-    const measure = () => {
-      if (trackRef.current) {
-        const first = trackRef.current.querySelector<HTMLElement>('.wc-slide');
-        if (first) setCardWidth(first.offsetWidth);
-      }
-    };
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
-  }, []);
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    const slides = Array.from(scroller.children) as HTMLElement[];
 
-  // Keyboard navigation
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        next();
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        prev();
-      }
-    };
-    const el = trackRef.current;
-    el?.addEventListener('keydown', onKey);
-    return () => el?.removeEventListener('keydown', onKey);
-  }, [next, prev]);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // The slide most-visible in the scroller becomes active.
+        let best: { idx: number; ratio: number } | null = null;
+        for (const entry of entries) {
+          const idx = slides.indexOf(entry.target as HTMLElement);
+          if (idx === -1) continue;
+          if (!best || entry.intersectionRatio > best.ratio) {
+            best = { idx, ratio: entry.intersectionRatio };
+          }
+        }
+        if (best && best.ratio > 0.5) {
+          setActive(best.idx);
+        }
+      },
+      { root: scroller, threshold: [0.5, 0.75, 1] },
+    );
 
-  // Pointer (mouse + touch) drag
-  const onPointerDown = (e: React.PointerEvent) => {
-    startX.current = e.clientX;
-    setIsDragging(true);
-    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-  };
+    slides.forEach((s) => observer.observe(s));
+    return () => observer.disconnect();
+  }, [cards.length]);
 
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!isDragging) return;
-    setDragX(e.clientX - startX.current);
-  };
-
-  const onPointerUp = () => {
-    if (!isDragging) return;
-    setIsDragging(false);
-    if (Math.abs(dragX) > SWIPE_THRESHOLD) {
-      if (dragX < 0) next();
-      else prev();
+  // Keyboard navigation on the carousel region.
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      prev();
     }
-    setDragX(0);
   };
 
-  // The visual offset: base (-active * 100%) + live drag delta
-  const baseOffset = -active * 100;
-  const dragPercent = cardWidth > 0 ? (dragX / cardWidth) * 100 : 0;
-  const offset = baseOffset + dragPercent;
-  const transition = isDragging ? 'none' : 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)';
+  const atStart = active === 0;
+  const atEnd = active === cards.length - 1;
 
   return (
     <div
@@ -112,53 +111,70 @@ export default function WelcomeCarousel({ cards }: WelcomeCarouselProps) {
       role="region"
       aria-roledescription="carousel"
       aria-label="Преимущества Cardcraft"
+      onKeyDown={onKeyDown}
+      tabIndex={0}
     >
-      <div
-        className="wc-track"
-        ref={trackRef}
-        tabIndex={0}
-        style={{ transform: `translateX(${offset}%)`, transition }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-      >
+      {/* Scroll-snap track — native scroll, peek of next card via gap + padding-right */}
+      <div className="wc-scroller" ref={scrollerRef}>
         {cards.map((card, i) => (
-          <div
+          <article
             key={i}
             className="wc-slide"
-            aria-hidden={i !== active}
             aria-roledescription="slide"
-            aria-label={`${i + 1} из ${cards.length}`}
+            aria-label={`Карточка ${i + 1} из ${cards.length}: ${card.title}`}
           >
-            {/* Decorative stacked cards behind the front card */}
-            <div className="wc-stack-back" />
-            <div className="wc-stack-middle" />
-            <article className="wc-stack-front">
-              <span className="wc-index">{card.index}</span>
-              <h2 className="wc-title">{card.title}</h2>
-              <p className="wc-desc">{card.description}</p>
-              <div className="wc-dots" role="tablist" aria-label="Выбор карточки">
-                {cards.map((_, di) => (
-                  <button
-                    key={di}
-                    className={di === active ? 'wc-dot wc-dot-active' : 'wc-dot'}
-                    role="tab"
-                    aria-selected={di === active}
-                    aria-label={`Карточка ${di + 1}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      goTo(di);
-                    }}
-                    tabIndex={di === active ? 0 : -1}
-                  />
-                ))}
-              </div>
-            </article>
-          </div>
+            <span className="wc-index">{card.index}</span>
+            <h2 className="wc-title">{card.title}</h2>
+            <p className="wc-desc">{card.description}</p>
+          </article>
         ))}
       </div>
-      {/* sr-only live region for screen readers */}
+
+      {/* Controls: prev/next arrows (desktop) + pagination dots (all viewports) */}
+      <div className="wc-controls">
+        <button
+          type="button"
+          className="wc-arrow"
+          aria-label="Предыдущая карточка"
+          onClick={prev}
+          disabled={atStart}
+          tabIndex={atStart ? -1 : 0}
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+
+        <div className="wc-dots" role="tablist" aria-label="Выбор карточки">
+          {cards.map((_, di) => (
+            <button
+              key={di}
+              type="button"
+              className={di === active ? 'wc-dot wc-dot-active' : 'wc-dot'}
+              role="tab"
+              aria-selected={di === active}
+              aria-label={`Карточка ${di + 1}`}
+              onClick={() => goTo(di)}
+              tabIndex={di === active ? 0 : -1}
+            />
+          ))}
+        </div>
+
+        <button
+          type="button"
+          className="wc-arrow"
+          aria-label="Следующая карточка"
+          onClick={next}
+          disabled={atEnd}
+          tabIndex={atEnd ? -1 : 0}
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+      </div>
+
+      {/* sr-only live region announces the active slide for screen readers */}
       <span className="sr-only" aria-live="polite">
         Карточка {active + 1} из {cards.length}
       </span>

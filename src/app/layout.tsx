@@ -6,6 +6,7 @@ import "@fontsource/lora";
 import "@fontsource/manrope";
 // P9.3: removed @fontsource/plus-jakarta-sans — not used by any theme
 import "./globals.css";
+import "./styles/tokens.css";
 import "./styles/projects-account.css";
 import "./styles/welcome.css";
 // P4: Sentry client init — client component wrapper for Turbopack dev

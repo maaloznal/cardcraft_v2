@@ -4,9 +4,10 @@ test.describe('Welcome and project entry points', () => {
   test('welcome page explains the product and opens the editor', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /Превращайте мысли/ })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Начать без регистрации' })).toHaveAttribute('href', '/editor/');
+    // Primary CTA is "Открыть редактор" → /editor/ (canonical route map)
+    await expect(page.getByRole('link', { name: 'Открыть редактор' }).first()).toHaveAttribute('href', /\/editor\/?/);
     await expect(page.getByText('50 000', { exact: true })).toBeVisible();
-    await page.getByRole('link', { name: 'Начать без регистрации' }).click();
+    await page.getByRole('link', { name: 'Открыть редактор' }).first().click();
     await expect(page).toHaveURL(/\/editor\/?$/);
     await expect(page.locator('#editorCardsList .card-editor-block')).toHaveCount(1);
   });
@@ -41,7 +42,7 @@ test.describe('Welcome and project entry points', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /Превращайте мысли/ })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Начать без регистрации' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Открыть редактор' }).first()).toBeVisible();
     await expect(page.locator('body')).not.toHaveCSS('overflow-x', 'scroll');
 
     await page.goto('/docs/');

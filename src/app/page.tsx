@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import WelcomeNav from './welcome-nav';
 import WelcomeCarousel, { type CarouselCard } from './welcome-carousel';
 
 export const metadata: Metadata = {
@@ -48,7 +49,25 @@ const features = [
   },
 ];
 
-const principles = [
+const steps = [
+  {
+    num: '1',
+    title: 'Соберите содержание',
+    description: 'Напишите карточки вручную или подготовьте черновик серии с ИИ.',
+  },
+  {
+    num: '2',
+    title: 'Проверьте и оформите',
+    description: 'Отредактируйте каждую мысль, выберите формат и общую визуальную тему.',
+  },
+  {
+    num: '3',
+    title: 'Экспортируйте',
+    description: 'Скачайте отдельный PNG, набор файлов или упорядоченный ZIP-архив.',
+  },
+];
+
+const benefits = [
   {
     icon: 'no-login',
     title: 'Без обязательной регистрации',
@@ -69,13 +88,13 @@ const principles = [
 const FeatureIcon = ({ name }: { name: string }) => {
   const icons: Record<string, React.ReactElement> = {
     ai: (
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
         <circle cx="12" cy="12" r="3" />
       </svg>
     ),
     palette: (
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="13.5" cy="6.5" r="0.5" fill="currentColor" />
         <circle cx="17.5" cy="10.5" r="0.5" fill="currentColor" />
         <circle cx="8.5" cy="7.5" r="0.5" fill="currentColor" />
@@ -84,14 +103,14 @@ const FeatureIcon = ({ name }: { name: string }) => {
       </svg>
     ),
     download: (
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
         <polyline points="7 10 12 15 17 10" />
         <line x1="12" y1="15" x2="12" y2="3" />
       </svg>
     ),
     sync: (
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 12a9 9 0 0 0-9-9 9 9 0 0 0-6.36 2.64L3 8" />
         <path d="M3 3v5h5" />
         <path d="M3 12a9 9 0 0 0 9 9 9 9 0 0 0 6.36-2.64L21 16" />
@@ -99,20 +118,20 @@ const FeatureIcon = ({ name }: { name: string }) => {
       </svg>
     ),
     'no-login': (
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
         <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
         <polyline points="10 17 15 12 10 7" />
         <line x1="15" y1="12" x2="3" y2="12" />
       </svg>
     ),
     author: (
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 20h9" />
         <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
       </svg>
     ),
     projects: (
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
       </svg>
     ),
@@ -123,127 +142,98 @@ const FeatureIcon = ({ name }: { name: string }) => {
 export default function WelcomePage() {
   return (
     <main className="welcome-page">
-      <nav className="welcome-nav" aria-label="Основная навигация">
-        <Link className="welcome-brand" href="/">Cardcraft</Link>
-        <div>
-          <Link href="/docs">Документация</Link>
-          <Link href="/login">Войти</Link>
-          <Link className="welcome-nav-primary" href="/editor">Открыть редактор</Link>
-        </div>
-      </nav>
+      <WelcomeNav />
 
+      {/* ─── HERO ─── */}
       <section className="welcome-hero">
         <div className="welcome-hero-copy">
           <span className="welcome-eyebrow">Карточки для соцсетей без лишней рутины</span>
           <h1>Превращайте мысли в&nbsp;понятные визуальные истории</h1>
           <p>Cardcraft помогает собрать серию текстовых карточек, оформить её в едином стиле и скачать готовые изображения прямо в браузере.</p>
           <div className="welcome-actions">
-            <Link className="welcome-primary" href="/editor">Начать без регистрации</Link>
-            <Link className="welcome-secondary" href="/login?mode=signup&next=/editor">Создать аккаунт</Link>
+            <Link className="welcome-btn-primary" href="/editor">Открыть редактор</Link>
+            <Link className="welcome-btn-secondary" href="/docs">Документация</Link>
           </div>
-          <small>Редактор доступен сразу. Регистрация нужна только для ИИ, проектов и облачной синхронизации.</small>
         </div>
-
         <div className="welcome-demo" aria-label="Пример серии карточек">
           <WelcomeCarousel cards={heroCards} />
         </div>
       </section>
 
-      <section className="welcome-section" aria-labelledby="featuresTitle">
-        <span className="welcome-eyebrow">Возможности</span>
-        <h2 id="featuresTitle">От исходного текста до готовой серии</h2>
-        <div className="welcome-feature-grid">
-          {features.map((feature, index) => (
-            <article key={feature.title} className="welcome-feature-card">
-              <div className="welcome-feature-icon">
-                <FeatureIcon name={feature.icon} />
-              </div>
-              <span className="welcome-feature-num">{String(index + 1).padStart(2, '0')}</span>
-              <h3>{feature.title}</h3>
-              <p>{feature.description}</p>
-            </article>
-          ))}
+      {/* ─── FEATURES (light) ─── */}
+      <section className="welcome-section welcome-section-light" aria-labelledby="featuresTitle">
+        <div className="welcome-section-inner">
+          <span className="welcome-eyebrow">Возможности</span>
+          <h2 id="featuresTitle">От исходного текста до готовой серии</h2>
+          <div className="welcome-feature-grid">
+            {features.map((feature, index) => (
+              <article key={feature.title} className="welcome-feature-card">
+                <div className="welcome-feature-icon"><FeatureIcon name={feature.icon} /></div>
+                <span className="welcome-feature-num">{String(index + 1).padStart(2, '0')}</span>
+                <h3>{feature.title}</h3>
+                <p>{feature.description}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className="welcome-workflow" aria-labelledby="workflowTitle">
-        <div className="welcome-workflow-heading">
-          <span className="welcome-eyebrow">Понятный процесс</span>
+      {/* ─── PROCESS (dark — timeline) ─── */}
+      <section className="welcome-section welcome-section-dark" aria-labelledby="workflowTitle">
+        <div className="welcome-section-inner">
+          <span className="welcome-eyebrow welcome-eyebrow-light">Понятный процесс</span>
           <h2 id="workflowTitle">Вы сохраняете контроль над каждой карточкой</h2>
-          <p>Cardcraft не прячет результат за автоматизацией: содержимое, последовательность и оформление всегда можно проверить и изменить до скачивания.</p>
-        </div>
-        <div className="welcome-workflow-steps">
-          <article className="welcome-workflow-step">
-            <span className="welcome-workflow-num">1</span>
-            <div><h3>Соберите содержание</h3><p>Напишите карточки вручную или подготовьте черновик серии с ИИ.</p></div>
-          </article>
-          <article className="welcome-workflow-step">
-            <span className="welcome-workflow-num">2</span>
-            <div><h3>Проверьте и оформите</h3><p>Отредактируйте каждую мысль, выберите формат и общую визуальную тему.</p></div>
-          </article>
-          <article className="welcome-workflow-step">
-            <span className="welcome-workflow-num">3</span>
-            <div><h3>Экспортируйте</h3><p>Скачайте отдельный PNG, набор файлов или упорядоченный ZIP-архив.</p></div>
-          </article>
+          <p className="welcome-section-lede">Cardcraft не прячет результат за автоматизацией: содержимое, последовательность и оформление всегда можно проверить и изменить до скачивания.</p>
+          <ol className="welcome-timeline">
+            {steps.map((step) => (
+              <li key={step.num} className="welcome-timeline-item">
+                <span className="welcome-timeline-num">{step.num}</span>
+                <div className="welcome-timeline-body">
+                  <h3>{step.title}</h3>
+                  <p>{step.description}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
-      <section className="welcome-principles" aria-labelledby="principlesTitle">
-        <div className="welcome-principles-heading">
-          <span className="welcome-eyebrow welcome-eyebrow-light">Преимущества</span>
-          <h2 id="principlesTitle">Создано для вдумчивой работы</h2>
-        </div>
-        <div className="welcome-principles-grid">
-          {principles.map((p) => (
-            <article key={p.title} className="welcome-principle-card">
-              <div className="welcome-principle-icon"><FeatureIcon name={p.icon} /></div>
-              <strong>{p.title}</strong>
-              <p>{p.description}</p>
-            </article>
-          ))}
+      {/* ─── BENEFITS (light — icon rows, no cards) ─── */}
+      <section className="welcome-section welcome-section-light" aria-labelledby="benefitsTitle">
+        <div className="welcome-section-inner">
+          <span className="welcome-eyebrow">Преимущества</span>
+          <h2 id="benefitsTitle">Создано для вдумчивой работы</h2>
+          <ul className="welcome-benefits-list">
+            {benefits.map((b) => (
+              <li key={b.title} className="welcome-benefit-row">
+                <span className="welcome-benefit-icon" aria-hidden="true"><FeatureIcon name={b.icon} /></span>
+                <div className="welcome-benefit-body">
+                  <strong>{b.title}</strong>
+                  <p>{b.description}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
-      <section className="welcome-registration">
-        <div className="welcome-registration-copy">
-          <span className="welcome-eyebrow">Бесплатный аккаунт</span>
-          <h2>Работайте с сериями, а не с одним черновиком</h2>
-          <p>Создавайте неограниченное количество проектов, переключайтесь между ними и храните карточки отдельно.</p>
-          <Link className="welcome-primary welcome-registration-cta" href="/login?mode=signup&next=/editor">Зарегистрироваться</Link>
+      {/* ─── FINAL CTA (dark — strongest block) ─── */}
+      <section className="welcome-section welcome-section-dark welcome-final" aria-labelledby="finalTitle">
+        <div className="welcome-section-inner welcome-final-inner">
+          <span className="welcome-eyebrow welcome-eyebrow-light">Бесплатный аккаунт</span>
+          <h2 id="finalTitle">Работайте с сериями, а не с одним черновиком</h2>
+          <p className="welcome-section-lede">Создавайте неограниченное количество проектов, переключайтесь между ними и храните карточки отдельно. Регистрация открывает ИИ и синхронизацию между устройствами.</p>
+          <ul className="welcome-final-stats">
+            <li><strong>50 000</strong><span>стартовых ИИ-токенов</span></li>
+            <li><strong>∞</strong><span>проектов</span></li>
+            <li><strong>1</strong><span>аккаунт на всех устройствах</span></li>
+          </ul>
+          <Link className="welcome-btn-primary welcome-btn-lg" href="/editor">Открыть редактор</Link>
         </div>
-        <ul className="welcome-registration-stats">
-          <li>
-            <span className="welcome-registration-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-            </span>
-            <span className="welcome-registration-stat">
-              <strong>50 000</strong>
-              <small>стартовых ИИ-токенов</small>
-            </span>
-          </li>
-          <li>
-            <span className="welcome-registration-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-            </span>
-            <span className="welcome-registration-stat">
-              <strong>∞</strong>
-              <small>проектов</small>
-            </span>
-          </li>
-          <li>
-            <span className="welcome-registration-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9 9 0 0 0-6.36 2.64L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9 9 0 0 0 6.36-2.64L21 16"/><path d="M21 21v-5h-5"/></svg>
-            </span>
-            <span className="welcome-registration-stat">
-              <strong>1</strong>
-              <small>аккаунт на всех устройствах</small>
-            </span>
-          </li>
-        </ul>
       </section>
 
       <footer className="welcome-footer">
-        <span>Cardcraft</span>
+        <span className="welcome-footer-brand">Cardcraft</span>
         <p>Создавайте карточки, которые удобно читать.</p>
         <Link href="/docs">Как начать →</Link>
       </footer>
