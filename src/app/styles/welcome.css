@@ -20,10 +20,11 @@
 }
 
 /* ─── Navigation ─── */
-/* Sticky + transparent. Text/logo/CTA use --ui-accent (#18181b near-black in
-   light, #fafafa in dark) so they read on both light AND dark scrolling
-   sections. No background — the nav floats over content. The mobile drawer
-   is separate (position: fixed, --ui-surface bg) so it stays opaque. */
+/* Sticky + transparent. Uses mix-blend-mode: difference so the text
+   automatically inverts against whatever scrolls behind it — white text
+   appears black over light sections, white over dark sections. No
+   background, no JS, no glassmorphism. The mobile drawer is separate
+   (position: fixed, opaque --ui-surface) so it is unaffected by blend. */
 .welcome-nav {
   display: flex;
   align-items: center;
@@ -34,17 +35,21 @@
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
+  mix-blend-mode: difference;
+  isolation: isolate;
 }
+/* With mix-blend-mode: difference, white (#fff) inverts to black over white
+   backgrounds and stays white over dark backgrounds — readable on both. */
 .welcome-brand {
   font-size: 1.125rem;
   font-weight: 800;
   letter-spacing: -0.04em;
-  color: var(--ui-accent);
+  color: #ffffff;
   text-decoration: none;
   transition: color var(--dur) var(--ease);
 }
 .welcome-brand:hover {
-  color: var(--ui-accent-hover);
+  color: #d4d4d8;
 }
 .welcome-nav-links {
   display: flex;
@@ -52,9 +57,7 @@
   gap: var(--space-6);
 }
 .welcome-nav-link {
-  /* --ui-accent is near-black in light mode / near-white in dark mode, so it
-     reads on both light and dark scrolling sections without a nav background. */
-  color: var(--ui-accent);
+  color: #ffffff;
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
@@ -64,13 +67,18 @@
   align-items: center;
 }
 .welcome-nav-link:hover {
-  color: var(--ui-accent-hover);
+  color: #d4d4d8;
 }
 .welcome-nav-link:focus-visible {
-  outline: 2px solid var(--ui-focus);
+  outline: 2px solid #ffffff;
   outline-offset: 4px;
   border-radius: var(--r-sm);
 }
+/* CTA: no background fill — mix-blend-mode on the parent inverts white text
+   just like the links. Using a pill background would break the blend (a
+   solid black pill inverts to white-on-black over white sections, then to
+   black-on-black over dark sections — unreadable). So CTA is text-only
+   with a border for emphasis, same blend behavior as links. */
 .welcome-nav-cta {
   display: inline-flex;
   align-items: center;
@@ -78,18 +86,19 @@
   min-height: 44px;
   padding: 0 var(--space-5);
   border-radius: var(--r-md);
-  background: var(--ui-accent);
-  color: var(--ui-accent-fg);
+  border: 1.5px solid #ffffff;
+  color: #ffffff;
   font-size: 0.875rem;
   font-weight: 650;
   text-decoration: none;
-  transition: background var(--dur) var(--ease);
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 .welcome-nav-cta:hover {
-  background: var(--ui-accent-hover);
+  color: #d4d4d8;
+  border-color: #d4d4d8;
 }
 .welcome-nav-cta:focus-visible {
-  outline: 2px solid var(--ui-focus);
+  outline: 2px solid #ffffff;
   outline-offset: 3px;
 }
 /* Mobile nav: CTA + burger (<768px) */
@@ -98,25 +107,25 @@
   align-items: center;
   gap: var(--space-3);
 }
+/* Burger: white icon + white border, blend-inverts with the parent. */
 .welcome-nav-burger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 44px;
   height: 44px;
-  border: 1px solid var(--ui-border);
+  border: 1.5px solid #ffffff;
   border-radius: var(--r-md);
-  background: var(--ui-surface);
-  color: var(--ui-text);
+  background: transparent;
+  color: #ffffff;
   cursor: pointer;
-  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  transition: border-color var(--dur) var(--ease);
 }
 .welcome-nav-burger:hover {
-  background: var(--ui-surface-hover);
-  border-color: var(--ui-border-strong);
+  border-color: #d4d4d8;
 }
 .welcome-nav-burger:focus-visible {
-  outline: 2px solid var(--ui-focus);
+  outline: 2px solid #ffffff;
   outline-offset: 2px;
 }
 
@@ -702,7 +711,7 @@
  * Docs page styles (preserved — not part of the welcome redesign)
  * ═══════════════════════════════════════════════════════════════════ */
 .docs-layout { display: grid; grid-template-columns: 220px minmax(0, 800px); gap: clamp(42px, 7vw, 90px); align-items: start; width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
-.docs-toc { position: sticky; top: 24px; display: grid; gap: var(--space-2); margin-top: 96px; border-left: 1px solid var(--ui-border); padding-left: 14px; }
+.docs-toc { position: sticky; top: 88px; display: grid; gap: var(--space-2); margin-top: 96px; max-height: calc(100vh - 108px); overflow-y: auto; border-left: 1px solid var(--ui-border); padding-left: 14px; }
 .docs-toc > span { margin-bottom: var(--space-2); color: var(--ui-text-tertiary); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
 .docs-toc-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .docs-toc-link { display: block; border-radius: var(--r-sm); padding: 6px 8px; color: var(--ui-text-secondary); font-size: 0.8rem; text-decoration: none; transition: color var(--dur) var(--ease), background var(--dur) var(--ease); }
