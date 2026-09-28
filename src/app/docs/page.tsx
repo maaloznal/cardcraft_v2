@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import DocsToc from './docs-toc';
 
 export const metadata: Metadata = {
   title: 'Документация',
@@ -13,7 +14,7 @@ const steps = [
   ['Проверьте и скачайте', 'Просмотрите всю последовательность и скачайте одну карточку, PNG-набор или ZIP.'],
 ];
 
-const sections = [
+const sections: [string, string][] = [
   ['quick-start', 'Быстрый старт'],
   ['editor', 'Редактор карточек'],
   ['projects', 'Проекты'],
@@ -30,14 +31,14 @@ export default function DocsPage() {
     <main className="docs-page">
       <nav className="welcome-nav" aria-label="Навигация документации">
         <Link className="welcome-brand" href="/">Cardcraft</Link>
-        <div><Link href="/">О проекте</Link><Link className="welcome-nav-primary" href="/editor">Открыть редактор</Link></div>
+        <div className="welcome-nav-links">
+          <Link className="welcome-nav-link" href="/">О проекте</Link>
+          <Link className="welcome-nav-cta" href="/editor">Открыть редактор</Link>
+        </div>
       </nav>
 
       <div className="docs-layout">
-        <aside className="docs-toc" aria-label="Содержание">
-          <span>Содержание</span>
-          {sections.map(([id, label]) => <a key={id} href={`#${id}`}>{label}</a>)}
-        </aside>
+        <DocsToc sections={sections} />
 
         <article className="docs-content">
           <header className="docs-header">

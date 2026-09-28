@@ -20,11 +20,10 @@
 }
 
 /* ─── Navigation ─── */
-/* Nav is transparent and non-sticky: it sits at the top over the light hero
-   and scrolls away naturally with the content. This avoids the contrast
-   problem a sticky transparent bar would create over dark sections (dark
-   text on dark bg = unreadable). The mobile drawer is separate (position:
-   fixed) so it remains accessible regardless of scroll position. */
+/* Sticky + transparent. Text/logo/CTA use --ui-accent (#18181b near-black in
+   light, #fafafa in dark) so they read on both light AND dark scrolling
+   sections. No background — the nav floats over content. The mobile drawer
+   is separate (position: fixed, --ui-surface bg) so it stays opaque. */
 .welcome-nav {
   display: flex;
   align-items: center;
@@ -32,13 +31,20 @@
   width: min(1120px, calc(100% - 40px));
   margin: 0 auto;
   padding: var(--space-5) 0;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
 }
 .welcome-brand {
   font-size: 1.125rem;
   font-weight: 800;
   letter-spacing: -0.04em;
-  color: var(--ui-text);
+  color: var(--ui-accent);
   text-decoration: none;
+  transition: color var(--dur) var(--ease);
+}
+.welcome-brand:hover {
+  color: var(--ui-accent-hover);
 }
 .welcome-nav-links {
   display: flex;
@@ -46,12 +52,9 @@
   gap: var(--space-6);
 }
 .welcome-nav-link {
-  /* Nav links sit on a translucent glass surface (--ui-topbar-bg 0.88 alpha)
-     composited over arbitrary section content. --ui-text-secondary (#52525b)
-     gives only 2.7:1 there — below WCAG AA. Use --ui-text (#18181b) for a
-     guaranteed 12.6:1 contrast that stays readable over both light and dark
-     sections scrolling behind the frosted header. */
-  color: var(--ui-text);
+  /* --ui-accent is near-black in light mode / near-white in dark mode, so it
+     reads on both light and dark scrolling sections without a nav background. */
+  color: var(--ui-accent);
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
@@ -61,7 +64,7 @@
   align-items: center;
 }
 .welcome-nav-link:hover {
-  color: var(--ui-accent);
+  color: var(--ui-accent-hover);
 }
 .welcome-nav-link:focus-visible {
   outline: 2px solid var(--ui-focus);
@@ -699,17 +702,20 @@
  * Docs page styles (preserved — not part of the welcome redesign)
  * ═══════════════════════════════════════════════════════════════════ */
 .docs-layout { display: grid; grid-template-columns: 220px minmax(0, 800px); gap: clamp(42px, 7vw, 90px); align-items: start; width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
-.docs-toc { position: sticky; top: 24px; display: grid; gap: 4px; margin-top: 96px; border-left: 1px solid var(--ui-border); padding-left: 14px; }
-.docs-toc span { margin-bottom: 8px; color: var(--ui-text-tertiary); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
-.docs-toc a { border-radius: var(--r-sm); padding: 6px 8px; color: var(--ui-text-secondary); font-size: 0.8rem; text-decoration: none; }
-.docs-toc a:hover { color: var(--ui-text); background: var(--ui-surface-hover); }
+.docs-toc { position: sticky; top: 24px; display: grid; gap: var(--space-2); margin-top: 96px; border-left: 1px solid var(--ui-border); padding-left: 14px; }
+.docs-toc > span { margin-bottom: var(--space-2); color: var(--ui-text-tertiary); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
+.docs-toc-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.docs-toc-link { display: block; border-radius: var(--r-sm); padding: 6px 8px; color: var(--ui-text-secondary); font-size: 0.8rem; text-decoration: none; transition: color var(--dur) var(--ease), background var(--dur) var(--ease); }
+.docs-toc-link:hover { color: var(--ui-text); background: var(--ui-surface-hover); }
+.docs-toc-link:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: 2px; border-radius: var(--r-sm); }
+.docs-toc-link-active { color: var(--ui-text); font-weight: 650; background: var(--ui-surface-hover); }
 .docs-content { min-width: 0; padding: 90px 0 130px; }
 .docs-header { margin-bottom: 80px; }
 .docs-header h1 { margin: 14px 0 18px; font-size: clamp(2.25rem, 5vw, 3.5rem); line-height: 1.05; letter-spacing: -0.03em; font-weight: 800; }
 .docs-header > p { max-width: 690px; margin: 0; color: var(--ui-text-secondary); font-size: 1.0625rem; line-height: 1.7; }
 .docs-status-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 24px; }
 .docs-status-row span { border: 1px solid var(--ui-border); border-radius: 999px; padding: 6px 10px; color: var(--ui-text-secondary); background: var(--ui-surface); font-size: 0.72rem; font-weight: 650; }
-.docs-block { scroll-margin-top: 24px; border-top: 1px solid var(--ui-border); padding: 58px 0 26px; }
+.docs-block { scroll-margin-top: 80px; border-top: 1px solid var(--ui-border); padding: 58px 0 26px; }
 .docs-block > p { color: var(--ui-text-secondary); line-height: 1.75; }
 .docs-section-heading { display: grid; grid-template-columns: 42px 1fr; gap: 14px; margin-bottom: 30px; }
 .docs-section-heading > span { padding-top: 5px; color: var(--ui-text-tertiary); font: 600 0.75rem var(--font-geist-mono), monospace; }
