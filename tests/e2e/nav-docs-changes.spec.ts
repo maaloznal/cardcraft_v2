@@ -23,7 +23,7 @@ async function gotoLanding(page: import('@playwright/test').Page): Promise<void>
 
 test.describe('Navigation + Docs scrollspy (last changes)', () => {
 
-  test('landing nav: sticky, transparent, blend-mode for auto-contrast', async ({ page }) => {
+  test('landing nav: sticky, gradient bg, white readable text', async ({ page }) => {
     await gotoLanding(page);
     const nav = page.locator('.welcome-nav');
 
@@ -31,25 +31,21 @@ test.describe('Navigation + Docs scrollspy (last changes)', () => {
     const position = await nav.evaluate((el) => getComputedStyle(el).position);
     expect(position).toBe('sticky');
 
-    // Transparent (no background fill)
-    const bg = await nav.evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(bg).toBe('rgba(0, 0, 0, 0)');
+    // Gradient background (violet→blue→cyan), NOT transparent.
+    // Chromium serializes colors as rgb() — check for the stop values.
+    const bg = await nav.evaluate((el) => getComputedStyle(el).backgroundImage);
+    expect(bg).toContain('linear-gradient');
+    expect(bg).toContain('rgb(76, 29, 149)'); // #4c1d95 violet
+    expect(bg).toContain('rgb(14, 116, 144)'); // #0e7490 cyan
 
-    // mix-blend-mode: difference — auto-inverts text color against background
-    const blend = await nav.evaluate((el) => getComputedStyle(el).mixBlendMode);
-    expect(blend).toBe('difference');
-
-    // Brand + links use white (#ffffff) — blend-mode inverts it to black over
-    // light sections, keeps it white over dark sections.
+    // White text on the gradient — readable on all three stops
     const brandColor = await page.locator('.welcome-brand').evaluate((el) => getComputedStyle(el).color);
     expect(brandColor).toBe('rgb(255, 255, 255)');
 
     const linkColor = await page.locator('.welcome-nav-link').first().evaluate((el) => getComputedStyle(el).color);
     expect(linkColor).toBe('rgb(255, 255, 255)');
 
-    // CTA: transparent bg, white border + white text (blend-inverts with links)
-    const ctaBg = await page.locator('.welcome-nav-cta').first().evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(ctaBg).toBe('rgba(0, 0, 0, 0)');
+    // CTA: semi-transparent white pill with white text
     const ctaColor = await page.locator('.welcome-nav-cta').first().evaluate((el) => getComputedStyle(el).color);
     expect(ctaColor).toBe('rgb(255, 255, 255)');
   });

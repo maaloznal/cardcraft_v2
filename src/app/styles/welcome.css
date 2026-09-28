@@ -20,11 +20,10 @@
 }
 
 /* ─── Navigation ─── */
-/* Sticky + transparent. Uses mix-blend-mode: difference so the text
-   automatically inverts against whatever scrolls behind it — white text
-   appears black over light sections, white over dark sections. No
-   background, no JS, no glassmorphism. The mobile drawer is separate
-   (position: fixed, opaque --ui-surface) so it is unaffected by blend. */
+/* Sticky nav with a violet→blue→cyan gradient background and white text.
+   The gradient stops are dark enough (-900 tones) that white text stays
+   readable across the full gradient range. The mobile drawer is separate
+   (position: fixed, opaque --ui-surface) so it is unaffected. */
 .welcome-nav {
   display: flex;
   align-items: center;
@@ -35,11 +34,8 @@
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
-  mix-blend-mode: difference;
-  isolation: isolate;
+  background: linear-gradient(90deg, #4c1d95 0%, #1e40af 50%, #0e7490 100%);
 }
-/* With mix-blend-mode: difference, white (#fff) inverts to black over white
-   backgrounds and stays white over dark backgrounds — readable on both. */
 .welcome-brand {
   font-size: 1.125rem;
   font-weight: 800;
@@ -49,7 +45,7 @@
   transition: color var(--dur) var(--ease);
 }
 .welcome-brand:hover {
-  color: #d4d4d8;
+  color: #e0e7ff;
 }
 .welcome-nav-links {
   display: flex;
@@ -67,18 +63,15 @@
   align-items: center;
 }
 .welcome-nav-link:hover {
-  color: #d4d4d8;
+  color: #e0e7ff;
 }
 .welcome-nav-link:focus-visible {
   outline: 2px solid #ffffff;
   outline-offset: 4px;
   border-radius: var(--r-sm);
 }
-/* CTA: no background fill — mix-blend-mode on the parent inverts white text
-   just like the links. Using a pill background would break the blend (a
-   solid black pill inverts to white-on-black over white sections, then to
-   black-on-black over dark sections — unreadable). So CTA is text-only
-   with a border for emphasis, same blend behavior as links. */
+/* CTA: semi-transparent white pill — stands out on the gradient bg while
+   staying legible. White text on rgba(255,255,255,0.12) + white border. */
 .welcome-nav-cta {
   display: inline-flex;
   align-items: center;
@@ -86,16 +79,17 @@
   min-height: 44px;
   padding: 0 var(--space-5);
   border-radius: var(--r-md);
-  border: 1.5px solid #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
   font-size: 0.875rem;
   font-weight: 650;
   text-decoration: none;
-  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 .welcome-nav-cta:hover {
-  color: #d4d4d8;
-  border-color: #d4d4d8;
+  background: rgba(255, 255, 255, 0.22);
+  border-color: #ffffff;
 }
 .welcome-nav-cta:focus-visible {
   outline: 2px solid #ffffff;
@@ -107,22 +101,23 @@
   align-items: center;
   gap: var(--space-3);
 }
-/* Burger: white icon + white border, blend-inverts with the parent. */
+/* Burger: white icon + semi-transparent white border on the gradient bg. */
 .welcome-nav-burger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 44px;
   height: 44px;
-  border: 1.5px solid #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
   border-radius: var(--r-md);
-  background: transparent;
+  background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
   cursor: pointer;
-  transition: border-color var(--dur) var(--ease);
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 .welcome-nav-burger:hover {
-  border-color: #d4d4d8;
+  background: rgba(255, 255, 255, 0.22);
+  border-color: #ffffff;
 }
 .welcome-nav-burger:focus-visible {
   outline: 2px solid #ffffff;
