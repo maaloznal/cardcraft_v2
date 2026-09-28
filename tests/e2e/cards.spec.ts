@@ -68,17 +68,22 @@ test.describe('Card operations', () => {
     await expect(action.locator('.btn-card-ai-label')).toBeHidden();
     const actionBox = await action.boundingBox();
     const editBox = await mainActions.locator('[data-action="edit-preview"]').boundingBox();
-    const cardBox = await page.locator('#cardsArea .card').first().boundingBox();
-    const mainBox = await mainActions.boundingBox();
     expect(actionBox).not.toBeNull();
     expect(editBox).not.toBeNull();
-    expect(cardBox).not.toBeNull();
-    expect(mainBox).not.toBeNull();
     expect(actionBox!.width).toBeLessThanOrEqual(44);
     expect(Math.abs(actionBox!.height - editBox!.height)).toBeLessThanOrEqual(1);
     expect(Math.abs(actionBox!.y - editBox!.y)).toBeLessThanOrEqual(4);
-    expect(Math.abs((mainBox!.x + mainBox!.width / 2) - (cardBox!.x + cardBox!.width / 2))).toBeLessThanOrEqual(2);
-    expect(actionBox!.x).toBeGreaterThan(mainBox!.x + mainBox!.width);
+    await expect.poll(async () => {
+      const [cardBox, mainBox] = await Promise.all([
+        page.locator('#cardsArea .card').first().boundingBox(),
+        mainActions.boundingBox(),
+      ]);
+      if (!cardBox || !mainBox) return Number.POSITIVE_INFINITY;
+      return Math.abs((mainBox.x + mainBox.width / 2) - (cardBox.x + cardBox.width / 2));
+    }).toBeLessThanOrEqual(2);
+    const settledMainBox = await mainActions.boundingBox();
+    expect(settledMainBox).not.toBeNull();
+    expect(actionBox!.x).toBeGreaterThan(settledMainBox!.x + settledMainBox!.width);
 
     await stylesAction.click();
     await expect(page.locator('#colorModal')).toHaveClass(/active/);
