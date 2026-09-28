@@ -125,16 +125,24 @@ test.describe('Tablet portrait (iPad gen 7, ~834×1194 / split-view)', () => {
     expect(deleteInDownload).toBe(0);
   });
 
-  test('C8: AI action has its own row and secondary card actions are centered', async ({ page }) => {
+  test('C8: compact AI action has its own row and secondary card actions are centered', async ({ page }) => {
     const actions = page.locator('#cardsArea .card-actions').first();
     const aiAction = actions.locator('[data-action="improve-ai"]');
     await expect(aiAction).toContainText('Улучшить с ИИ');
 
     const actionsBox = await actions.boundingBox();
     const aiBox = await aiAction.boundingBox();
+    const cardBox = await page.locator('#cardsArea .card').first().boundingBox();
     expect(actionsBox).not.toBeNull();
     expect(aiBox).not.toBeNull();
-    expect(aiBox!.width).toBeGreaterThanOrEqual(actionsBox!.width - 1);
+    expect(cardBox).not.toBeNull();
+    expect(aiBox!.width).toBeGreaterThan(120);
+    expect(aiBox!.width).toBeLessThanOrEqual(176);
+    await expect.poll(async () => {
+      const [currentAi, currentCard] = await Promise.all([aiAction.boundingBox(), page.locator('#cardsArea .card').first().boundingBox()]);
+      if (!currentAi || !currentCard) return Number.POSITIVE_INFINITY;
+      return Math.abs((currentAi.x + currentAi.width / 2) - (currentCard.x + currentCard.width / 2));
+    }).toBeLessThanOrEqual(2);
 
     const centerOffset = await actions.evaluate((panel) => {
       const aiRect = panel.querySelector('.btn-card-ai')!.getBoundingClientRect();

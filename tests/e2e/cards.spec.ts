@@ -56,7 +56,7 @@ test.describe('Card operations', () => {
     expect(spacing.below).toBeGreaterThan(80);
   });
 
-  test('4aa. desktop actions are centered, styles are duplicated, and AI stays at the far edge', async ({ page }) => {
+  test('4aa. desktop actions are centered, styles are duplicated, and AI follows the other actions', async ({ page }) => {
     const action = page.locator('#cardsArea .btn-card-ai').first();
     const actions = page.locator('#cardsArea .card-actions').first();
     const mainActions = actions.locator('.card-actions-main');
@@ -81,9 +81,7 @@ test.describe('Card operations', () => {
       if (!cardBox || !mainBox) return Number.POSITIVE_INFINITY;
       return Math.abs((mainBox.x + mainBox.width / 2) - (cardBox.x + cardBox.width / 2));
     }).toBeLessThanOrEqual(2);
-    const settledMainBox = await mainActions.boundingBox();
-    expect(settledMainBox).not.toBeNull();
-    expect(actionBox!.x).toBeGreaterThan(settledMainBox!.x + settledMainBox!.width);
+    await expect(mainActions.locator('.btn-card-action').last()).toHaveAttribute('data-action', 'improve-ai');
 
     await stylesAction.click();
     await expect(page.locator('#colorModal')).toHaveClass(/active/);
@@ -100,6 +98,8 @@ test.describe('Card operations', () => {
     await card.locator('[data-field="title"]').fill('Desktop Title');
     await card.locator('.card-collapse-toggle').click();
     await expect(card).toHaveClass(/\bcollapsed\b/);
+    await expect(card.locator('.card-editor-heading')).toBeHidden();
+    await expect(card.locator('.card-editor-num-badge')).toBeVisible();
 
     await card.locator('.card-editor-title-group').click();
     await expect(card).toHaveClass(/\bcollapsed\b/);

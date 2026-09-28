@@ -331,9 +331,17 @@ test.describe('P1-touch: 44×44 touch targets', () => {
     await expect(aiAction).toContainText('Улучшить с ИИ');
     const aiBox = await aiAction.boundingBox();
     const actionsBox = await actionsPanel.boundingBox();
+    const cardBox = await page.locator('#cardsArea .card').first().boundingBox();
     expect(aiBox).not.toBeNull();
     expect(actionsBox).not.toBeNull();
-    expect(aiBox!.width).toBeGreaterThanOrEqual(actionsBox!.width - 1);
+    expect(cardBox).not.toBeNull();
+    expect(aiBox!.width).toBeGreaterThan(120);
+    expect(aiBox!.width).toBeLessThanOrEqual(176);
+    await expect.poll(async () => {
+      const [currentAi, currentCard] = await Promise.all([aiAction.boundingBox(), page.locator('#cardsArea .card').first().boundingBox()]);
+      if (!currentAi || !currentCard) return Number.POSITIVE_INFINITY;
+      return Math.abs((currentAi.x + currentAi.width / 2) - (currentCard.x + currentCard.width / 2));
+    }).toBeLessThanOrEqual(2);
 
     const secondary = await actionsPanel.locator('.btn-card-action:not(.btn-card-ai)').evaluateAll((buttons) =>
       buttons.map((button) => {
@@ -343,8 +351,12 @@ test.describe('P1-touch: 44×44 touch targets', () => {
     );
     const secondaryLeft = Math.min(...secondary.map((rect) => rect.left));
     const secondaryRight = Math.max(...secondary.map((rect) => rect.right));
+    const secondaryTop = Math.min(...await actionsPanel.locator('.btn-card-action:not(.btn-card-ai)').evaluateAll((buttons) =>
+      buttons.map((button) => button.getBoundingClientRect().top),
+    ));
     const actionsCenter = actionsBox!.x + actionsBox!.width / 2;
     expect(Math.abs((secondaryLeft + secondaryRight) / 2 - actionsCenter)).toBeLessThanOrEqual(2);
+    expect(aiBox!.y + aiBox!.height).toBeLessThan(secondaryTop);
 
     await actionsPanel.locator('[data-action="palette-preview"]').click();
     await expect(page.locator('#colorModal')).toHaveClass(/active/);

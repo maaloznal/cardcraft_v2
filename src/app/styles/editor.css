@@ -173,6 +173,12 @@
   margin-top: -10px;
   margin-bottom: -10px;
 }
+.card-editor-block.collapsed .card-editor-heading {
+  display: none;
+}
+.card-editor-block.collapsed .card-editor-title-group {
+  flex: 0 0 auto;
+}
 
 /* Full-width "Стили" button below the header */
 .btn-card-editor-palette {

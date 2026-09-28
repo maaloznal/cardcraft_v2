@@ -16,6 +16,8 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
+  width: 380px;
+  max-width: 100%;
   animation: cardFadeIn 0.4s var(--ease) both;
 }
 @keyframes cardFadeIn {
@@ -26,7 +28,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
   gap: 8px;
   width: 100%;
   min-height: 36px;
@@ -37,11 +38,7 @@
   justify-content: center;
   flex-wrap: nowrap;
   gap: 8px;
-  width: max-content;
-  position: absolute;
-  left: 50%;
-  top: 0;
-  transform: translateX(-50%);
+  width: 100%;
 }
 
 /* Card action buttons (under preview cards) */
@@ -72,9 +69,7 @@
   transform: scale(0.97);
 }
 .cc-root button.btn-card-ai {
-  position: absolute;
-  right: 0;
-  top: 0;
+  position: relative;
   flex: 0 0 auto;
   width: 32px;
   padding: 0;
@@ -136,23 +131,24 @@
 }
 @media (max-width: 1023px) {
   .card-actions {
-    display: flex;
-    flex-direction: column;
     justify-content: center;
   }
   .card-actions-main {
-    order: 2;
-    position: static;
-    transform: none;
     width: 100%;
     flex-wrap: wrap;
   }
+  .card-actions-main::after {
+    content: '';
+    flex: 0 0 100%;
+    height: 0;
+    order: -1;
+  }
   .cc-root button.btn-card-ai {
-    position: relative;
-    inset: auto;
-    order: 1;
-    flex: 1 0 100%;
-    width: 100%;
+    order: -2;
+    flex: 0 0 auto;
+    width: auto;
+    max-width: 176px;
+    padding: 0 14px;
     min-height: 44px;
     gap: 6px;
     background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(37, 99, 235, 0.08));
@@ -172,7 +168,7 @@
   border: 1px solid var(--card-border);
   border-radius: 0 !important;
   padding: 32px;
-  width: 380px;
+  width: 100%;
   max-width: 100%;
   /* No min-height for default 'auto' format — card adapts to content.
      A card with only a title will be short; a card with title+text+list
