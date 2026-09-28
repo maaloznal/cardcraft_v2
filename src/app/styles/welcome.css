@@ -28,6 +28,10 @@
   margin: 0 auto;
   padding: 70px 0 110px;
 }
+/* min-width:0 on grid children prevents content (h1 max-width:760px) from
+   stretching the column beyond the grid track on narrow viewports. */
+.welcome-hero-copy { min-width: 0; }
+.welcome-demo { min-width: 0; }
 .welcome-eyebrow { color: #6d4aff; font-size: 0.76rem; font-weight: 800; letter-spacing: 0.13em; text-transform: uppercase; }
 .welcome-hero h1 { max-width: 760px; margin: 18px 0 24px; font-size: clamp(3rem, 6vw, 6.1rem); line-height: 0.94; letter-spacing: -0.065em; }
 .welcome-hero-copy > p { max-width: 660px; margin: 0; color: #5e6879; font-size: clamp(1.05rem, 2vw, 1.25rem); line-height: 1.65; }
@@ -41,18 +45,20 @@
 .welcome-demo { position: relative; min-height: 520px; perspective: 900px; }
 
 /* ═══ Carousel (hero demo cards) ═══ */
+/* Card background = page background (#f8fafc). No border clipping — separation
+   comes from shadow + rotation. Cards are lifted, not stretched. */
 .wc-carousel { position: relative; width: 100%; height: 100%; min-height: 440px; overflow: hidden; touch-action: pan-y; }
 .wc-track { display: flex; width: 100%; height: 100%; will-change: transform; cursor: grab; }
 .wc-track:active { cursor: grabbing; }
 .wc-track:focus-visible { outline: 2px solid #7453f5; outline-offset: 4px; border-radius: 12px; }
 .wc-slide { flex: 0 0 100%; min-width: 100%; position: relative; padding: 24px 5% 40px 8%; }
-/* Stack cards sit slightly higher + closer together so the front card reads
-   as lifted above the page, not as a separate white panel. */
 .wc-stack-back,
-.wc-stack-middle { position: absolute; inset: 24px 8% 40px 5%; border-radius: 32px; box-shadow: 0 24px 60px rgba(31, 41, 74, 0.14); pointer-events: none; }
-.wc-stack-back { transform: translate(28px, -38px) rotate(8deg); background: linear-gradient(145deg, #23b4ed, #2d6fec); opacity: 0.68; }
+.wc-stack-middle { position: absolute; inset: 24px 8% 40px 5%; border-radius: 32px; box-shadow: 0 20px 50px rgba(31, 41, 74, 0.18); pointer-events: none; }
+.wc-stack-back { transform: translate(28px, -38px) rotate(8deg); background: linear-gradient(145deg, #23b4ed, #2d6fec); opacity: 0.7; }
 .wc-stack-middle { transform: translate(10px, -16px) rotate(3deg); background: linear-gradient(145deg, #e0d3ff, #b996ff); opacity: 0.92; }
-.wc-stack-front { position: relative; display: flex; flex-direction: column; justify-content: space-between; height: 100%; padding: clamp(28px, 4vw, 44px); border-radius: 32px; box-shadow: 0 28px 70px rgba(31, 41, 74, 0.18); transform: rotate(-2deg) translateY(-6px); color: #172033; background: linear-gradient(180deg, #ffffff 0%, #f4f6fb 100%); border: 1px solid rgba(255, 255, 255, 0.8); z-index: 1; }
+/* Front card: transparent background (page shows through) + strong shadow
+   for depth. No border, no fill — the shadow does the separation work. */
+.wc-stack-front { position: relative; display: flex; flex-direction: column; justify-content: space-between; height: 100%; padding: clamp(28px, 4vw, 44px); border-radius: 32px; box-shadow: 0 32px 64px rgba(31, 41, 74, 0.22), 0 12px 24px rgba(31, 41, 74, 0.12); transform: rotate(-2deg) translateY(-6px); color: #172033; background: transparent; z-index: 1; }
 .wc-index { color: #7453f5; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.12em; }
 .wc-title { margin: auto 0 16px; font-size: clamp(1.6rem, 2.8vw, 2.6rem); line-height: 1.05; letter-spacing: -0.04em; overflow-wrap: balance; }
 .wc-desc { margin: 0 0 28px; color: #647084; font-size: clamp(0.92rem, 1.1vw, 1rem); line-height: 1.55; max-width: 420px; }
@@ -61,45 +67,54 @@
 .wc-dot-active { width: 28px; border-radius: 20px; background: #7453f5; }
 .wc-dot:hover:not(.wc-dot-active) { background: #b4a8e8; }
 
-.welcome-section { width: min(1180px, calc(100% - 40px)); margin: 0 auto; padding: 110px 0; }
-.welcome-section > h2 { max-width: 740px; margin: 14px 0 44px; font-size: clamp(2.2rem, 4.8vw, 4.5rem); line-height: 1; letter-spacing: -0.055em; }
-
-/* Feature cards — modern tiles with icons + hover */
-.welcome-feature-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.welcome-feature-card { position: relative; min-height: 240px; border: 1px solid #e8ebf2; border-radius: 20px; padding: 32px; background: #fff; transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease, border-color 0.3s ease; overflow: hidden; }
+/* ═══ Возможности — dark card section matching registration/principles ═══ */
+.welcome-section { width: min(1180px, calc(100% - 40px)); margin: 0 auto 80px; border-radius: 30px; padding: clamp(40px, 5vw, 64px); color: #fff; background: linear-gradient(135deg, #1a2236 0%, #1f2a45 100%); position: relative; overflow: hidden; }
+.welcome-section::before { content: ''; position: absolute; inset: 0; padding: 1px; border-radius: 30px; background: linear-gradient(135deg, rgba(114, 72, 245, 0.6), rgba(40, 118, 233, 0.4), transparent); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
+.welcome-section::after { content: ''; position: absolute; top: -30%; right: -10%; width: 55%; height: 160%; background: radial-gradient(circle, rgba(114, 72, 245, 0.16), transparent 65%); pointer-events: none; }
+.welcome-section > .welcome-eyebrow { position: relative; z-index: 1; }
+.welcome-section > h2 { position: relative; z-index: 1; max-width: 740px; margin: 14px 0 44px; font-size: clamp(2.2rem, 4.8vw, 4rem); line-height: 1.02; letter-spacing: -0.045em; color: #fff; }
+/* Feature cards — dark tiles with icons + hover (matches stat cards) */
+.welcome-feature-grid { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.welcome-feature-card { position: relative; min-height: 220px; border-radius: 18px; padding: 28px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), background 0.3s ease, border-color 0.3s ease; overflow: hidden; }
 .welcome-feature-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #7248f5, #2876e9); transform: scaleX(0); transform-origin: left; transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
-.welcome-feature-card:hover { transform: translateY(-5px); box-shadow: 0 20px 50px rgba(31, 41, 74, 0.12); border-color: transparent; }
+.welcome-feature-card:hover { transform: translateY(-5px); background: rgba(255, 255, 255, 0.07); border-color: rgba(169, 140, 255, 0.35); }
 .welcome-feature-card:hover::before { transform: scaleX(1); }
-.welcome-feature-icon { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin-bottom: 20px; border-radius: 12px; color: #6d4aff; background: #eee9ff; transition: all 0.3s ease; }
-.welcome-feature-card:hover .welcome-feature-icon { color: #fff; background: linear-gradient(135deg, #7248f5, #2876e9); transform: scale(1.05); }
-.welcome-feature-num { position: absolute; top: 32px; right: 32px; color: #c4cad8; font: 650 0.75rem var(--font-geist-mono), monospace; }
-.welcome-feature-card h3 { margin: 0 0 10px; font-size: 1.3rem; letter-spacing: -0.02em; }
-.welcome-feature-card p { max-width: 470px; margin: 0; color: #667184; line-height: 1.6; }
+.welcome-feature-icon { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin-bottom: 20px; border-radius: 12px; color: #a98cff; background: rgba(169, 140, 255, 0.14); transition: all 0.3s ease; }
+.welcome-feature-card:hover .welcome-feature-icon { color: #fff; background: linear-gradient(135deg, #7248f5, #2876e9); transform: scale(1.06); box-shadow: 0 6px 18px rgba(114, 72, 245, 0.4); }
+.welcome-feature-num { position: absolute; top: 28px; right: 28px; color: rgba(255, 255, 255, 0.25); font: 650 0.75rem var(--font-geist-mono), monospace; }
+.welcome-feature-card h3 { margin: 0 0 10px; color: #fff; font-size: 1.25rem; letter-spacing: -0.02em; }
+.welcome-feature-card p { max-width: 470px; margin: 0; color: #b9c1d0; line-height: 1.6; }
 
-.welcome-workflow { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: clamp(42px, 8vw, 110px); width: min(1180px, calc(100% - 40px)); margin: 0 auto; padding: 60px 0 120px; }
-.welcome-workflow-heading h2 { margin: 14px 0 20px; font-size: clamp(2.2rem, 4.2vw, 4.2rem); line-height: 1; letter-spacing: -0.055em; }
-.welcome-workflow-heading p { margin: 0; color: #667184; line-height: 1.65; }
-.welcome-workflow-steps { display: grid; gap: 14px; }
-.welcome-workflow-step { display: grid; grid-template-columns: 46px 1fr; gap: 18px; align-items: start; border: 1px solid #e8ebf2; border-radius: 16px; padding: 26px 28px; background: #fff; transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease, border-color 0.3s ease; }
-.welcome-workflow-step:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(31, 41, 74, 0.1); border-color: transparent; }
-.welcome-workflow-num { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; color: #6d4aff; background: #eee9ff; font-weight: 800; font-size: 0.95rem; transition: all 0.3s ease; }
-.welcome-workflow-step:hover .welcome-workflow-num { color: #fff; background: linear-gradient(135deg, #7248f5, #2876e9); box-shadow: 0 6px 18px rgba(114, 72, 245, 0.35); }
-.welcome-workflow-step h3 { margin: 0 0 7px; font-size: 1.05rem; letter-spacing: -0.015em; }
-.welcome-workflow-step p { margin: 0; color: #667184; line-height: 1.55; }
+/* ═══ Понятный процесс — dark card section matching the others ═══ */
+.welcome-workflow { width: min(1180px, calc(100% - 40px)); margin: 0 auto 80px; border-radius: 30px; padding: clamp(40px, 5vw, 64px); color: #fff; background: linear-gradient(135deg, #1a2236 0%, #1f2a45 100%); position: relative; overflow: hidden; display: grid; grid-template-columns: 0.9fr 1.1fr; gap: clamp(42px, 6vw, 90px); align-items: start; }
+.welcome-workflow::before { content: ''; position: absolute; inset: 0; padding: 1px; border-radius: 30px; background: linear-gradient(135deg, rgba(40, 118, 233, 0.6), rgba(114, 72, 245, 0.4), transparent); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
+.welcome-workflow::after { content: ''; position: absolute; bottom: -30%; left: -10%; width: 55%; height: 160%; background: radial-gradient(circle, rgba(40, 118, 233, 0.16), transparent 65%); pointer-events: none; }
+.welcome-workflow-heading { position: relative; z-index: 1; }
+.welcome-workflow-heading h2 { margin: 14px 0 20px; font-size: clamp(2.2rem, 4.2vw, 3.8rem); line-height: 1.02; letter-spacing: -0.045em; color: #fff; }
+.welcome-workflow-heading p { margin: 0; color: #b9c1d0; line-height: 1.65; }
+.welcome-workflow-steps { position: relative; z-index: 1; display: grid; gap: 12px; }
+.welcome-workflow-step { display: grid; grid-template-columns: 46px 1fr; gap: 18px; align-items: start; border-radius: 18px; padding: 24px 26px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), background 0.3s ease, border-color 0.3s ease; }
+.welcome-workflow-step:hover { transform: translateY(-3px); background: rgba(255, 255, 255, 0.07); border-color: rgba(169, 140, 255, 0.35); }
+.welcome-workflow-num { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; color: #a98cff; background: rgba(169, 140, 255, 0.14); font-weight: 800; font-size: 0.95rem; transition: all 0.3s ease; }
+.welcome-workflow-step:hover .welcome-workflow-num { color: #fff; background: linear-gradient(135deg, #7248f5, #2876e9); box-shadow: 0 6px 18px rgba(114, 72, 245, 0.4); }
+.welcome-workflow-step h3 { margin: 0 0 7px; color: #fff; font-size: 1.05rem; letter-spacing: -0.015em; }
+.welcome-workflow-step p { margin: 0; color: #b9c1d0; line-height: 1.55; }
 
-/* Principles → "Преимущества" */
-.welcome-principles { width: min(1180px, calc(100% - 40px)); margin: 0 auto 80px; }
-.welcome-principles-heading { margin-bottom: 40px; }
-.welcome-principles-heading h2 { margin: 12px 0 0; font-size: clamp(2rem, 4vw, 3.8rem); line-height: 1; letter-spacing: -0.055em; color: #172033; }
+/* ═══ Преимущества — dark card matching the registration section style ═══ */
+.welcome-principles { width: min(1180px, calc(100% - 40px)); margin: 0 auto 80px; border-radius: 30px; padding: clamp(40px, 5vw, 64px); color: #fff; background: linear-gradient(135deg, #1a2236 0%, #1f2a45 100%); position: relative; overflow: hidden; }
+.welcome-principles::before { content: ''; position: absolute; inset: 0; padding: 1px; border-radius: 30px; background: linear-gradient(135deg, rgba(114, 72, 245, 0.6), rgba(40, 118, 233, 0.4), transparent); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
+.welcome-principles::after { content: ''; position: absolute; top: -30%; left: -10%; width: 60%; height: 160%; background: radial-gradient(circle, rgba(40, 118, 233, 0.16), transparent 65%); pointer-events: none; }
+.welcome-principles-heading { position: relative; z-index: 1; margin-bottom: 40px; }
+.welcome-principles-heading h2 { margin: 12px 0 0; font-size: clamp(2rem, 4vw, 3.4rem); line-height: 1.02; letter-spacing: -0.045em; color: #fff; }
 .welcome-eyebrow-light { color: #a98cff; }
-.welcome-principles-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; border-radius: 24px; overflow: hidden; color: #e9edf5; background: #2a3548; }
-.welcome-principle-card { position: relative; min-height: 200px; padding: 32px; background: #202a3d; transition: background 0.3s ease; }
-.welcome-principle-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(180deg, #7248f5, #2876e9); transform: scaleY(0); transform-origin: top; transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
-.welcome-principle-card:hover { background: #283247; }
+.welcome-principles-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; position: relative; z-index: 1; }
+.welcome-principle-card { position: relative; border-radius: 18px; padding: 28px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), background 0.3s ease, border-color 0.3s ease; }
+.welcome-principle-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 18px 0 0 18px; background: linear-gradient(180deg, #7248f5, #2876e9); transform: scaleY(0); transform-origin: top; transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+.welcome-principle-card:hover { transform: translateY(-4px); background: rgba(255, 255, 255, 0.07); border-color: rgba(169, 140, 255, 0.35); }
 .welcome-principle-card:hover::before { transform: scaleY(1); }
-.welcome-principle-icon { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin-bottom: 24px; border-radius: 10px; color: #a98cff; background: rgba(169, 140, 255, 0.12); transition: all 0.3s ease; }
-.welcome-principle-card:hover .welcome-principle-icon { color: #fff; background: linear-gradient(135deg, #7248f5, #2876e9); }
-.welcome-principle-card strong { display: block; margin-bottom: 12px; color: #fff; font-size: 1.05rem; letter-spacing: -0.015em; }
+.welcome-principle-icon { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin-bottom: 20px; border-radius: 12px; color: #a98cff; background: rgba(169, 140, 255, 0.14); transition: all 0.3s ease; }
+.welcome-principle-card:hover .welcome-principle-icon { color: #fff; background: linear-gradient(135deg, #7248f5, #2876e9); transform: scale(1.06); box-shadow: 0 6px 18px rgba(114, 72, 245, 0.4); }
+.welcome-principle-card strong { display: block; margin-bottom: 10px; color: #fff; font-size: 1.05rem; letter-spacing: -0.015em; }
 .welcome-principle-card p { margin: 0; color: #b9c1d0; font-size: 0.9rem; line-height: 1.6; }
 
 .welcome-registration { display: grid; grid-template-columns: 1.1fr 1fr; gap: clamp(40px, 6vw, 90px); align-items: center; width: min(1180px, calc(100% - 40px)); margin: 40px auto 120px; border-radius: 30px; padding: clamp(40px, 5vw, 64px); color: #fff; background: linear-gradient(135deg, #1a2236 0%, #1f2a45 100%); position: relative; overflow: hidden; }
@@ -170,17 +185,37 @@
 .docs-faq p { margin: 0; border-top: 1px solid #e7eaf0; padding: 15px 18px; color: #667184; line-height: 1.6; }
 .docs-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 56px; }
 
+@media (max-width: 1024px) {
+  .welcome-hero { gap: 50px; }
+  .welcome-workflow { gap: 50px; }
+}
+
 @media (max-width: 820px) {
   .welcome-nav { width: min(100% - 28px, 1180px); }
   .welcome-nav > div { gap: 12px; }
   .welcome-nav > div > a:first-child { display: none; }
-  .welcome-hero { grid-template-columns: 1fr; width: min(100% - 32px, 680px); padding-top: 60px; }
-  .welcome-demo { min-height: 480px; }
-  .wc-carousel { min-height: 400px; }
+  /* Hero: single column, full width, smaller paddings */
+  .welcome-hero { grid-template-columns: 1fr; width: min(100% - 32px, 720px); gap: 40px; padding: 50px 0 80px; }
+  .welcome-hero h1 { font-size: clamp(2.4rem, 8vw, 3.6rem); }
+  .welcome-demo { min-height: 440px; }
+  .wc-carousel { min-height: 380px; }
+  .wc-slide { padding: 20px 4% 32px 6%; }
+  .wc-title { font-size: clamp(1.5rem, 5vw, 2rem); }
+  /* Features → single column */
   .welcome-feature-grid { grid-template-columns: 1fr; }
-  .welcome-workflow { grid-template-columns: 1fr; }
+  .welcome-feature-card { min-height: auto; padding: 26px; }
+  /* Workflow → single column */
+  .welcome-workflow { grid-template-columns: 1fr; width: min(100% - 32px, 720px); padding: 30px 0 80px; }
+  .welcome-workflow-step { padding: 22px 24px; }
+  /* Principles dark section → single column, reduced padding */
+  .welcome-principles { width: min(100% - 32px, 720px); padding: 32px 24px; }
   .welcome-principles-grid { grid-template-columns: 1fr; }
-  .welcome-registration { grid-template-columns: 1fr; }
+  .welcome-principle-card { padding: 24px; }
+  /* Registration dark section → single column, reduced padding */
+  .welcome-registration { grid-template-columns: 1fr; width: min(100% - 32px, 720px); padding: 32px 24px; gap: 28px; }
+  .welcome-registration-stats { gap: 10px; }
+  .welcome-registration-stats li { padding: 16px 18px; }
+  /* Docs */
   .docs-layout { grid-template-columns: 1fr; }
   .docs-toc { position: static; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 45px; border-left: 0; padding: 0; }
   .docs-toc span { grid-column: 1 / -1; }
@@ -188,24 +223,36 @@
 }
 
 @media (max-width: 520px) {
+  .welcome-nav { width: calc(100% - 24px); padding: 16px 0; }
   .welcome-nav > div > a:not(.welcome-nav-primary) { display: none; }
   .welcome-nav-primary { padding: 9px 12px; }
-  .welcome-hero { gap: 30px; min-height: auto; padding: 48px 0 80px; }
-  .welcome-hero h1 { font-size: clamp(2.7rem, 14vw, 4.4rem); }
+  /* Hero: tighter, smaller carousel */
+  .welcome-hero { width: calc(100% - 24px); gap: 28px; padding: 36px 0 60px; }
+  .welcome-hero h1 { font-size: clamp(2.1rem, 11vw, 3rem); }
   .welcome-actions { display: grid; }
-  .welcome-demo { min-height: 400px; }
-  .wc-carousel { min-height: 360px; }
-  .wc-slide { padding: 30px 3% 30px 6%; }
-  .wc-title { font-size: 1.8rem; }
-  .welcome-section { width: min(100% - 32px, 1180px); padding: 80px 0; }
-  .welcome-feature-card { min-height: 210px; padding: 25px; }
-  .welcome-workflow, .welcome-principles { width: calc(100% - 32px); }
-  .welcome-workflow { padding: 30px 0 80px; }
-  .welcome-registration { width: calc(100% - 24px); margin-bottom: 80px; border-radius: 22px; }
-  .welcome-footer { align-items: flex-start; width: calc(100% - 32px); }
+  .welcome-demo { min-height: 380px; }
+  .wc-carousel { min-height: 340px; }
+  .wc-slide { padding: 16px 3% 28px 5%; }
+  .wc-title { font-size: 1.6rem; }
+  .wc-stack-front { padding: 24px; border-radius: 24px; }
+  .wc-stack-back, .wc-stack-middle { border-radius: 24px; }
+  /* Sections: tighter width + padding */
+  .welcome-section { width: calc(100% - 24px); padding: 60px 0; }
+  .welcome-feature-card { padding: 22px; }
+  .welcome-workflow { width: calc(100% - 24px); padding: 24px 0 60px; }
+  .welcome-workflow-step { padding: 20px 22px; }
+  /* Dark sections: full width minus small margin, smaller radius */
+  .welcome-principles { width: calc(100% - 20px); padding: 28px 20px; border-radius: 24px; margin-bottom: 60px; }
+  .welcome-principle-card { padding: 22px; border-radius: 14px; }
+  .welcome-registration { width: calc(100% - 20px); margin: 24px auto 60px; border-radius: 24px; padding: 28px 20px; }
+  .welcome-registration-stats li { padding: 14px 16px; border-radius: 14px; }
+  .welcome-registration-icon { width: 38px; height: 38px; }
+  .welcome-registration-stat strong { font-size: 1.3rem; }
+  .welcome-footer { align-items: flex-start; width: calc(100% - 24px); }
   .welcome-footer p { display: none; }
   .welcome-footer a { margin-left: auto; }
-  .docs-layout { width: calc(100% - 32px); }
+  /* Docs */
+  .docs-layout { width: calc(100% - 24px); }
   .docs-toc { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .docs-header { margin-bottom: 55px; }
   .docs-grid, .docs-grid-three, .docs-compare { grid-template-columns: 1fr; }
