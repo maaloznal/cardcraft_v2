@@ -20,6 +20,11 @@
 }
 
 /* ─── Navigation ─── */
+/* Nav is transparent and non-sticky: it sits at the top over the light hero
+   and scrolls away naturally with the content. This avoids the contrast
+   problem a sticky transparent bar would create over dark sections (dark
+   text on dark bg = unreadable). The mobile drawer is separate (position:
+   fixed) so it remains accessible regardless of scroll position. */
 .welcome-nav {
   display: flex;
   align-items: center;
@@ -27,15 +32,6 @@
   width: min(1120px, calc(100% - 40px));
   margin: 0 auto;
   padding: var(--space-5) 0;
-  position: sticky;
-  top: 0;
-  z-index: var(--z-sticky);
-  /* Glassmorphism: frosted glass — translucent light surface over content.
-     --ui-topbar-bg is rgba(255,255,255,0.88) in light / rgba(24,24,27,0.9) in dark. */
-  background: var(--ui-topbar-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--ui-border);
 }
 .welcome-brand {
   font-size: 1.125rem;
