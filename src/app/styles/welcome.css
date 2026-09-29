@@ -778,8 +778,9 @@
 }
 
 @media (max-width: 520px) {
-  .welcome-nav { width: calc(100% - 24px); padding: var(--space-4) 0; }
-  .welcome-nav-cta { padding: 0 var(--space-4); font-size: 0.8125rem; }
+  /* Nav: keep full-width bg, but ensure brand doesn't stick to the edge */
+  .welcome-nav { padding: 0 16px; }
+  .welcome-nav-cta { padding: 0 14px; font-size: 0.75rem; }
   /* Hero tighter */
   .welcome-hero {
     width: calc(100% - 24px);

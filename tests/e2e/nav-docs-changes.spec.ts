@@ -139,7 +139,7 @@ test.describe('Navigation + Docs scrollspy (last changes)', () => {
     expect(headingTop).toBeGreaterThan(-10);
   });
 
-  test('mobile: burger + CTA visible, drawer opens', async ({ page }) => {
+  test('mobile: burger visible (no CTA in navbar), drawer opens with CTA', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await gotoLanding(page);
 
@@ -150,11 +150,9 @@ test.describe('Navigation + Docs scrollspy (last changes)', () => {
     expect(burgerBox?.width).toBeGreaterThanOrEqual(44);
     expect(burgerBox?.height).toBeGreaterThanOrEqual(44);
 
-    // CTA visible on mobile
-    const cta = page.locator('.welcome-nav-mobile .welcome-nav-cta');
-    await expect(cta).toBeVisible();
-    const ctaBox = await cta.boundingBox();
-    expect(ctaBox?.width).toBeGreaterThan(0);
+    // CTA should NOT be visible in the navbar on mobile (it's in the drawer)
+    const navbarCta = page.locator('.welcome-nav-mobile .welcome-nav-cta');
+    await expect(navbarCta).toHaveCount(0);
 
     // aria-expanded false initially
     await expect(burger).toHaveAttribute('aria-expanded', 'false');

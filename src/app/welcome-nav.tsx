@@ -119,11 +119,8 @@ export default function WelcomeNav() {
           </Link>
         </div>
 
-        {/* Mobile compact (<768px): CTA + burger */}
+        {/* Mobile compact (<768px): burger only (CTA lives inside the drawer) */}
         <div className="welcome-nav-mobile">
-          <Link className="welcome-nav-cta" href="/editor">
-            Открыть редактор
-          </Link>
           <button
             ref={burgerRef}
             type="button"
