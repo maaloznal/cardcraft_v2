@@ -1,3 +1,7 @@
 #!/usr/bin/env sh
 # P15: Conventional Commits — enforce feat:/fix:/refactor:/perf:/test:/docs:/chore: format
-bunx commitlint --edit "$1"
+if command -v bunx >/dev/null 2>&1; then
+  bunx commitlint --edit "$1"
+else
+  npx --no-install commitlint --edit "$1"
+fi

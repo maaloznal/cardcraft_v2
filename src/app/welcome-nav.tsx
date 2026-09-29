@@ -44,7 +44,7 @@ export default function WelcomeNav() {
     (e: React.MouseEvent) => {
       if (pathname === '/') {
         e.preventDefault();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
       }
     },
     [pathname],
@@ -52,6 +52,7 @@ export default function WelcomeNav() {
 
   const close = useCallback(() => {
     setOpen(false);
+    burgerRef.current?.focus();
   }, []);
 
   const onBurgerKey = (e: React.KeyboardEvent) => {
@@ -81,6 +82,11 @@ export default function WelcomeNav() {
     if (!drawer) return;
 
     const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        close();
+        return;
+      }
       if (e.key !== 'Tab') return;
       const focusables = drawer.querySelectorAll<HTMLElement>(
         'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
@@ -104,14 +110,7 @@ export default function WelcomeNav() {
 
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [open]);
-
-  // Return focus to the burger trigger after closing.
-  useEffect(() => {
-    if (open) return;
-    // Only re-focus if the drawer was just closed (not on mount).
-    burgerRef.current?.focus();
-  }, [open]);
+  }, [open, close]);
 
   return (
     <>

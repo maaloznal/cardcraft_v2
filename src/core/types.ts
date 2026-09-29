@@ -204,3 +204,38 @@ export type Action =
 
 /** String literal union of all action types — useful for devtools/logging */
 export type ActionType = Action['type'];
+export interface TokenRequest {
+  id: string;
+  user_id: string;
+  amount: number;
+  status: 'pending' | 'approved' | 'rejected';
+  credit_kind: 'purchase' | 'grant' | null;
+  comment: string;
+  admin_note: string;
+  created_at: string;
+  decided_at: string | null;
+  payment_network?: string | null;
+  payment_address?: string | null;
+  payment_amount_micros?: number | null;
+  payment_tx_hash?: string;
+}
+
+export interface TokenPaymentConfig {
+  price: number | null;
+  networks: { id: string; label: string; address: string }[];
+}
+
+export interface AdminTokenRequest extends TokenRequest {
+  email: string | null;
+  token_balance: number;
+  tokens_used: number;
+  tokens_purchased: number;
+  tokens_granted: number;
+  unlimited_tokens: boolean;
+}
+
+export interface TokenAdminOverview {
+  stats: { users: number; purchased: number; granted: number; used: number; balance: number; pending: number; undelivered: number; projects: number };
+  requests: AdminTokenRequest[];
+  total: number;
+}

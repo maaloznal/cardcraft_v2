@@ -80,6 +80,11 @@ export default defineConfig({
   ],
   webServer: {
     command: 'bun run dev',
+    // Deterministic public-only fixtures; token/admin specs intercept the network.
+    env: {
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://cardcraft-test.supabase.co',
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_test_fixture',
+    },
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,

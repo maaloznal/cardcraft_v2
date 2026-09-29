@@ -7,6 +7,7 @@ import { useAuth } from '@/auth/AuthProvider';
 import { getUserAccount, INITIAL_TOKEN_BALANCE, type UserAccount } from '@/account/account-service';
 import { createProject, deleteProject, pullProjects, renameProject, type Project } from '@/lib/sync/cloudSync';
 import { normalizeProjectName, setActiveProject } from '@/projects/project-storage';
+import TokenRequests from '@/account/TokenRequests';
 
 const number = new Intl.NumberFormat('ru-RU');
 const date = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -39,6 +40,10 @@ export default function AccountPage() {
     } finally {
       setLoading(false);
     }
+  }, [user]);
+
+  const refreshBalance = useCallback(() => {
+    if (user) void getUserAccount(user.id).then(setAccount).catch(() => setError('Не удалось обновить баланс.'));
   }, [user]);
 
   useEffect(() => {
@@ -142,6 +147,8 @@ export default function AccountPage() {
             <div className="account-stat"><span>Использовано</span><strong>{number.format(account.tokens_used)}</strong></div>
             <div className="account-stat"><span>Проектов</span><strong>{number.format(projects.length)}</strong></div>
           </section>
+
+          <TokenRequests key={user.id} userId={user.id} onBalanceChange={refreshBalance} />
 
           <section className="account-section">
             <h2>Профиль</h2>
