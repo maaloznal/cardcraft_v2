@@ -8,7 +8,7 @@ import TokenInvoice from '@/account/TokenInvoice';
 
 const presets = [10_000, 50_000, 100_000, 500_000];
 const n = (value: number) => new Intl.NumberFormat('ru-RU').format(value);
-const statuses = { pending: 'На рассмотрении', approved: 'Начислено', rejected: 'Отклонено' };
+const statuses = { pending: 'На рассмотрении', approved: 'Начислено', rejected: 'Отклонено', cancelled: 'Закрыта вами' };
 
 export default function TokenRequests({ userId, onBalanceChange }: { userId: string; onBalanceChange: () => void }) {
   const [requests, setRequests] = useState<TokenRequest[]>([]);
@@ -37,7 +37,7 @@ export default function TokenRequests({ userId, onBalanceChange }: { userId: str
       if (previousPending.current && previousPending.current !== active?.id) {
         onBalanceChange();
         const resolved = rows.find((item) => item.id === previousPending.current);
-        setMessage(resolved?.status === 'approved' ? `Готово! ${n(resolved.amount)} токенов зачислено. Можно продолжать работу.` : 'Статус заявки изменился. Подробности — в истории пополнений.');
+        setMessage(resolved?.status === 'approved' ? `Готово! ${n(resolved.amount)} токенов зачислено. Можно продолжать работу.` : resolved?.status === 'cancelled' ? 'Заявка закрыта. При необходимости можно создать новую.' : 'Статус заявки изменился. Подробности — в истории пополнений.');
       }
       previousPending.current = active?.id ?? null;
       setError('');

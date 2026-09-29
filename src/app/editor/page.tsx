@@ -710,7 +710,8 @@ function CardEditor() {
         </div>
       </div>
 
-      <div className="word-style-popup" id="wordStylePopup" role="dialog" aria-modal="true" aria-label="Настройка выделенного текста">
+      <div className="word-style-popup" id="wordStylePopup" role="dialog" aria-label="Настройка выделенного текста">
+        <button id="wordCloseBtn" className="word-close-btn" type="button" aria-label="Закрыть настройки текста">✕</button>
         <div className="word-popup-header" id="wordPopupHeader" />
         <button
           className="word-clear-btn"
@@ -739,7 +740,7 @@ function CardEditor() {
               ))}
             </div>
             <div className="size-control-section">
-              <input type="range" id="sizeSlider" min={10} max={48} defaultValue={16} />
+              <input type="range" id="sizeSlider" aria-label="Размер выделенного текста" min={10} max={48} defaultValue={16} />
               <span id="sizeValue">16px</span>
             </div>
           </div>
@@ -751,8 +752,10 @@ function CardEditor() {
           <div className="popup-section-content">
             <div className="color-presets">
               {PRESETS.map((c) => (
-                <div
+                <button
                   key={c}
+                  type="button"
+                  aria-label={`Цвет текста ${c}`}
                   className="color-preset"
                   data-color={c}
                   style={{ background: c }}

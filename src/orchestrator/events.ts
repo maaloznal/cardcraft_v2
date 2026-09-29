@@ -576,6 +576,8 @@ export function bindModalEvents(ctx: OrchestratorContext): void {
  */
 export function bindPopupEvents(ctx: OrchestratorContext): void {
   const { refs } = ctx;
+  const close = refs.wordStylePopup?.querySelector('#wordCloseBtn');
+  if (close) ctx.listeners.addEl(close, 'click', () => ctx.wordPopup.closeWordStylePopup());
 
   // Document-level click: close word popup (5-condition check)
   // Note: theme dropdown click-outside handled by Dropdown class
@@ -586,6 +588,7 @@ export function bindPopupEvents(ctx: OrchestratorContext): void {
     if (refs.editorSidebar?.contains(t)) return;
     if (refs.colorModal?.contains(t)) return;
     if (t.closest('.cc-styled-word')) return;
+    if (t.closest('#cardsArea [data-field]') && !window.getSelection()?.isCollapsed) return;
     if (t.closest('input, textarea, select, button')) return;
     ctx.wordPopup.closeWordStylePopup();
   });

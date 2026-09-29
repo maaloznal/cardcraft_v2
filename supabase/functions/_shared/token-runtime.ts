@@ -84,12 +84,17 @@ export async function decide(client, id, decision, kind = 'purchase', note = '')
   const { data, error } = await client.rpc('decide_token_request', { p_id: id, p_decision: decision, p_admin_id: Number(OWNER_ID), p_kind: kind, p_note: note });
   if (error) throw new Error('Decision unavailable');
   // Cosmetic Telegram updates must never turn a committed credit into a failed API response.
-  if (data.request.telegram_message_id) {
+  await refreshRequestMessage(data.request);
+  return data;
+}
+
+export async function refreshRequestMessage(request) {
+  if (request.telegram_message_id) {
     try {
-      await telegram('editMessageText', { chat_id: OWNER_ID, message_id: data.request.telegram_message_id,
-        text: `${data.request.status === 'approved' ? 'Одобрено' : 'Отклонено'}: ${n(data.request.amount)} токенов\nЗаявка: ${id}\nКлиент: ${data.request.user_id}\n${data.request.admin_note || ''}`,
-        reply_markup: { inline_keyboard: [[{ text: 'История клиента', callback_data: `history:${data.request.user_id}:0` }], ...menu().inline_keyboard] } });
+      const label = { approved: 'Одобрено', rejected: 'Отклонено', cancelled: 'Закрыта клиентом' }[request.status] || request.status;
+      await telegram('editMessageText', { chat_id: OWNER_ID, message_id: request.telegram_message_id,
+        text: `${label}: ${n(request.amount)} токенов\nЗаявка: ${request.id}\nКлиент: ${request.user_id}\n${request.admin_note || ''}`,
+        reply_markup: { inline_keyboard: [[{ text: 'История клиента', callback_data: `history:${request.user_id}:0` }], ...menu().inline_keyboard] } });
     } catch { /* The database is authoritative; /requests and Mini App show the decision. */ }
   }
-  return data;
 }

@@ -79,17 +79,27 @@ export function applyWordStylesToText(
 
   if (ranges.length === 0) return escapeHtml(text);
 
-  ranges.sort((a, b) => a.start - b.start || a.end - b.end);
-
-  let html = '';
-  let pos = 0;
-  for (const r of ranges) {
-    if (r.start < pos) continue; // overlap — skip
-    html += escapeHtml(text.slice(pos, r.start));
-    html += `<span class="cc-styled-word" style="${r.styleStr}">${escapeHtml(text.slice(r.start, r.end))}</span>`;
-    pos = r.end;
+  // Broad selections form the base; a smaller word/phrase can override just
+  // its own properties without removing the rest of the paragraph's style.
+  type StyledRange = typeof ranges[number];
+  const starts = new Map<number, StyledRange[]>();
+  const ends = new Map<number, StyledRange[]>();
+  for (const range of ranges) {
+    starts.set(range.start, [...(starts.get(range.start) || []), range]);
+    ends.set(range.end, [...(ends.get(range.end) || []), range]);
   }
-  html += escapeHtml(text.slice(pos));
+  const boundaries = [...new Set([0, text.length, ...starts.keys(), ...ends.keys()])].sort((a, b) => a - b);
+  const active = new Set<StyledRange>();
+  let html = '';
+  for (let i = 0; i < boundaries.length - 1; i++) {
+    const start = boundaries[i];
+    const end = boundaries[i + 1];
+    for (const range of ends.get(start) || []) active.delete(range);
+    for (const range of starts.get(start) || []) active.add(range);
+    const styles = [...active].sort((a, b) => (b.end - b.start) - (a.end - a.start)).map((range) => range.styleStr).join('');
+    const segment = escapeHtml(text.slice(start, end));
+    html += styles ? `<span class="cc-styled-word" style="${styles}">${segment}</span>` : segment;
+  }
   return html;
 }
 

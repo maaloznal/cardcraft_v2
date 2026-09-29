@@ -1,4 +1,5 @@
 .account-page .account-shell { width: min(100%, 1080px); }
+.invoice-cancel { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border-color, #e4e4e7); }.invoice-cancel p { font-size: .85rem; line-height: 1.6; }.invoice-cancel-actions { display: flex; flex-wrap: wrap; gap: 10px; }.token-status-cancelled { background: #f4f4f5; color: #52525b; }
 .account-eyebrow { display: block; color: #6d4aff; font-size: .65rem; font-weight: 750; letter-spacing: .12em; margin-bottom: 8px; }
 .account-section { scroll-margin-top: 24px; }.account-section-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .account-quick-actions { display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }.account-quick-actions > a { text-decoration: none; }.account-quick-actions nav { display: flex; flex-wrap: wrap; gap: 16px; }.account-quick-actions nav a { font-size: .8rem; color: var(--text-secondary, #52525b); text-decoration: none; padding-block: 10px; }.account-quick-actions nav a:hover { color: #6d4aff; }

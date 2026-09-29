@@ -46,6 +46,7 @@ export function createWordPopupController(ctx: OrchestratorContext): WordPopupCo
     const key = `${field}::${selectedText}`;
     const existing = card.wordStyles?.[key];
     wordEditorManager.open(x, y, selectedText, field, cardIndex, existing);
+    wordEditorManager.renderWordStyleList(card);
   }
 
   function closeWordStylePopup(): void {

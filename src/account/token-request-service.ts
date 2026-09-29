@@ -27,6 +27,10 @@ export async function updatePaymentHash(id: string, txHash: string): Promise<Tok
   return invokeTokenRequest({ action: 'payment', id, txHash });
 }
 
+export async function cancelTokenRequest(id: string): Promise<TokenRequest> {
+  return invokeTokenRequest({ action: 'cancel', id });
+}
+
 async function invokeTokenRequest(body: Record<string, unknown>): Promise<TokenRequest> {
   if (!supabase) throw new Error('Supabase не настроен.');
   const { data, error } = await supabase.functions.invoke('token-request', { body });

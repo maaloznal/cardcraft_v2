@@ -1,5 +1,5 @@
 // @ts-nocheck -- Supabase Edge Function (Deno).
-import { db, json, cors, readBody, notifyRequest } from '../_shared/token-runtime.ts';
+import { db, json, cors, readBody, notifyRequest, refreshRequestMessage } from '../_shared/token-runtime.ts';
 import { validTokenAmount, validUuid } from '../_shared/token-contract.ts';
 
 Deno.serve(async (req: Request) => {
@@ -12,6 +12,13 @@ Deno.serve(async (req: Request) => {
   if (authError || !auth.user) return json(req, { error: 'Войдите в аккаунт.' }, 401);
   let body;
   try { body = await readBody(req); } catch { return json(req, { error: 'Некорректный запрос.' }, 400); }
+  if (body.action === 'cancel') {
+    if (!validUuid(body.id)) return json(req, { error: 'Некорректный номер заявки.' }, 400);
+    const { data: request, error } = await client.rpc('cancel_token_request', { p_user_id: auth.user.id, p_id: body.id });
+    if (error) return json(req, { error: 'Не удалось закрыть заявку. Возможно, она уже обработана — обновите статус.' }, 409);
+    await refreshRequestMessage(request);
+    return json(req, { request });
+  }
   if (body.action === 'payment') {
     if (!validUuid(body.id) || typeof body.txHash !== 'string' || body.txHash.trim().length < 8 || body.txHash.length > 128) return json(req, { error: 'Укажите хеш транзакции (8–128 символов).' }, 400);
     const { data: request, error } = await client.rpc('set_token_payment_hash', { p_user_id: auth.user.id, p_id: body.id, p_hash: body.txHash });

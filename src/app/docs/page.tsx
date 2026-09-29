@@ -20,15 +20,20 @@ const sections: [string, string][] = [
   ['projects', 'Проекты'],
   ['ai', 'Создание с ИИ'],
   ['design', 'Дизайн и форматы'],
+  ['text-styling', 'Оформление текста и слов'],
   ['export', 'Скачивание'],
   ['storage', 'Хранение и синхронизация'],
   ['mobile', 'Телефон и планшет'],
   ['faq', 'Частые вопросы'],
 ];
 
+function DocsHeading({ number, title, subtitle }: { number: string; title: string; subtitle: string }) {
+  return <div className="docs-section-heading"><span>{number}</span><div><h2><span className="docs-heading-desktop">{title}</span><a className="docs-heading-mobile" href="#docs-top">{title}<small aria-hidden="true">↑ К содержанию</small></a></h2><p>{subtitle}</p></div></div>;
+}
+
 export default function DocsPage() {
   return (
-    <main className="docs-page">
+    <main className="docs-page" id="docs-top">
       <nav className="welcome-nav" aria-label="Навигация документации">
         <Link className="welcome-brand" href="/">Cardcraft</Link>
         <div className="welcome-nav-links">
@@ -49,7 +54,7 @@ export default function DocsPage() {
           </header>
 
           <section className="docs-block" id="quick-start">
-            <div className="docs-section-heading"><span>01</span><div><h2>Быстрый старт</h2><p>Минимальный путь до первой готовой карточки.</p></div></div>
+            <DocsHeading number="01" title="Быстрый старт" subtitle="Минимальный путь до первой готовой карточки." />
             <ol className="docs-steps">
               {steps.map(([title, description], index) => (
                 <li key={title}><span>{index + 1}</span><div><h3>{title}</h3><p>{description}</p></div></li>
@@ -58,7 +63,7 @@ export default function DocsPage() {
           </section>
 
           <section className="docs-block" id="editor">
-            <div className="docs-section-heading"><span>02</span><div><h2>Редактор карточек</h2><p>Содержание редактируется отдельно от внешнего вида.</p></div></div>
+            <DocsHeading number="02" title="Редактор карточек" subtitle="Содержание редактируется отдельно от внешнего вида." />
             <div className="docs-grid">
               <article><h3>Поля карточки</h3><p>Доступны заголовок, подзаголовок, основной текст, список, итог и кнопка действия. Заполнять все поля необязательно.</p></article>
               <article><h3>Порядок серии</h3><p>Карточки можно добавлять, клонировать, перемещать и удалять. Нумерация пересчитывается автоматически.</p></article>
@@ -69,7 +74,7 @@ export default function DocsPage() {
           </section>
 
           <section className="docs-block" id="projects">
-            <div className="docs-section-heading"><span>03</span><div><h2>Проекты</h2><p>Независимые рабочие пространства для разных серий.</p></div></div>
+            <DocsHeading number="03" title="Проекты" subtitle="Независимые рабочие пространства для разных серий." />
             <p>Редактор можно открыть без проекта — в этом случае вы работаете в локальном черновике. Создание облачных проектов доступно после регистрации, их количество не ограничено.</p>
             <ul className="docs-list">
               <li>Нажмите название текущего проекта в верхней панели.</li>
@@ -82,7 +87,7 @@ export default function DocsPage() {
           </section>
 
           <section className="docs-block" id="ai">
-            <div className="docs-section-heading"><span>04</span><div><h2>Создание с ИИ</h2><p>Инструмент для структурирования вашего текста, а не генератор случайного содержания.</p></div></div>
+            <DocsHeading number="04" title="Создание с ИИ" subtitle="Инструмент для структурирования вашего текста, а не генератор случайного содержания." />
             <p>Функция доступна зарегистрированным пользователям. В один запрос можно передать до 10 000 символов, выбрать профессиональную роль и указать целевой объём одной карточки от 180 до 2 200 символов.</p>
             <div className="docs-compare">
               <article><span>Режим 1</span><h3>Не изменять текст</h3><p>Сохраняет порядок, стиль и формулировки. Исправляет орфографию, грамматику и пунктуацию, затем распределяет текст по карточкам.</p></article>
@@ -90,10 +95,11 @@ export default function DocsPage() {
             </div>
             <p>ИИ сначала показывает предварительный результат. Карточки попадут в редактор только после вашего подтверждения.</p>
             <div className="docs-tip"><strong>Токены</strong><p>После регистрации начисляется 50 000 токенов. Фактический расход списывается сервером и отображается в личном кабинете.</p></div>
+            <p>Для пополнения откройте личный кабинет, выберите пакет от 10 000 токенов и сеть USDT. Создайте заявку, скопируйте сохранённые сумму и адрес, оплатите и передайте хеш транзакции. Администратор проверяет оплату вручную; после одобрения баланс обновится автоматически. Ненужную заявку можно закрыть. Если деньги уже отправлены, дождитесь проверки: закрытие заявки не возвращает перевод.</p>
           </section>
 
           <section className="docs-block" id="design">
-            <div className="docs-section-heading"><span>05</span><div><h2>Дизайн и форматы</h2><p>Один набор настроек применяется ко всей серии.</p></div></div>
+            <DocsHeading number="05" title="Дизайн и форматы" subtitle="Общий стиль серии и персональные настройки каждой карточки." />
             <ul className="docs-list">
               <li><strong>Формат:</strong> стандартный, 4:5, Stories 9:16 и варианты для популярных социальных сетей.</li>
               <li><strong>Тема:</strong> готовые сочетания фона, типографики и декоративных элементов.</li>
@@ -102,8 +108,16 @@ export default function DocsPage() {
             </ul>
           </section>
 
+          <section className="docs-block" id="text-styling">
+            <DocsHeading number="06" title="Оформление текста и слов" subtitle="Меняйте цвет, размер и начертание прямо в предпросмотре." />
+            <p>Можно оформить отдельное слово, несколько предложений или весь текст одного поля. Изменения относятся к выбранной карточке. Заголовок, основной текст и другие поля выделяются по отдельности.</p>
+            <div className="docs-compare"><article><h3>На компьютере</h3><p>Дважды нажмите на слово либо протяните выделение мышью по фразе. После выделения откроются настройки текста. Выберите цвет, размер, жирное или курсивное начертание, подчёркивание либо зачёркивание.</p></article><article><h3>На телефоне и планшете</h3><p>Откройте режим просмотра. Удерживайте слово, затем растяните выделение за маркеры на нужный фрагмент. Нажмите «Оформить выделение» и измените те же параметры, что на компьютере.</p></article></div>
+            <ul className="docs-list"><li><strong>Вся карточка или раздел:</strong> нажмите палитру под превью и задайте персональные стили полей.</li><li><strong>Шрифт серии:</strong> семейство шрифта выбирается в разделе «Дизайн». Размер и начертание выделения можно менять отдельно в окне настроек текста.</li><li><strong>Слово внутри оформленного абзаца:</strong> выделите его повторно — собственные цвет и размер слова будут применяться поверх стиля большого фрагмента.</li><li><strong>Сброс:</strong> кнопка «Сбросить стиль выделения» убирает оформление выбранного фрагмента. Крестик в списке «Стили выделений» удаляет конкретный стиль. Действие можно отменить кнопкой отмены.</li></ul>
+            <div className="docs-tip"><strong>Подсказка</strong><p>Одинаковый выделенный текст в одном поле оформляется во всех его повторениях. Для изменения самих слов откройте редактор карточки кнопкой с карандашом. Стили автоматически сохраняются и попадают в PNG.</p></div>
+          </section>
+
           <section className="docs-block" id="export">
-            <div className="docs-section-heading"><span>06</span><div><h2>Скачивание</h2><p>Выберите способ экспорта под конкретную задачу.</p></div></div>
+            <DocsHeading number="07" title="Скачивание" subtitle="Выберите способ экспорта под конкретную задачу." />
             <div className="docs-grid docs-grid-three">
               <article><h3>Одна карточка</h3><p>Кнопка скачивания под превью создаёт PNG только для выбранной карточки.</p></article>
               <article><h3>PNG по одному</h3><p>«Скачать все» может сохранить каждую карточку отдельным изображением.</p></article>
@@ -113,7 +127,7 @@ export default function DocsPage() {
           </section>
 
           <section className="docs-block" id="storage">
-            <div className="docs-section-heading"><span>07</span><div><h2>Хранение и синхронизация</h2><p>Что происходит с вашей работой после закрытия страницы.</p></div></div>
+            <DocsHeading number="08" title="Хранение и синхронизация" subtitle="Что происходит с вашей работой после закрытия страницы." />
             <div className="docs-table" role="table" aria-label="Сравнение способов хранения">
               <div role="row"><strong role="columnheader">Режим</strong><strong role="columnheader">Где хранится</strong><strong role="columnheader">Другое устройство</strong></div>
               <div role="row"><span role="cell">Локальный черновик</span><span role="cell">В браузере</span><span role="cell">Недоступен</span></div>
@@ -123,13 +137,14 @@ export default function DocsPage() {
           </section>
 
           <section className="docs-block" id="mobile">
-            <div className="docs-section-heading"><span>08</span><div><h2>Телефон и планшет</h2><p>Интерфейс меняется под размер экрана.</p></div></div>
+            <DocsHeading number="09" title="Телефон и планшет" subtitle="Интерфейс меняется под размер экрана." />
             <p>На телефоне редактор и просмотр открываются как отдельные режимы. Переключатель остаётся сверху, а из превью можно сразу перейти к редактированию нужной карточки. На планшете используется сфокусированный режим либо разделённый экран — в зависимости от ширины.</p>
             <p>Cardcraft можно установить на домашний экран как PWA, если браузер поддерживает установку веб-приложений.</p>
+            <p>Чтобы вернуться к содержанию этой документации на телефоне или планшете, нажмите название любой главы с подписью «↑ К содержанию».</p>
           </section>
 
           <section className="docs-block" id="faq">
-            <div className="docs-section-heading"><span>09</span><div><h2>Частые вопросы</h2><p>Короткие ответы на важные ситуации.</p></div></div>
+            <DocsHeading number="10" title="Частые вопросы" subtitle="Короткие ответы на важные ситуации." />
             <div className="docs-faq">
               <details><summary>Можно ли пользоваться без регистрации?</summary><p>Да. Ручное создание, оформление и скачивание доступны в локальном черновике.</p></details>
               <details><summary>Почему черновика нет на другом устройстве?</summary><p>Локальный черновик не отправляется в облако. Создайте проект после регистрации, чтобы включить синхронизацию.</p></details>

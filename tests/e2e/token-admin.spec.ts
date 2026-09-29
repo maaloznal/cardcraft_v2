@@ -77,6 +77,10 @@ test('account validates amounts, submits custom tokens once, and shows status', 
   await page.route('**/rest/v1/token_payment_networks*', (route) => route.fulfill({ json: [{ id: 'ton', label: 'TON', address: 'test-ton-address' }, { id: 'tron', label: 'Tron (TRC20)', address: 'test-tron-address' }] }));
   await page.route('**/functions/v1/token-request', async (route) => {
     const body = route.request().postDataJSON();
+    if (body.action === 'cancel') {
+      rows[0] = { ...rows[0], status: 'cancelled', admin_note: 'Закрыта клиентом' };
+      await route.fulfill({ json: { request: rows[0] } }); return;
+    }
     if (body.action === 'payment') {
       payments.push(body); rows[0] = { ...rows[0], payment_tx_hash: body.txHash };
       await route.fulfill({ json: { request: rows[0] } }); return;
@@ -137,6 +141,17 @@ test('account validates amounts, submits custom tokens once, and shows status', 
   await expect(page.locator('.account-balance strong')).toHaveText('62 345');
   await expect(page.locator('.token-invoice')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Пополнить баланс', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: 'Пополнить баланс', exact: true }).click();
+  await page.getByRole('button', { name: 'Создать заявку и перейти к оплате' }).click();
+  await page.getByRole('button', { name: 'Закрыть заявку', exact: true }).click();
+  await expect(page.getByRole('group', { name: 'Подтверждение закрытия заявки' })).toContainText('не возвращает перевод');
+  await page.getByRole('button', { name: 'Оставить открытой' }).click();
+  await expect(page.locator('.token-invoice')).toBeVisible();
+  await page.getByRole('button', { name: 'Закрыть заявку', exact: true }).click();
+  await page.getByRole('button', { name: 'Да, закрыть заявку' }).click();
+  await expect(page.locator('.token-invoice')).toHaveCount(0);
+  await expect(page.locator('.token-success')).toContainText('Заявка закрыта');
+  await expect(page.locator('.account-balance strong')).toHaveText('62 345');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 

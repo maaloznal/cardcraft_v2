@@ -4,6 +4,7 @@ import { validUuid } from '../_shared/token-contract.ts';
 import { OWNER_ID, botToken, db, json, cors, readBody, telegram, menu, overview, clientsOverview, decide, retryNotifications } from '../_shared/token-runtime.ts';
 
 const n = (v) => new Intl.NumberFormat('ru-RU').format(v ?? 0);
+const statusLabel = (value) => ({ approved: 'одобрена', rejected: 'отклонена', cancelled: 'закрыта клиентом', pending: 'ожидает' })[value] || value;
 async function botUpdate(client, update) {
   const callback = update.callback_query;
   const message = callback?.message || update.message;
@@ -35,12 +36,12 @@ async function botUpdate(client, update) {
       reply_markup: { inline_keyboard: [[{ text: 'Подтвердить', callback_data: `${action === 'approve' ? 'yes' : 'no'}:${id}` }], [{ text: 'Назад к заявкам', callback_data: 'queue:0' }]] } });
   } else if (['yes', 'no'].includes(action) && validUuid(id)) {
     const result = await decide(client, id, action === 'yes' ? 'approved' : 'rejected');
-    await telegram('sendMessage', { chat_id: OWNER_ID, text: result.changed ? (action === 'yes' ? 'Одобрено. Токены начислены.' : 'Заявка отклонена.') : `Заявка уже обработана: ${result.request.status === 'approved' ? 'одобрена' : 'отклонена'}.`, reply_markup: menu() });
+    await telegram('sendMessage', { chat_id: OWNER_ID, text: result.changed ? (action === 'yes' ? 'Одобрено. Токены начислены.' : 'Заявка отклонена.') : `Заявка уже обработана: ${statusLabel(result.request.status)}.`, reply_markup: menu() });
   } else if (action === 'history' && validUuid(id)) {
     const page = /^\d{1,5}$/.test(pageText || '') ? Number(pageText) : 0;
     const result = await overview(client, { p_status: 'all', p_user_id: id, p_page: page });
     const user = (await clientsOverview(client, { p_user_id: id })).clients[0];
-    const history = result.requests.map((r) => `${new Date(r.created_at).toLocaleDateString('ru-RU')} · ${n(r.amount)} · ${r.status === 'approved' ? 'одобрена' : r.status === 'rejected' ? 'отклонена' : 'ожидает'}`).join('\n');
+    const history = result.requests.map((r) => `${new Date(r.created_at).toLocaleDateString('ru-RU')} · ${n(r.amount)} · ${statusLabel(r.status)}`).join('\n');
     const rows = [];
     if (page > 0) rows.push({ text: '←', callback_data: `history:${id}:${page - 1}` });
     if ((page + 1) * 20 < result.total) rows.push({ text: '→', callback_data: `history:${id}:${page + 1}` });
@@ -88,7 +89,7 @@ Deno.serve(async (req: Request) => {
     if (body.action === 'list') {
       const status = body.status ?? 'pending';
       const page = body.page ?? 0;
-      if (!['all', 'pending', 'approved', 'rejected'].includes(status) || !Number.isInteger(page) || page < 0 || page > 100000 || (body.userId && !validUuid(body.userId)) || (body.search != null && (typeof body.search !== 'string' || body.search.length > 200))) return json(req, { error: 'Некорректный фильтр.' }, 400);
+      if (!['all', 'pending', 'approved', 'rejected', 'cancelled'].includes(status) || !Number.isInteger(page) || page < 0 || page > 100000 || (body.userId && !validUuid(body.userId)) || (body.search != null && (typeof body.search !== 'string' || body.search.length > 200))) return json(req, { error: 'Некорректный фильтр.' }, 400);
       return json(req, await overview(client, { p_status: status, p_search: body.search || '', p_page: page, p_user_id: body.userId || null }));
     }
     if (body.action === 'decide') {

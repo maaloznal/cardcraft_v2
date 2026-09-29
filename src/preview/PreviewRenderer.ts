@@ -43,6 +43,12 @@ export class PreviewRenderer {
   private clickHandler: ((e: MouseEvent) => void) | null = null;
   private dblclickHandler: ((e: MouseEvent) => void) | null = null;
   private pointerUpHandler: ((e: PointerEvent) => void) | null = null;
+  private selectionHandler: (() => void) | null = null;
+  private pointerDownHandler: ((e: PointerEvent) => void) | null = null;
+  private selectionTimer: number | null = null;
+  private touchSelection = false;
+  private selectionButton: HTMLButtonElement | null = null;
+  private selected: Record<string, unknown> | null = null;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -59,6 +65,11 @@ export class PreviewRenderer {
     if (this.clickHandler) this.container.removeEventListener('click', this.clickHandler);
     if (this.dblclickHandler) this.container.removeEventListener('dblclick', this.dblclickHandler);
     if (this.pointerUpHandler) this.container.removeEventListener('pointerup', this.pointerUpHandler);
+    if (this.pointerDownHandler) this.container.removeEventListener('pointerdown', this.pointerDownHandler);
+    if (this.selectionHandler) document.removeEventListener('selectionchange', this.selectionHandler);
+    if (this.selectionTimer !== null) window.clearTimeout(this.selectionTimer);
+    this.selectionButton?.remove();
+    this.selected = null;
     this.clickHandler = null;
     this.dblclickHandler = null;
     this.pointerUpHandler = null;
@@ -470,40 +481,58 @@ export class PreviewRenderer {
     // A drag/long-press selection can contain a phrase or any other range.
     // Only accept a selection whose endpoints both belong to the same card
     // field, so text from neighbouring fields can never be styled by mistake.
-    this.pointerUpHandler = (e: PointerEvent) => {
-      const delay = e.pointerType === 'touch' ? 120 : 0;
-      window.setTimeout(() => this.openSelectedText(e.clientX, e.clientY), delay);
+    this.touchSelection = window.matchMedia('(pointer: coarse)').matches;
+    this.selectionButton = document.createElement('button');
+    this.selectionButton.type = 'button';
+    this.selectionButton.className = 'preview-selection-action';
+    this.selectionButton.textContent = 'Оформить выделение';
+    this.selectionButton.hidden = true;
+    this.selectionButton.addEventListener('pointerdown', (event) => event.preventDefault());
+    this.selectionButton.addEventListener('click', () => {
+      if (!this.selected) return;
+      this.actionHandler?.('dblclick', this.selected);
+      window.getSelection()?.removeAllRanges();
+      this.selected = null;
+      this.selectionButton!.hidden = true;
+    });
+    (this.container.closest('.cc-root') || this.container).append(this.selectionButton);
+    this.pointerDownHandler = (event) => { this.touchSelection = event.pointerType === 'touch' || event.pointerType === 'pen'; };
+    this.container.addEventListener('pointerdown', this.pointerDownHandler);
+    // Native long-press/selection handles can cancel the pointer sequence entirely.
+    // selectionchange keeps the touch action current without covering those handles.
+    this.selectionHandler = () => {
+      if (!this.touchSelection) return;
+      this.selected = this.readSelectedText();
+      this.selectionButton!.hidden = !this.selected;
+    };
+    document.addEventListener('selectionchange', this.selectionHandler);
+    this.pointerUpHandler = (event: PointerEvent) => {
+      if (event.pointerType === 'touch' || event.pointerType === 'pen') this.touchSelection = true;
+      if (this.selectionTimer !== null) window.clearTimeout(this.selectionTimer);
+      this.selectionTimer = window.setTimeout(() => {
+        if (this.touchSelection) this.selectionHandler?.();
+        else this.openSelectedText();
+      }, 0);
     };
     this.container.addEventListener('pointerup', this.pointerUpHandler);
 
     // Dblclick delegation for word styling
     this.dblclickHandler = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const el = target.closest<HTMLElement>('[data-field]');
-      if (!el) return;
-      const selection = window.getSelection();
-      const text = selection ? selection.toString().trim() : '';
-      const field = el.dataset.field || '';
-      // P1-1: resolve cardId from stable data-card-id (not positional data-index)
-      const cardId = el.dataset.cardId || '';
-      if (text.length > 0) {
-        const rect = el.getBoundingClientRect();
-        this.actionHandler?.('dblclick', {
-          text,
-          field,
-          cardId,
-          x: rect.left,
-          y: rect.top + 24,
-        });
-      }
+      if (this.touchSelection) this.selectionHandler?.();
+      else this.openSelectedText();
       e.stopPropagation();
     };
     this.container.addEventListener('dblclick', this.dblclickHandler);
   }
 
-  private openSelectedText(fallbackX: number, fallbackY: number): void {
+  private openSelectedText(): void {
+    const selected = this.readSelectedText();
+    if (selected) this.actionHandler?.('dblclick', selected);
+  }
+
+  private readSelectedText(): Record<string, unknown> | null {
     const selection = window.getSelection();
-    if (!selection || selection.isCollapsed || selection.rangeCount === 0) return;
+    if (!selection || selection.isCollapsed || selection.rangeCount === 0) return null;
     const range = selection.getRangeAt(0);
     const start = (range.startContainer.nodeType === Node.ELEMENT_NODE
       ? range.startContainer as Element
@@ -511,18 +540,18 @@ export class PreviewRenderer {
     const end = (range.endContainer.nodeType === Node.ELEMENT_NODE
       ? range.endContainer as Element
       : range.endContainer.parentElement)?.closest<HTMLElement>('[data-field]');
-    if (!start || start !== end || !this.container.contains(start)) return;
+    if (!start || start !== end || !this.container.contains(start)) return null;
 
     const text = selection.toString().trim();
-    if (!text) return;
+    if (!text) return null;
     const rect = range.getBoundingClientRect();
-    this.actionHandler?.('dblclick', {
+    return {
       text,
       field: start.dataset.field || '',
       cardId: start.dataset.cardId || '',
-      x: rect.left || fallbackX,
-      y: (rect.bottom || fallbackY) + 6,
-    });
+      x: rect.left,
+      y: rect.bottom + 6,
+    };
   }
 }
 

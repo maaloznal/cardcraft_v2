@@ -65,6 +65,12 @@ export class WordEditorManager {
 
     this.initDrag();
     this.initControls();
+    this.trackListener(this.wordList, 'click', (event) => {
+      const button = (event.target as HTMLElement).closest<HTMLElement>('[data-word-key]');
+      if (button && this.activeCardIndex !== null) this.removeWordHandler?.(this.activeCardIndex, button.dataset.wordKey || '');
+    });
+    this.trackListener(window, 'resize', () => this.clampPosition());
+    if (window.visualViewport) this.trackListener(window.visualViewport, 'resize', () => this.clampPosition());
   }
 
   /** Whether the word-style popup is currently visible (.active class on the popup element). */
@@ -127,8 +133,8 @@ export class WordEditorManager {
     this.popup.style.visibility = 'hidden';
     const rect = this.popup.getBoundingClientRect();
     this.popup.style.visibility = '';
-    const left = Math.min(Math.max(pad, x), window.innerWidth - rect.width - pad);
-    const top = Math.min(Math.max(pad, y), window.innerHeight - rect.height - pad);
+    const left = Math.max(pad, Math.min(x, window.innerWidth - rect.width - pad));
+    const top = Math.max(pad, Math.min(y, (window.visualViewport?.height || window.innerHeight) - rect.height - pad));
     this.popup.style.left = `${left}px`;
     this.popup.style.top = `${top}px`;
   }
@@ -142,6 +148,13 @@ export class WordEditorManager {
   }
 
   // ─── Tracked listener helper ───────────────────────────────
+
+  private clampPosition(): void {
+    if (!this.isOpen) return;
+    const rect = this.popup.getBoundingClientRect();
+    this.popup.style.left = `${Math.max(12, Math.min(rect.left, window.innerWidth - rect.width - 12))}px`;
+    this.popup.style.top = `${Math.max(12, Math.min(rect.top, (window.visualViewport?.height || window.innerHeight) - rect.height - 12))}px`;
+  }
 
   /**
    * Attach a listener AND record it so destroy() can remove it.
@@ -189,20 +202,11 @@ export class WordEditorManager {
       entries
         .map(
           (e) =>
-            `<div class="word-list-item"><span class="word-list-word">${escapeHtml(e.word)}</span><button class="word-list-remove" data-word-key="${escapeHtml(e.key)}" title="Удалить стиль">✕</button></div>`,
+            `<div class="word-list-item"><span class="word-list-word" title="${escapeHtml(e.word)}">${escapeHtml(e.word.length > 100 ? e.word.slice(0, 99) + '…' : e.word)}</span><button type="button" class="word-list-remove" data-word-key="${escapeHtml(e.key)}" aria-label="Удалить стиль выделения" title="Удалить стиль">✕</button></div>`,
         )
         .join('');
 
-    // Attach remove handlers (tracked so destroy() cleans them up —
-    // otherwise they'd accumulate on every renderWordStyleList() call).
-    this.wordList.querySelectorAll<HTMLElement>('.word-list-remove').forEach((btn) =>
-      this.trackListener(btn, 'click', () => {
-        const key = btn.dataset.wordKey || '';
-        if (this.activeCardIndex !== null && this.removeWordHandler) {
-          this.removeWordHandler(this.activeCardIndex, key);
-        }
-      }),
-    );
+    this.clampPosition();
   }
 
   // ─── Private ────────────────────────────────────────────────

@@ -61,7 +61,27 @@ try {
   assert.equal(balance.data.token_balance, 62345, 'one credit, launch balance + 12345');
   const denial = await call('telegram-admin', { action: 'decide', id, decision: 'rejected', kind: 'purchase', note: '', initData: signed });
   assert.equal(denial.data.changed, false);
-  console.log('PASS: live auth, minimum amount, submission, pending deduplication, cross-user RLS, concurrent decisions and balance.');
+  assert.equal((await call('token-request', { action: 'cancel', id }, user.token)).status, 409, 'cannot cancel an approved request');
+  const cancelId = randomUUID(); requestIds.push(cancelId);
+  assert.equal((await call('token-request', { id: cancelId, amount: 10000, comment: 'Автоматическая проверка закрытия заявки. Оплата не требуется.', ...payment }, user.token)).status, 200);
+  assert.equal((await call('token-request', { action: 'cancel', id: cancelId }, users[1].token)).status, 409, 'cannot cancel another client request');
+  const cancelled = await call('token-request', { action: 'cancel', id: cancelId }, user.token);
+  assert.equal(cancelled.data.request.status, 'cancelled');
+  assert.equal((await call('token-request', { action: 'cancel', id: cancelId }, user.token)).status, 200, 'safe retry');
+  const lateApproval = await call('telegram-admin', { action: 'decide', id: cancelId, decision: 'approved', kind: 'grant', note: '', initData: signed });
+  assert.equal(lateApproval.data.changed, false, 'closed request cannot be credited');
+  const raceId = randomUUID(); requestIds.push(raceId);
+  assert.equal((await call('token-request', { id: raceId, amount: 10000, comment: 'Автоматическая проверка гонки отмены и одобрения. Оплата не требуется.', ...payment }, user.token)).status, 200);
+  const [raceCancel, raceApprove] = await Promise.all([
+    call('token-request', { action: 'cancel', id: raceId }, user.token),
+    call('telegram-admin', { action: 'decide', id: raceId, decision: 'approved', kind: 'grant', note: '', initData: signed }),
+  ]);
+  assert.equal(raceApprove.status, 200);
+  const credited = raceApprove.data.changed;
+  assert.equal(raceCancel.status, credited ? 409 : 200);
+  const finalBalance = await user.client.from('user_accounts').select('token_balance').single();
+  assert.equal(finalBalance.data.token_balance, credited ? 72345 : 62345, 'single terminal state wins');
+  console.log('PASS: live auth, cross-user RLS, payment updates, cancellation/retry and concurrent cancel/approve with exact balance.');
 } finally {
   for (const id of requestIds) {
     const { data } = await admin.from('token_requests').select('telegram_message_id').eq('id', id).maybeSingle();

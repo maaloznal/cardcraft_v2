@@ -8,7 +8,7 @@ import AdminClients from '@/account/AdminClients';
 import './admin.css';
 
 const n = (v: number) => new Intl.NumberFormat('ru-RU').format(v);
-const statusNames = { pending: 'Ожидает', approved: 'Одобрена', rejected: 'Отклонена' };
+const statusNames = { pending: 'Ожидает', approved: 'Одобрена', rejected: 'Отклонена', cancelled: 'Закрыта клиентом' };
 type TelegramWindow = Window & { Telegram?: { WebApp?: { initData: string; ready: () => void; expand: () => void } } };
 
 export default function AdminPage() {
@@ -97,7 +97,7 @@ export default function AdminPage() {
         <div className="admin-toolbar"><h2>{userId ? 'История клиента' : 'Заявки'} <span>{data.total}</span></h2>{userId && <button className="account-secondary" onClick={() => { setUserId(null); setClientEmail(''); setPage(0); setView('clients'); }}>К списку клиентов</button>}</div>
         {userId && clientEmail && <p className="admin-history-email">{clientEmail}</p>}
         <form className="admin-search" onSubmit={(e) => { e.preventDefault(); setQuery(search.trim()); setPage(0); }}><label htmlFor="admin-search">Поиск по email или номеру заявки</label><div><input id="admin-search" value={search} onChange={(e) => setSearch(e.target.value)} maxLength={200} placeholder="client@example.com" /><button className="account-secondary">Найти</button></div></form>
-        <div className="admin-filters" aria-label="Статус заявок">{[['pending', 'Ожидают'], ['approved', 'Одобрены'], ['rejected', 'Отклонены'], ['all', 'Все']].map(([value, label]) => <button type="button" className={status === value ? 'account-primary' : 'account-secondary'} aria-pressed={status === value} key={value} onClick={() => { setStatus(value); setPage(0); }}>{label}</button>)}</div>
+        <div className="admin-filters" aria-label="Статус заявок">{[['pending', 'Ожидают'], ['approved', 'Одобрены'], ['rejected', 'Отклонены'], ['cancelled', 'Закрыты клиентом'], ['all', 'Все']].map(([value, label]) => <button type="button" className={status === value ? 'account-primary' : 'account-secondary'} aria-pressed={status === value} key={value} onClick={() => { setStatus(value); setPage(0); }}>{label}</button>)}</div>
         {data.requests.length === 0 && <div className="admin-empty"><h3>Заявок нет</h3><p>Новые запросы клиентов появятся здесь.</p></div>}
         <div className="admin-request-list">{data.requests.map((request) => <article className="admin-request" key={request.id}>
           <div className="admin-request-top"><div><strong>{request.email || 'Без email'}</strong><small>{new Date(request.created_at).toLocaleString('ru-RU')}</small></div><span className={`token-status token-status-${request.status}`}>{statusNames[request.status]}</span></div>

@@ -208,7 +208,7 @@ export interface TokenRequest {
   id: string;
   user_id: string;
   amount: number;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
   credit_kind: 'purchase' | 'grant' | null;
   comment: string;
   admin_note: string;
