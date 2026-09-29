@@ -27,13 +27,18 @@ export async function telegram(method: string, payload: Record<string, unknown>)
   return data.result;
 }
 export function menu() {
-  const rows = [[{ text: 'Заявки', callback_data: 'queue:0' }, { text: 'Статистика', callback_data: 'stats' }]];
+  const rows = [[{ text: 'Клиенты', callback_data: 'clients:0' }, { text: 'Заявки', callback_data: 'queue:0' }], [{ text: 'Статистика', callback_data: 'stats' }]];
   const url = Deno.env.get('TELEGRAM_ADMIN_APP_URL');
   if (url?.startsWith('https://')) rows.push([{ text: 'Открыть админку', web_app: { url } }]);
   return { inline_keyboard: rows };
 }
 export async function overview(client, filters = {}) {
   const { data, error } = await client.rpc('token_admin_overview', filters);
+  if (error) throw new Error('Database unavailable');
+  return data;
+}
+export async function clientsOverview(client, filters = {}) {
+  const { data, error } = await client.rpc('token_admin_clients', filters);
   if (error) throw new Error('Database unavailable');
   return data;
 }

@@ -1,10 +1,19 @@
 import { supabase } from '@/lib/supabase/client';
 import type { TokenRequest } from '@/core/types';
 
+const requestFields = 'id,user_id,amount,status,credit_kind,comment,admin_note,created_at,decided_at,payment_network,payment_address,payment_amount_micros,payment_tx_hash';
+
+export async function getPendingTokenRequest(userId: string): Promise<TokenRequest | null> {
+  if (!supabase) throw new Error('Supabase не настроен.');
+  const { data, error } = await supabase.from('token_requests').select(requestFields).eq('user_id', userId).eq('status', 'pending').maybeSingle();
+  if (error) throw new Error('Не удалось проверить активную заявку. Попробуйте ещё раз.');
+  return data as TokenRequest | null;
+}
+
 export async function listTokenRequests(userId: string, page = 0): Promise<TokenRequest[]> {
   if (!supabase) throw new Error('Supabase не настроен.');
   const { data, error } = await supabase.from('token_requests')
-    .select('id,user_id,amount,status,credit_kind,comment,admin_note,created_at,decided_at,payment_network,payment_address,payment_amount_micros,payment_tx_hash')
+    .select(requestFields)
     .eq('user_id', userId).order('created_at', { ascending: false }).order('id', { ascending: false }).range(page * 20, page * 20 + 19);
   if (error) throw new Error('Не удалось загрузить заявки. Повторите попытку.');
   return data as TokenRequest[];

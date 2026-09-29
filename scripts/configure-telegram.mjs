@@ -26,8 +26,8 @@ if (process.argv.includes('--inspect')) {
 } else {
   const me = await api('getMe');
   await api('setWebhook', { url: `https://${projectRef}.supabase.co/functions/v1/telegram-admin/webhook`, secret_token: env.TELEGRAM_WEBHOOK_SECRET, allowed_updates: ['message', 'callback_query'], drop_pending_updates: false });
-  await api('setMyCommands', { scope: { type: 'chat', chat_id: 7145160476 }, commands: [{ command: 'start', description: 'Открыть админку Cardcraft' }, { command: 'requests', description: 'Заявки на токены' }, { command: 'stats', description: 'Статистика проекта' }] });
+  await api('setMyCommands', { scope: { type: 'chat', chat_id: 7145160476 }, commands: [{ command: 'start', description: 'Открыть админку Cardcraft' }, { command: 'clients', description: 'Список и поиск клиентов' }, { command: 'requests', description: 'Заявки на токены' }, { command: 'stats', description: 'Статистика проекта' }] });
   await api('setChatMenuButton', { chat_id: 7145160476, menu_button: { type: 'web_app', text: 'Админка', web_app: { url: env.TELEGRAM_ADMIN_APP_URL } } });
-  await api('sendMessage', { chat_id: 7145160476, text: 'Админка Cardcraft подключена. Заявки на токены будут приходить сюда. /requests — очередь заявок, /stats — статистика. Одобрение после проверки оплаты начисляет токены один раз.', reply_markup: { inline_keyboard: [[{ text: 'Открыть админку', web_app: { url: env.TELEGRAM_ADMIN_APP_URL } }]] } });
+  await api('sendMessage', { chat_id: 7145160476, text: 'Админка Cardcraft обновлена. /clients — все зарегистрированные клиенты (поиск: /clients email), /requests — очередь заявок, /stats — статистика. Одобрение после проверки оплаты начисляет токены один раз.', reply_markup: { inline_keyboard: [[{ text: 'Открыть админку', web_app: { url: env.TELEGRAM_ADMIN_APP_URL } }]] } });
   console.log(`Configured @${me.username}; owner-only menu and webhook enabled.`);
 }

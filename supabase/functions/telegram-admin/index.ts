@@ -1,7 +1,7 @@
 // @ts-nocheck -- Supabase Edge Function (Deno).
 import { verifyTelegramAdmin, constantTimeEqual } from '../_shared/telegram-auth.ts';
 import { validUuid } from '../_shared/token-contract.ts';
-import { OWNER_ID, botToken, db, json, cors, readBody, telegram, menu, overview, decide, retryNotifications } from '../_shared/token-runtime.ts';
+import { OWNER_ID, botToken, db, json, cors, readBody, telegram, menu, overview, clientsOverview, decide, retryNotifications } from '../_shared/token-runtime.ts';
 
 const n = (v) => new Intl.NumberFormat('ru-RU').format(v ?? 0);
 async function botUpdate(client, update) {
@@ -15,7 +15,21 @@ async function botUpdate(client, update) {
     try { await telegram('answerCallbackQuery', { callback_query_id: callback.id }); } catch { /* Expired UI callback; decision is still idempotent. */ }
   }
   const [action, id, pageText] = command.split(':');
-  if (['approve', 'reject'].includes(action) && validUuid(id)) {
+  if (action === 'clients' || command === '/clients') {
+    const search = callback ? '' : (message?.text || '').replace(/^\/clients\s*/, '').trim().slice(0, 200);
+    const page = /^\d{1,5}$/.test(id || '') ? Number(id) : 0;
+    const result = await clientsOverview(client, { p_search: search, p_page: page });
+    const rows = result.clients.map((user) => [{ text: `${(user.email || user.display_name || user.id).slice(0, 45)} · ${user.unlimited_tokens ? '∞' : n(user.token_balance)}`, callback_data: `client:${user.id}` }]);
+    const pagination = [];
+    if (page > 0) pagination.push({ text: '← Назад', callback_data: `clients:${page - 1}` });
+    if (!search && (page + 1) * 20 < result.total) pagination.push({ text: 'Далее →', callback_data: `clients:${page + 1}` });
+    await telegram('sendMessage', { chat_id: OWNER_ID, text: `Зарегистрированные клиенты: ${n(result.total)}${search ? `\nПоиск: ${search}` : `\nСтраница ${page + 1} из ${Math.max(1, Math.ceil(result.total / 20))}`}\n\nВыберите клиента: баланс, расход, проекты и история заявок.\nПоиск: /clients email или имя${search && result.total > 20 ? '\nПоказаны первые 20. Уточните поиск или откройте мини-приложение.' : ''}`, reply_markup: { inline_keyboard: [...rows, ...(pagination.length ? [pagination] : []), ...menu().inline_keyboard] } });
+  } else if (action === 'client' && validUuid(id)) {
+    const result = await clientsOverview(client, { p_user_id: id });
+    const user = result.clients[0];
+    const date = (value) => value ? new Date(value).toLocaleDateString('ru-RU') : 'ещё не входил';
+    await telegram('sendMessage', { chat_id: OWNER_ID, text: user ? `Клиент: ${user.email || 'Без email'}\n${user.display_name ? `Имя: ${user.display_name}\n` : ''}ID: ${user.id}\nРегистрация: ${date(user.created_at)}\nПоследний вход: ${date(user.last_sign_in_at)}\nEmail: ${user.email_confirmed ? 'подтверждён' : 'не подтверждён'}\n\nБаланс: ${user.unlimited_tokens ? 'Без ограничений' : n(user.token_balance)}\nКуплено: ${n(user.tokens_purchased)}\nБонусы: ${n(user.tokens_granted)}\nИспользовано: ${n(user.tokens_used)}\nПроектов: ${n(user.projects)}\nЗаявок: ${n(user.requests)}\nОжидают: ${n(user.pending)}` : 'Клиент не найден.', reply_markup: { inline_keyboard: [...(user ? [[{ text: 'История заявок', callback_data: `history:${id}:0` }]] : []), ...menu().inline_keyboard] } });
+  } else if (['approve', 'reject'].includes(action) && validUuid(id)) {
     await telegram('sendMessage', { chat_id: OWNER_ID,
       text: action === 'approve' ? 'Оплата проверена? Подтверждение начислит токены клиенту.' : 'Подтвердите отклонение заявки.',
       reply_markup: { inline_keyboard: [[{ text: 'Подтвердить', callback_data: `${action === 'approve' ? 'yes' : 'no'}:${id}` }], [{ text: 'Назад к заявкам', callback_data: 'queue:0' }]] } });
@@ -25,7 +39,7 @@ async function botUpdate(client, update) {
   } else if (action === 'history' && validUuid(id)) {
     const page = /^\d{1,5}$/.test(pageText || '') ? Number(pageText) : 0;
     const result = await overview(client, { p_status: 'all', p_user_id: id, p_page: page });
-    const user = result.requests[0];
+    const user = (await clientsOverview(client, { p_user_id: id })).clients[0];
     const history = result.requests.map((r) => `${new Date(r.created_at).toLocaleDateString('ru-RU')} · ${n(r.amount)} · ${r.status === 'approved' ? 'одобрена' : r.status === 'rejected' ? 'отклонена' : 'ожидает'}`).join('\n');
     const rows = [];
     if (page > 0) rows.push({ text: '←', callback_data: `history:${id}:${page - 1}` });
@@ -41,7 +55,7 @@ async function botUpdate(client, update) {
     await telegram('sendMessage', { chat_id: OWNER_ID, text: `Ожидают решения: ${n(result.total)}.\nВыберите клиента для просмотра истории.`, reply_markup: { inline_keyboard: [...rows, ...(pagination.length ? [pagination] : []), ...menu().inline_keyboard] } });
   } else {
     const { stats } = await overview(client);
-    await telegram('sendMessage', { chat_id: OWNER_ID, text: `Cardcraft · Администрирование\n\nПользователей: ${n(stats.users)}\nПроектов: ${n(stats.projects)}\nКуплено токенов: ${n(stats.purchased)}\nВыдано бонусов: ${n(stats.granted)}\nИспользовано: ${n(stats.used)}\nОжидают решения: ${n(stats.pending)}\nОжидают уведомления: ${n(stats.undelivered)}\n\n/requests — заявки\n/stats — статистика`, reply_markup: menu() });
+    await telegram('sendMessage', { chat_id: OWNER_ID, text: `Cardcraft · Администрирование\n\nПользователей: ${n(stats.users)}\nПроектов: ${n(stats.projects)}\nКуплено токенов: ${n(stats.purchased)}\nВыдано бонусов: ${n(stats.granted)}\nИспользовано: ${n(stats.used)}\nОжидают решения: ${n(stats.pending)}\nОжидают уведомления: ${n(stats.undelivered)}\n\n/clients — список клиентов\n/requests — заявки\n/stats — статистика`, reply_markup: menu() });
   }
 }
 
@@ -65,6 +79,12 @@ Deno.serve(async (req: Request) => {
   }
   try {
     const client = db();
+    if (body.action === 'clients') {
+      const page = body.page ?? 0;
+      const search = body.search ?? '';
+      if (!Number.isInteger(page) || page < 0 || page > 100000 || typeof search !== 'string' || search.length > 200 || (body.userId && !validUuid(body.userId))) return json(req, { error: 'Некорректный фильтр.' }, 400);
+      return json(req, await clientsOverview(client, { p_search: search, p_page: page, p_user_id: body.userId || null }));
+    }
     if (body.action === 'list') {
       const status = body.status ?? 'pending';
       const page = body.page ?? 0;

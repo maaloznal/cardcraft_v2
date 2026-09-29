@@ -239,3 +239,22 @@ export interface TokenAdminOverview {
   requests: AdminTokenRequest[];
   total: number;
 }
+
+export interface AdminClient {
+  id: string;
+  email: string | null;
+  display_name: string;
+  created_at: string;
+  last_sign_in_at: string | null;
+  email_confirmed: boolean;
+  token_balance: number;
+  tokens_used: number;
+  tokens_purchased: number;
+  tokens_granted: number;
+  unlimited_tokens: boolean;
+  projects: number;
+  requests: number;
+  pending: number;
+}
+
+export interface AdminClientList { total: number; clients: AdminClient[] }

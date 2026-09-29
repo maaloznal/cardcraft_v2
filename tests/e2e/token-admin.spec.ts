@@ -62,37 +62,113 @@ test('account validates amounts, submits custom tokens once, and shows status', 
     const session = { access_token: jwt, refresh_token: 'fixture', expires_at: exp, expires_in: 3600, token_type: 'bearer', user };
     for (const url of urls) localStorage.setItem(`sb-${new URL(url).hostname.split('.')[0]}-auth-token`, JSON.stringify(session));
   }, { user, urls });
-  let rows: object[] = [];
+  let rows: Array<Record<string, unknown>> = [];
+  let balance = 50000;
   const submissions: { amount: number; id: string }[] = [];
+  const payments: unknown[] = [];
   await page.route('**/auth/v1/**', (route) => route.fulfill({ json: user }));
-  await page.route('**/rest/v1/user_accounts*', (route) => route.fulfill({ json: { user_id: user.id, token_balance: 50000, tokens_used: 0, unlimited_tokens: false } }));
-  await page.route('**/rest/v1/projects*', (route) => route.fulfill({ json: [] }));
-  await page.route('**/rest/v1/token_requests*', (route) => route.fulfill({ json: rows }));
-  await page.route('**/rest/v1/token_payment_settings*', (route) => route.fulfill({ json: { price_per_10000_micros: 1000000 } }));
+  await page.route('**/rest/v1/user_accounts*', (route) => route.fulfill({ json: { user_id: user.id, token_balance: balance, tokens_used: 0, unlimited_tokens: false } }));
+  await page.route('**/rest/v1/projects*', (route) => route.fulfill({ json: [
+    { id: 'project-old', user_id: user.id, name: 'Архив', updated_at: '2026-01-01T10:00:00Z' },
+    { id: 'project-new', user_id: user.id, name: 'Новые идеи', updated_at: '2026-09-29T10:00:00Z' },
+  ] }));
+  await page.route('**/rest/v1/token_requests*', (route) => route.fulfill({ json: new URL(route.request().url()).searchParams.get('status') === 'eq.pending' ? rows.filter((row) => row.status === 'pending') : rows }));
+  await page.route('**/rest/v1/token_payment_settings*', (route) => route.fulfill({ json: { price_per_10000_micros: 100000 } }));
   await page.route('**/rest/v1/token_payment_networks*', (route) => route.fulfill({ json: [{ id: 'ton', label: 'TON', address: 'test-ton-address' }, { id: 'tron', label: 'Tron (TRC20)', address: 'test-tron-address' }] }));
   await page.route('**/functions/v1/token-request', async (route) => {
-    const body = route.request().postDataJSON(); submissions.push(body);
-    const created = { ...request, ...body, user_id: user.id };
+    const body = route.request().postDataJSON();
+    if (body.action === 'payment') {
+      payments.push(body); rows[0] = { ...rows[0], payment_tx_hash: body.txHash };
+      await route.fulfill({ json: { request: rows[0] } }); return;
+    }
+    submissions.push(body);
+    if (submissions.length === 1) { await route.fulfill({ status: 503, json: { error: 'Временная ошибка. Повторите отправку.' } }); return; }
+    const created = { ...request, ...body, user_id: user.id, payment_network: body.network, payment_address: 'test-tron-address', payment_amount_micros: 123450, payment_tx_hash: '' };
     rows = [created]; await route.fulfill({ json: { request: created } });
   });
   await page.goto('/account/');
-  await page.getByRole('button', { name: 'Увеличить лимит' }).click();
-  for (const amount of ['10 000', '50 000', '100 000', '500 000']) await expect(page.getByRole('button', { name: amount.replaceAll(' ', '\u00a0'), exact: true })).toBeVisible();
+  await expect(page.locator('.account-project-row').first()).toContainText('Новые идеи');
+  await page.getByLabel('Найти проект').fill('Архив');
+  await expect(page.locator('.account-project-row')).toHaveCount(1);
+  await expect(page.locator('.account-project-row')).toContainText('Архив');
+  await page.getByLabel('Найти проект').fill('не существует');
+  await expect(page.getByText('Ничего не нашлось')).toBeVisible();
+  await page.getByRole('button', { name: 'Показать все проекты' }).click();
+  await expect(page.locator('.account-project-row')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Пополнить баланс', exact: true }).click();
+  await expect(page.locator('.token-package')).toHaveCount(4);
+  await expect(page.locator('.token-package').first()).toContainText('0,1 USDT');
+  await expect(page.locator('.token-package').nth(1)).toContainText('0,5 USDT');
   const input = page.getByLabel('Или введите своё количество');
   await input.fill('9999');
-  await expect(page.getByRole('button', { name: /Запросить.*токенов/ })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Создать заявку и перейти к оплате' })).toBeDisabled();
   await input.fill('12345');
-  await expect(page.locator('.token-payment-total')).toContainText('1,2345 USDT');
-  await page.getByLabel('Сеть перевода').selectOption('tron');
-  await expect(page.getByLabel('Адрес получателя')).toHaveValue('test-tron-address');
-  await page.getByLabel('Хеш транзакции (если уже оплатили)').fill('test-transaction');
+  await expect(page.locator('.token-payment-total')).toContainText('0,12345 USDT');
+  await page.getByLabel('Сеть перевода USDT').selectOption('tron');
+  await expect(page.getByLabel('Адрес получателя')).toHaveCount(0);
+  await page.getByText('Добавить комментарий', { exact: true }).click();
   await page.getByLabel('Комментарий (необязательно)').fill('Для теста');
   await page.screenshot({ path: test.info().outputPath('account-payment-mobile.png'), fullPage: true });
-  await page.getByRole('button', { name: /Запросить.*токенов/ }).click();
-  await expect(page.getByRole('status')).toContainText('принята');
-  expect(submissions).toHaveLength(1);
+  await page.getByRole('button', { name: 'Создать заявку и перейти к оплате' }).click();
+  await expect(page.locator('.token-section .project-error')).toContainText('Временная ошибка');
+  await expect(input).toHaveValue('12345');
+  await page.getByRole('button', { name: 'Создать заявку и перейти к оплате' }).click();
+  await expect(page.locator('.token-success')).toContainText('Заявка создана');
+  expect(submissions).toHaveLength(2);
+  expect(submissions[0].id).toBe(submissions[1].id);
   expect(submissions[0].amount).toBe(12345);
-  expect(submissions[0]).toMatchObject({ network: 'tron', price: 1000000, txHash: 'test-transaction' });
-  await expect(page.getByRole('button', { name: 'Заявка на рассмотрении' })).toBeDisabled();
+  expect(submissions[0]).toMatchObject({ network: 'tron', price: 100000, txHash: '' });
+  await expect(page.getByLabel('Адрес получателя', { exact: true })).toHaveValue('test-tron-address');
+  await expect(page.getByLabel('Сумма USDT', { exact: true })).toHaveValue('0.12345');
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.getByRole('button', { name: 'Копировать: адрес получателя' }).click();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('test-tron-address');
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Заявка создана. Следующий шаг — оплата' })).toBeVisible();
+  await page.getByLabel('Хеш транзакции (TXID)').fill('test-transaction');
+  await page.screenshot({ path: test.info().outputPath('account-invoice-mobile.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Я оплатил — передать на проверку' }).click();
+  await expect(page.getByRole('heading', { name: 'Платёж передан на проверку' })).toBeVisible();
+  expect(payments).toHaveLength(1);
+  expect(submissions).toHaveLength(2);
+  rows[0] = { ...rows[0], status: 'approved' }; balance += 12345;
+  await page.getByRole('button', { name: 'Обновить статус' }).click();
+  await expect(page.locator('.token-success')).toContainText('токенов зачислено');
+  await expect(page.locator('.account-balance strong')).toHaveText('62 345');
+  await expect(page.locator('.token-invoice')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Пополнить баланс', exact: true })).toBeEnabled();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('owner finds registered clients without requests and can open their empty history', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.route('https://telegram.org/js/**', (route) => route.fulfill({ contentType: 'application/javascript', body: 'window.Telegram={WebApp:{initData:"signed-fixture",ready(){},expand(){}}};' }));
+  const client = { id: request.user_id, email: 'new@example.com', display_name: 'Новый клиент', email_confirmed: true, created_at: request.created_at, last_sign_in_at: null, token_balance: 50000, tokens_used: 0, tokens_purchased: 0, tokens_granted: 0, projects: 0, requests: 0, pending: 0 };
+  const searches: string[] = [];
+  await page.route('**/functions/v1/telegram-admin', async (route) => {
+    const body = route.request().postDataJSON();
+    if (body.action === 'clients') {
+      searches.push(body.search);
+      const found = !body.search || client.email.includes(body.search);
+      await route.fulfill({ json: { total: found ? 1 : 0, clients: found ? [client] : [] } }); return;
+    }
+    await route.fulfill({ json: { stats: { users: 1, pending: 0, purchased: 0, used: 0, granted: 0, projects: 0, undelivered: 0 }, total: 0, requests: [] } });
+  });
+  await page.goto('/admin/');
+  await page.getByRole('button', { name: 'Клиенты · 1' }).click();
+  await expect(page.getByText(client.email, { exact: true })).toBeVisible();
+  await expect(page.getByText('Ещё не входил', { exact: true })).toBeVisible();
+  await page.screenshot({ path: test.info().outputPath('clients-mobile.png'), fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByLabel('Поиск по имени, email или ID клиента').fill('missing');
+  await page.getByRole('button', { name: 'Найти', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Клиенты не найдены' })).toBeVisible();
+  expect(searches).toContain('missing');
+  await page.getByRole('button', { name: 'Сбросить поиск' }).click();
+  await page.getByRole('button', { name: 'История заявок (0)' }).click();
+  await expect(page.getByRole('heading', { name: /История клиента/ })).toBeVisible();
+  await expect(page.getByText(client.email, { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Заявок нет' })).toBeVisible();
+  await page.getByRole('button', { name: 'К списку клиентов' }).click();
+  await expect(page.getByRole('button', { name: 'История заявок (0)' })).toBeVisible();
 });

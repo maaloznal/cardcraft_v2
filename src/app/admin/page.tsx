@@ -4,6 +4,7 @@ import Script from 'next/script';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AdminTokenRequest, TokenAdminOverview } from '@/core/types';
 import { formatUsdt } from '@/account/payment-service';
+import AdminClients from '@/account/AdminClients';
 import './admin.css';
 
 const n = (v: number) => new Intl.NumberFormat('ru-RU').format(v);
@@ -25,6 +26,8 @@ export default function AdminPage() {
   const [kind, setKind] = useState('purchase');
   const [note, setNote] = useState('');
   const [notice, setNotice] = useState('');
+  const [view, setView] = useState<'requests' | 'clients'>('requests');
+  const [clientEmail, setClientEmail] = useState('');
   const sequence = useRef(0);
   const dialog = useRef<HTMLDialogElement>(null);
   const locked = useRef(false);
@@ -88,9 +91,11 @@ export default function AdminPage() {
         ['Ожидают решения', data.stats.pending], ['Пользователей', data.stats.users], ['Куплено токенов', data.stats.purchased], ['Использовано токенов', data.stats.used], ['Бонусных токенов', data.stats.granted], ['Проектов', data.stats.projects],
       ].map(([label, value]) => <div key={label}><span>{label}</span><strong>{n(Number(value))}</strong></div>)}</section>
       <p className="account-note">Стартовые 50 000 токенов не входят в покупки и бонусные начисления. Покупки считаются по заявкам, одобренным после проверки оплаты. Статистика накопительная.</p>
+      <nav className="admin-view-tabs" aria-label="Разделы админки"><button className={view === 'requests' ? 'account-primary' : 'account-secondary'} aria-pressed={view === 'requests'} onClick={() => setView('requests')}>Заявки</button><button className={view === 'clients' ? 'account-primary' : 'account-secondary'} aria-pressed={view === 'clients'} onClick={() => setView('clients')}>Клиенты · {data.stats.users}</button></nav>
       {data.stats.undelivered > 0 && <div className="admin-delivery"><span>Ожидают отправки в Telegram: {data.stats.undelivered}</span><button className="account-secondary" disabled={busy} onClick={() => void retry()}>Повторить доставку</button></div>}
-      <section className="admin-requests" aria-busy={loading}>
-        <div className="admin-toolbar"><h2>{userId ? 'История клиента' : 'Заявки'} <span>{data.total}</span></h2>{userId && <button className="account-secondary" onClick={() => { setUserId(null); setPage(0); }}>Все клиенты</button>}</div>
+      {view === 'clients' ? <AdminClients api={api} onHistory={(client) => { setUserId(client.id); setClientEmail(client.email || client.display_name); setStatus('all'); setQuery(''); setSearch(''); setPage(0); setView('requests'); }} /> : <section className="admin-requests" aria-busy={loading}>
+        <div className="admin-toolbar"><h2>{userId ? 'История клиента' : 'Заявки'} <span>{data.total}</span></h2>{userId && <button className="account-secondary" onClick={() => { setUserId(null); setClientEmail(''); setPage(0); setView('clients'); }}>К списку клиентов</button>}</div>
+        {userId && clientEmail && <p className="admin-history-email">{clientEmail}</p>}
         <form className="admin-search" onSubmit={(e) => { e.preventDefault(); setQuery(search.trim()); setPage(0); }}><label htmlFor="admin-search">Поиск по email или номеру заявки</label><div><input id="admin-search" value={search} onChange={(e) => setSearch(e.target.value)} maxLength={200} placeholder="client@example.com" /><button className="account-secondary">Найти</button></div></form>
         <div className="admin-filters" aria-label="Статус заявок">{[['pending', 'Ожидают'], ['approved', 'Одобрены'], ['rejected', 'Отклонены'], ['all', 'Все']].map(([value, label]) => <button type="button" className={status === value ? 'account-primary' : 'account-secondary'} aria-pressed={status === value} key={value} onClick={() => { setStatus(value); setPage(0); }}>{label}</button>)}</div>
         {data.requests.length === 0 && <div className="admin-empty"><h3>Заявок нет</h3><p>Новые запросы клиентов появятся здесь.</p></div>}
@@ -101,10 +106,10 @@ export default function AdminPage() {
           {request.comment && <p className="admin-comment">{request.comment}</p>}{request.admin_note && <p className="admin-comment">Решение: {request.admin_note}</p>}
           {request.payment_network && <div className="admin-payment"><strong>{request.payment_amount_micros == null ? 'Сумма не согласована' : `${formatUsdt(request.payment_amount_micros)} USDT`} · {request.payment_network}</strong><p>Адрес: {request.payment_address}</p><p>Транзакция: {request.payment_tx_hash || 'не указана'}</p></div>}
           <small className="admin-request-id">Заявка {request.id}</small>
-          <div className="admin-request-actions"><button className="account-secondary" onClick={() => { setUserId(request.user_id); setStatus('all'); setQuery(''); setSearch(''); setPage(0); }}>История клиента</button>{request.status === 'pending' && <><button className="account-primary" disabled={busy || loading} onClick={() => { setNote(''); setKind('purchase'); setSelection({ request, decision: 'approved' }); }}>Одобрить</button><button className="account-danger" disabled={busy || loading} onClick={() => { setNote(''); setSelection({ request, decision: 'rejected' }); }}>Отклонить</button></>}</div>
+          <div className="admin-request-actions"><button className="account-secondary" onClick={() => { setUserId(request.user_id); setClientEmail(request.email || ''); setStatus('all'); setQuery(''); setSearch(''); setPage(0); }}>История клиента</button>{request.status === 'pending' && <><button className="account-primary" disabled={busy || loading} onClick={() => { setNote(''); setKind('purchase'); setSelection({ request, decision: 'approved' }); }}>Одобрить</button><button className="account-danger" disabled={busy || loading} onClick={() => { setNote(''); setSelection({ request, decision: 'rejected' }); }}>Отклонить</button></>}</div>
         </article>)}</div>
         <div className="token-pagination"><button className="account-secondary" disabled={page === 0 || loading} onClick={() => setPage(page - 1)}>Назад</button><span>{page + 1} / {Math.max(1, Math.ceil(data.total / 20))}</span><button className="account-secondary" disabled={(page + 1) * 20 >= data.total || loading} onClick={() => setPage(page + 1)}>Далее</button></div>
-      </section>
+      </section>}
     </>}
     {loading && !data && <p role="status">Загружаем данные…</p>}
     <dialog ref={dialog} className="admin-dialog" aria-labelledby="decision-title" onCancel={(e) => { if (busy) e.preventDefault(); else setSelection(null); }}>
