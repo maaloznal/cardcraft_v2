@@ -23,6 +23,7 @@
  */
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const NAV_LINKS = [
@@ -32,10 +33,22 @@ const NAV_LINKS = [
 
 export default function WelcomeNav() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
   const burgerRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
-  // First focusable element in the drawer (the close button) — receives focus on open.
   const firstFocusableRef = useRef<HTMLAnchorElement | HTMLButtonElement>(null);
+
+  /** Brand click: if on the landing page, smooth-scroll to top. Otherwise
+   *  navigate to '/' (Next.js Link handles it). */
+  const onBrandClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (pathname === '/') {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    },
+    [pathname],
+  );
 
   const close = useCallback(() => {
     setOpen(false);
@@ -103,7 +116,7 @@ export default function WelcomeNav() {
   return (
     <>
       <nav className="welcome-nav" aria-label="Основная навигация">
-        <Link className="welcome-brand" href="/">
+        <Link className="welcome-brand" href="/" onClick={onBrandClick}>
           Cardcraft
         </Link>
 

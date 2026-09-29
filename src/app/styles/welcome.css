@@ -72,27 +72,29 @@
   border-radius: var(--r-sm);
   opacity: 1;
 }
-/* CTA: Apple-blue pill. */
+/* CTA: flat text link, same style as nav links (no bg, no border-radius). */
 .welcome-nav-cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 28px;
-  padding: 0 14px;
-  border-radius: 980px;
-  background: #0071e3;
-  color: #ffffff;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #1d1d1f;
   font-size: 0.75rem;
   font-weight: 400;
   text-decoration: none;
-  transition: background var(--dur) var(--ease);
+  transition: opacity var(--dur) var(--ease);
 }
 .welcome-nav-cta:hover {
-  background: #0077ed;
+  opacity: 0.65;
 }
 .welcome-nav-cta:focus-visible {
   outline: 2px solid #0071e3;
-  outline-offset: 3px;
+  outline-offset: 4px;
+  border-radius: var(--r-sm);
+  opacity: 1;
 }
 /* Mobile nav: CTA + burger (<768px) */
 .welcome-nav-mobile {
@@ -749,7 +751,21 @@
 .docs-faq details { border: 1px solid var(--ui-border); border-radius: var(--r-md); background: var(--ui-surface); }
 .docs-faq summary { padding: 16px 18px; font-weight: 700; cursor: pointer; }
 .docs-faq p { margin: 0; border-top: 1px solid var(--ui-border); padding: 15px 18px; color: var(--ui-text-secondary); line-height: 1.6; }
-.docs-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 56px; }
+/* Docs footer actions — centered, responsive. */
+.docs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: 64px;
+  padding-top: 40px;
+  border-top: 1px solid var(--ui-border);
+}
+@media (max-width: 520px) {
+  .docs-actions { flex-direction: column; align-items: stretch; }
+  .docs-actions .welcome-btn-primary,
+  .docs-actions .welcome-btn-secondary { width: 100%; }
+}
 
 /* ═══ Responsive ═══ */
 @media (max-width: 1024px) {

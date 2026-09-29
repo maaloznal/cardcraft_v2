@@ -46,11 +46,26 @@ test.describe('Navigation + Docs scrollspy (last changes)', () => {
     const linkColor = await page.locator('.welcome-nav-link').first().evaluate((el) => getComputedStyle(el).color);
     expect(linkColor).toBe('rgb(29, 29, 31)');
 
-    // CTA: Apple-blue pill with white text
+    // CTA: flat text link (no bg, no border-radius) — same style as nav links
     const ctaBg = await page.locator('.welcome-nav-cta').first().evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(ctaBg).toBe('rgb(0, 113, 227)');
+    expect(ctaBg).toBe('rgba(0, 0, 0, 0)');
     const ctaColor = await page.locator('.welcome-nav-cta').first().evaluate((el) => getComputedStyle(el).color);
-    expect(ctaColor).toBe('rgb(255, 255, 255)');
+    expect(ctaColor).toBe('rgb(29, 29, 31)'); // same as nav links
+    const ctaRadius = await page.locator('.welcome-nav-cta').first().evaluate((el) => getComputedStyle(el).borderRadius);
+    expect(ctaRadius).toBe('0px');
+  });
+
+  test('brand click scrolls to top on landing page', async ({ page }) => {
+    await gotoLanding(page);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    // Scroll down
+    await page.evaluate(() => window.scrollTo(0, 1000));
+    await page.waitForTimeout(300);
+    // Click brand
+    await page.locator('.welcome-brand').click();
+    await page.waitForTimeout(800); // smooth scroll
+    const scrollY = await page.evaluate(() => window.scrollY);
+    expect(scrollY).toBe(0);
   });
 
   test('landing nav: stays sticky when scrolling to dark section', async ({ page }) => {

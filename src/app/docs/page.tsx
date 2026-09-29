@@ -140,8 +140,8 @@ export default function DocsPage() {
           </section>
 
           <footer className="docs-actions">
-            <Link className="welcome-primary" href="/editor">Перейти в редактор</Link>
-            <Link className="welcome-secondary" href="/login?mode=signup&next=/editor">Создать аккаунт</Link>
+            <Link className="welcome-btn-primary" href="/editor">Перейти в редактор</Link>
+            <Link className="welcome-btn-secondary" href="/login?mode=signup&next=/editor">Создать аккаунт</Link>
           </footer>
         </article>
       </div>
