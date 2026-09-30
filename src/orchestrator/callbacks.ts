@@ -16,7 +16,6 @@
  *   wireRendererCallbacks(ctx) — register all renderer callbacks
  */
 
-import { openTextPicker } from '@/word-editor/TouchTextPicker';
 import type { Card } from '@/core/types';
 import { pruneOrphanWordStyles } from '@/styles/StyleHelpers';
 import { splitOnce } from '@/core/utils';
@@ -40,15 +39,6 @@ export function wireRendererCallbacks(ctx: OrchestratorContext): void {
       const cardId = String(data.cardId || '').replace(/^card-node-/, '');
       const cardIndex = stateManager.getCards().findIndex((card) => card.id === cardId);
       if (cardIndex >= 0) ctx.mobileMode.openCard(cardIndex);
-    } else if (action === 'style-preview') {
-      const cardId = String(data.cardId || '').replace(/^card-node-/, '');
-      const index = stateManager.getCards().findIndex((card) => card.id === cardId);
-      const card = stateManager.getCard(index);
-      const root = document.getElementById(`card-node-${cardId}`)?.closest<HTMLElement>('.cc-root');
-      if (card && root) openTextPicker(root, card, (text, field) => {
-        const currentIndex = stateManager.getCards().findIndex((item) => item.id === cardId);
-        if (currentIndex >= 0) ctx.wordPopup.openWordStylePopup(12, 100, text, field, currentIndex);
-      });
     } else if (action === 'palette-preview') {
       const cardId = String(data.cardId || '').replace(/^card-node-/, '');
       const cardIndex = stateManager.getCards().findIndex((card) => card.id === cardId);

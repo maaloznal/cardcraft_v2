@@ -1,6 +1,6 @@
 # Оплата Crypto Bot и уведомления администратора
 
-Новые пополнения в `/account` оплачиваются счётом Crypto Pay в USDT. Сервер создаёт счёт, сохраняет его ID, сумму, срок и ссылку. Секрет `CRYPTO_PAY_API_TOKEN` хранится только в Supabase Secrets; локальная копия `.env.crypto` исключена из Git.
+В `/account` доступны два способа оплаты: счёт Crypto Pay в USDT с автоматическим начислением и ручной перевод USDT с выбором сети, отправкой хеша и проверкой администратором. Минимальный чек 1 USDT действует для обоих способов. Сервер создаёт счёт, сохраняет его ID, сумму, срок и ссылку. Секрет `CRYPTO_PAY_API_TOKEN` хранится только в Supabase Secrets; локальная копия `.env.crypto` исключена из Git.
 
 Минимальный чек — **1 USDT**. Расчёт: `max(1 USDT, ceil(tokens × price_per_10000_micros / 10000))` в микродолях USDT. Текущая ставка 0,1 USDT за 10 000 даёт 10 000 / 50 000 / 100 000 за 1 USDT и 500 000 за 5 USDT. Существующие ручные заявки сохраняют исходные реквизиты и цену.
 
@@ -17,7 +17,7 @@
 
 ## Развёртывание
 
-1. `supabase db push --linked` (миграции по 0013).
+1. `supabase db push --linked` (миграции по 0014).
 2. Сохранить `.env.crypto` с `CRYPTO_PAY_API_TOKEN=...`, затем `supabase secrets set --env-file .env.crypto`. Для отдельного тестового окружения добавить `CRYPTO_PAY_TESTNET=true`; не смешивать mainnet/testnet счета в одной базе.
 3. `supabase functions deploy token-request telegram-admin crypto-pay-webhook --no-verify-jwt --use-api`. JWT шлюза отключён для webhook; пользовательские запросы проверяют Supabase JWT внутри функции, Telegram — собственную подпись и владельца.
 4. Crypto Bot → Crypto Pay → My Apps → Cardcraft → Webhooks: включить `https://rbvokjedmyndntojvekn.supabase.co/functions/v1/crypto-pay-webhook`. Самоподписной сертификат не нужен.
@@ -29,6 +29,7 @@
 - `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`.
 - `npx playwright test tests/e2e/token-admin.spec.ts tests/e2e/selection-docs.spec.ts --project=chromium`.
 - `supabase db query --linked --file tests/database/crypto-pay.sql` — rollback-проверка минимума, привязки счёта, запрета ручного решения, неверной суммы/валюты, поздней оплаты, повторов, lease и закрытых прав RPC.
+- `supabase db query --linked --file tests/database/manual-payment-option.sql` — rollback-проверка ручного перевода: минимум, неизменность сохранённой суммы, хеш без начисления и однократное одобрение.
 - Прежние SQL-тесты ручных заявок остаются актуальны. `scripts/test-token-admin-live.mjs` относится к прежнему ручному сценарию и не используется для Crypto Pay.
 
 Официальная спецификация: https://help.send.tg/en/articles/10279948-crypto-pay-api

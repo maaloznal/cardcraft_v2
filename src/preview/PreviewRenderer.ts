@@ -12,6 +12,7 @@
  *   updateProgressBars(total)       — O(n) rebuild progress bars only
  */
 
+import { wordAtPoint } from '../word-editor/word-at-point';
 import type { Card } from '../core/types';
 import { escapeAttr, sanitizeCardId } from '../core/utils';
 import {
@@ -47,6 +48,8 @@ export class PreviewRenderer {
   private pointerDownHandler: ((e: PointerEvent) => void) | null = null;
   private selectionTimer: number | null = null;
   private touchSelection = false;
+  private touchStart: { x: number; y: number; time: number } | null = null;
+  private touchTap: { x: number; y: number } | null = null;
   private selectionButton: HTMLButtonElement | null = null;
   private selected: Record<string, unknown> | null = null;
 
@@ -305,7 +308,6 @@ export class PreviewRenderer {
           <button class="btn-card-action btn-card-history" data-action="undo-preview" title="Отменить изменение" aria-label="Отменить изменение" disabled><svg aria-hidden="true" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>
           <button class="btn-card-action btn-card-history" data-action="redo-preview" title="Вернуть изменение" aria-label="Вернуть изменение" disabled><svg aria-hidden="true" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
           <button class="btn-card-action" data-action="edit-preview" data-card-id="card-node-${safeCardId}" title="Редактировать карточку ${index + 1}" aria-label="Редактировать карточку ${index + 1}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
-          <button class="btn-card-action btn-card-text" data-action="style-preview" data-card-id="card-node-${safeCardId}" aria-label="Оформить текст карточки ${index + 1}">Текст</button>
           <button class="btn-card-action" data-action="palette-preview" data-card-id="card-node-${safeCardId}" title="Персональные стили карточки ${index + 1}" aria-label="Персональные стили карточки ${index + 1}"><svg aria-hidden="true" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg></button>
           <button class="btn-card-action" data-action="download" data-card-id="card-node-${safeCardId}" data-filename="card-${index + 1}.png" title="Скачать" aria-label="Скачать"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
           <button class="btn-card-action" data-action="copy" data-card-id="card-node-${safeCardId}" title="Копировать" aria-label="Копировать"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
@@ -459,9 +461,20 @@ export class PreviewRenderer {
     this.clickHandler = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const btn = target.closest<HTMLElement>('[data-action]');
-      if (!btn) return;
+      if (!btn) {
+        const tap = this.touchTap; this.touchTap = null;
+        const field = target.closest<HTMLElement>('[data-field]');
+        if (this.touchSelection && tap && field && this.container.contains(field)) {
+          const text = wordAtPoint(field, tap.x, tap.y);
+          if (text) {
+            e.stopPropagation();
+            this.actionHandler?.('dblclick', { text, field: field.dataset.field || '', cardId: field.dataset.cardId || '', x: tap.x, y: tap.y + 12 });
+          }
+        }
+        return;
+      }
       const action = btn.dataset.action || '';
-      if (action === 'style-preview' || action === 'edit-preview' || action === 'palette-preview' || action === 'download' || action === 'copy' || action === 'improve-ai' || action === 'undo-preview' || action === 'redo-preview') {
+      if (action === 'edit-preview' || action === 'palette-preview' || action === 'download' || action === 'copy' || action === 'improve-ai' || action === 'undo-preview' || action === 'redo-preview') {
         e.stopPropagation();
         this.actionHandler?.(action, {
           cardId: btn.dataset.cardId || '',
@@ -497,7 +510,11 @@ export class PreviewRenderer {
       this.selectionButton!.hidden = true;
     });
     (this.container.closest('.cc-root') || this.container).append(this.selectionButton);
-    this.pointerDownHandler = (event) => { this.touchSelection = event.pointerType === 'touch' || event.pointerType === 'pen'; };
+    this.pointerDownHandler = (event) => {
+      this.touchSelection = event.pointerType === 'touch' || event.pointerType === 'pen';
+      this.touchStart = this.touchSelection ? { x: event.clientX, y: event.clientY, time: event.timeStamp } : null;
+      this.touchTap = null;
+    };
     this.container.addEventListener('pointerdown', this.pointerDownHandler);
     // Native long-press/selection handles can cancel the pointer sequence entirely.
     // selectionchange keeps the touch action current without covering those handles.
@@ -509,6 +526,10 @@ export class PreviewRenderer {
     document.addEventListener('selectionchange', this.selectionHandler);
     this.pointerUpHandler = (event: PointerEvent) => {
       if (event.pointerType === 'touch' || event.pointerType === 'pen') this.touchSelection = true;
+      const start = this.touchStart;
+      this.touchTap = start && event.timeStamp - start.time < 500 && Math.hypot(event.clientX - start.x, event.clientY - start.y) < 12
+        ? { x: event.clientX, y: event.clientY } : null;
+      this.touchStart = null;
       if (this.selectionTimer !== null) window.clearTimeout(this.selectionTimer);
       this.selectionTimer = window.setTimeout(() => {
         if (this.touchSelection) this.selectionHandler?.();

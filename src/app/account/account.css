@@ -17,3 +17,15 @@
 .account-empty-note { border: 1px dashed var(--border-color, #d4d4d8); border-radius: 14px; padding: 24px; }.account-empty-note strong { font-size: .9rem; }.account-empty-note p { font-size: .82rem; line-height: 1.55; color: var(--text-secondary, #71717a); margin: 8px 0; }
 .account-page button:disabled { opacity: .55; cursor: default; }.account-page :focus-visible { outline: 3px solid #8b5cf6; outline-offset: 3px; }.account-loading h1 { font-size: 1.3rem; }.account-loading .account-back { display: block; margin-top: 16px; }.account-loading > div { max-width: 480px; text-align: center; }.account-loading button { margin-top: 14px; }
 @media (max-width: 700px) { .account-page .account-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }.account-balance { grid-column: 1/-1; }.account-quick-actions { align-items: stretch; }.account-quick-actions > a, .account-quick-actions > button { width: 100%; text-align: center; }.account-quick-actions nav { width: 100%; justify-content: space-between; gap: 8px; }.token-checkout { flex-direction: column; align-items: stretch; }.token-invoice { padding: 16px; }.invoice-heading { flex-direction: column; }.invoice-copy > div { flex-direction: column; }.invoice-summary { padding: 12px; }.invoice-summary strong { font-size: .96rem; }.invoice-footer { flex-wrap: wrap; }.token-steps li { font-size: .62rem; }.token-package { padding: 16px 12px; }.token-package.selected { padding: 15px 11px; } }
+
+.crypto-pay-button { display: flex; align-items: center; justify-content: center; gap: 10px; box-sizing: border-box; width: 100%; min-width: 0; min-height: 52px; margin: 18px 0 14px; padding: 14px 16px; font-size: 1rem; line-height: 1.35; text-align: center; text-decoration: none; touch-action: manipulation; }
+.crypto-pay-button > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.crypto-pay-button > span:last-child { flex: 0 0 auto; }
+.token-payment-methods { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-block: 8px; }
+.token-payment-method { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; min-width: 0; padding: 14px; border: 1px solid var(--border-color, #d4d4d8); border-radius: 12px; color: inherit; background: var(--bg-secondary, #fff); text-align: left; font: inherit; cursor: pointer; }
+.token-payment-method[aria-pressed="true"] { border-color: #7451f4; box-shadow: inset 0 0 0 1px #7451f4; background: rgba(116,81,244,.055); }
+.token-payment-method span { color: var(--text-secondary, #71717a); font-size: .78rem; line-height: 1.4; }
+@media (max-width: 480px) {
+  .token-payment-methods { grid-template-columns: 1fr; }
+  .invoice-footer > button { width: 100%; }
+}

@@ -91,28 +91,43 @@ for (const width of [390, 768, 1024, 1280]) {
 }
 
 for (const width of [390, 768, 1024]) {
-  test(`tap-based text formatting without native selection (${width})`, async ({ browser }) => {
+  test(`tap word directly without a toolbar button (${width})`, async ({ browser }) => {
     const context = await browser.newContext({ viewport: { width, height: 900 }, hasTouch: true, isMobile: true, baseURL: 'http://localhost:3000' });
     const page = await context.newPage();
     try {
       await gotoApp(page);
       if (await page.locator('#modeEditorTab').isVisible()) await page.locator('#modeEditorTab').tap();
-      await page.locator('#editorCardsList textarea[data-field="text"]').first().fill('Alpha beta gamma');
+      await page.locator('#editorCardsList textarea[data-field="text"]').first().fill('Проверка точечного оформления');
       if (await page.locator('#modePreviewTab').isVisible()) await page.locator('#modePreviewTab').tap();
-      await page.getByRole('button', { name: 'Оформить текст карточки 1', exact: true }).tap();
-      const dialog = page.getByRole('dialog', { name: 'Оформление текста' });
-      await expect(dialog).toBeVisible();
-      await dialog.getByLabel('Часть карточки').selectOption('text');
-      await dialog.getByRole('button', { name: 'beta', exact: true }).tap();
-      await dialog.getByRole('button', { name: 'gamma', exact: true }).tap();
-      await dialog.getByRole('button', { name: 'Оформить', exact: true }).tap();
+      await expect(page.locator('[data-action="style-preview"]')).toHaveCount(0);
+      const field = page.locator('#cardsArea .card-text').first();
+      await field.scrollIntoViewIfNeeded();
+      const point = await field.evaluate((element) => {
+        const node = element.firstChild!;
+        const range = document.createRange(); range.setStart(node, 9); range.setEnd(node, 18);
+        const rect = range.getBoundingClientRect(); return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+      });
+      await page.touchscreen.tap(point.x, point.y);
       const popup = page.locator('#wordStylePopup');
       await expect(popup).toBeVisible();
+      await expect(popup.locator('.wp-header-word')).toHaveText('точечного');
       await popup.locator('[data-format="bold"]').tap();
-      await expect(page.locator('#cardsArea .card-text .cc-styled-word').first()).toHaveText('beta gamma');
-      await expect(page.locator('#cardsArea .card-text .cc-styled-word').first()).toHaveCSS('font-weight', '700');
+      const styled = field.locator('.cc-styled-word').first();
+      await expect(styled).toHaveText('точечного');
+      await expect(styled).toHaveCSS('font-weight', '700');
+      await page.getByRole('button', { name: 'Закрыть настройки текста' }).tap();
+      await styled.tap();
+      await expect(popup).toBeVisible();
+      await popup.locator('[data-color="#dc2626"]').tap();
+      await expect(styled).toHaveCSS('color', 'rgb(220, 38, 38)');
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      await page.screenshot({ path: test.info().outputPath(`text-picker-${width}.png`) });
+      await page.screenshot({ path: test.info().outputPath(`tap-word-${width}.png`) });
+      await page.getByRole('button', { name: 'Закрыть настройки текста' }).tap();
+      // A swipe that begins on a word must not open its editor.
+      await field.dispatchEvent('pointerdown', { pointerType: 'touch', clientX: point.x, clientY: point.y });
+      await field.dispatchEvent('pointerup', { pointerType: 'touch', clientX: point.x, clientY: point.y + 100 });
+      await field.dispatchEvent('click', { clientX: point.x, clientY: point.y + 100 });
+      await expect(popup).not.toBeVisible();
     } finally { await context.close(); }
   });
 }

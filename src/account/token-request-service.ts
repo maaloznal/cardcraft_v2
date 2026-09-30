@@ -25,7 +25,7 @@ export async function listTokenRequests(userId: string, page = 0): Promise<Token
   return data as TokenRequest[];
 }
 
-export async function submitTokenRequest(id: string, amount: number, comment: string, payment: { network: string; price: number | null; txHash: string }): Promise<TokenRequest> {
+export async function submitTokenRequest(id: string, amount: number, comment: string, payment: { provider?: 'crypto_pay' | 'manual'; network: string; price: number | null; txHash: string }): Promise<TokenRequest> {
   return invokeTokenRequest({ id, amount, comment, ...payment });
 }
 

@@ -51,6 +51,15 @@ Deno.serve(async (req: Request) => {
     return json(req, { error: 'Введите целое количество от 10 000 до 1 000 000 000 токенов и комментарий до 500 символов.' }, 400);
   }
   if (!Number.isSafeInteger(body.price) || body.price <= 0) return json(req, { error: 'Обновите стоимость пакета.' }, 400);
+  const provider = body.provider ?? (body.network === 'crypto_pay' ? 'crypto_pay' : 'manual');
+  if (!['crypto_pay', 'manual'].includes(provider)) return json(req, { error: 'Выберите способ оплаты.' }, 400);
+  if (provider === 'manual') {
+    if (typeof body.network !== 'string' || body.network.length > 20) return json(req, { error: 'Выберите сеть USDT.' }, 400);
+    const { data: request, error } = await client.rpc('create_paid_token_request', { p_user_id: auth.user.id, p_id: body.id, p_amount: body.amount, p_comment: body.comment.trim(), p_network: body.network, p_expected_price_micros: body.price, p_tx_hash: '' });
+    if (error) return json(req, { error: error.message.includes('price changed') ? 'Цена изменилась. Обновите страницу.' : error.message.includes('rate limit') ? 'Можно создать не более 5 заявок за сутки.' : 'Не удалось создать заявку. Проверьте выбранную сеть.' }, error.message.includes('rate limit') ? 429 : 409);
+    try { await notifyRequest(client, request.id); } catch { /* Durable notification retry. */ }
+    return json(req, { request });
+  }
   if (!cryptoToken()) return json(req, { error: 'Оплата через Crypto Bot пока недоступна.' }, 503);
   const { data: request, error } = await client.rpc('create_crypto_token_request', { p_user_id: auth.user.id, p_id: body.id, p_amount: body.amount, p_comment: body.comment.trim(), p_expected_price_micros: body.price });
   if (error) return json(req, { error: error.message.includes('price changed') ? 'Цена изменилась. Обновите страницу.' : error.message.includes('rate limit') ? 'Можно создать не более 5 счетов за сутки.' : 'Не удалось сохранить счёт.' }, error.message.includes('rate limit') ? 429 : 409);
