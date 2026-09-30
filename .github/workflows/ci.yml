@@ -1,167 +1,129 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
+  workflow_call:
 
-# Cancel in-progress runs for the same branch (saves CI minutes)
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  # ─── Lint + Typecheck + Unit tests ─────────────────────────
-  check:
-    name: Lint + Typecheck + Unit tests
+  edge-functions:
+    name: Typecheck Edge Functions
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Check Supabase Edge Functions
+        run: deno check --config supabase/functions/deno.json supabase/functions/*/index.ts
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+  check:
+    name: Lint + Typecheck + Unit + Performance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-
-      # P-MOBILE: cache bun's global cache across runs
       - name: Cache Bun
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.bun-install/cache
+          path: ~/.bun-install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
+          restore-keys: ${{ runner.os }}-bun-
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      - run: bun run typecheck
+      - run: bun run test
+      - run: bun run test:perf
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Run ESLint
-        run: bun run lint
-
-      - name: Run TypeScript typecheck
-        run: bun run typecheck
-
-      - name: Run unit tests
-        run: bun run test
-
-      - name: Run perf benchmarks
-        run: bun run test:perf
-
-  # ─── E2E tests (Playwright) ────────────────────────────────
-  # E2E suite: desktop chromium + P-MOBILE mobile + tablet projects.
-  # - ~50 desktop tests (functional, visual, axe, xss, onboarding, shortcuts, cards, etc.)
-  # - ~20 mobile tests (mobile.spec.ts, narrow.spec.ts, mobile-accessibility.spec.ts)
-  # - ~10 tablet tests (tablet.spec.ts + accessibility on tablet)
-  # CI is ~2-3x slower than local due to shared runners + browser install.
-  # Local: ~90s. CI: ~10-15 min. Timeout set to 30 min for mobile projects overhead.
   e2e:
-    name: E2E tests (Playwright)
+    name: Functional E2E
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-
-      # P-MOBILE: cache bun's global cache + playwright browser binaries
-      # across runs to speed up CI (~30s savings per run after first).
       - name: Cache Bun
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.bun-install/cache
+          path: ~/.bun-install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
+          restore-keys: ${{ runner.os }}-bun-
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         id: playwright-cache
         with:
-          path: |
-            ~/.cache/ms-playwright
+          path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('bun.lock') }}
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Install Playwright browsers
-        # P-MOBILE: only chromium is needed — mobile-chrome and tablet-chrome
-        # projects use channel:'chromium' (not Safari/webkit) because CI sandbox
-        # may not be able to install webkit system deps without sudo.
-        # Chromium-based device emulation provides the same viewport/touch/UA
-        # fidelity needed for our responsive tests.
+      - run: bun install --frozen-lockfile
+      - name: Install Playwright browser
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: bunx playwright install --with-deps chromium
-
-      - name: Install Playwright system deps (cache hit)
-        # If browsers are cached, still need system libs (which aren't cached)
+      - name: Install Playwright system dependencies
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: bunx playwright install-deps chromium
-
       - name: Run E2E tests
-        # P-MOBILE: runs all projects (chromium, mobile-chrome, tablet-chrome)
-        # via playwright.config.ts. Each project has its own viewport/device preset.
-        # --fail-on-flaky-tests: ensures retries don't mask flaky tests —
-        # if a test passes only after retry, CI still fails.
-        run: bunx playwright test --fail-on-flaky-tests
+        run: bun run test:e2e -- --fail-on-flaky-tests
 
       - name: Upload test results on failure
-        if: failure()
         uses: actions/upload-artifact@v4
+        if: failure()
         with:
-          name: playwright-report
+          name: functional-test-results
           path: |
             playwright-report/
             test-results/
           retention-days: 7
 
-  # ─── Production build verification ─────────────────────────
   build:
-    name: Production build
+    name: Build and verify Pages artifact
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      NEXT_PUBLIC_BASE_PATH: /cardcraft_v2
+      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-
-      # P-MOBILE: cache bun's global cache across runs
       - name: Cache Bun
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.bun-install/cache
+          path: ~/.bun-install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Build production bundle
-        run: bun run build
-        env:
-          # Skip static copy if .next/standalone doesn't exist (standalone output)
-          CI: true
-          # Supabase environment variables
-          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-
-  # Note: SENTRY_AUTH_TOKEN must be set as GitHub Actions Secret
-  # for production source maps upload during build job.
-  # The build job uses .env from repo (gitignored) — in CI, set env:
-  # env:
-  #   SENTRY_AUTH_TOKEN: \${{ secrets.SENTRY_AUTH_TOKEN }}
+          restore-keys: ${{ runner.os }}-bun-
+      - run: bun install --frozen-lockfile
+      - name: Require production auth configuration
+        shell: bash
+        run: |
+          test -n "$NEXT_PUBLIC_SUPABASE_URL" || { echo 'Missing NEXT_PUBLIC_SUPABASE_URL repository variable'; exit 1; }
+          test -n "$NEXT_PUBLIC_SUPABASE_ANON_KEY" || { echo 'Missing NEXT_PUBLIC_SUPABASE_ANON_KEY repository secret'; exit 1; }
+      - run: bun run build
+      - run: bunx playwright install --with-deps chromium
+      - name: Test the exported files under the real Pages path
+        run: bun run test:e2e:production
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: production-test-results
+          path: test-results-production/
+          retention-days: 7
+      - name: Upload the verified artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./out

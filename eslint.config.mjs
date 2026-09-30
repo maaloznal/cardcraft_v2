@@ -48,6 +48,12 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     "no-useless-escape": "off",
   },
 }, {
+  files: ["supabase/functions/**/*.ts"],
+  rules: {
+    // Deno/Supabase RPC payloads are checked by the dedicated Deno CI job.
+    "@typescript-eslint/no-explicit-any": "off",
+  },
+}, {
   ignores: [
     "node_modules/**",
     ".next/**",

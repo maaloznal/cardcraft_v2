@@ -15,38 +15,44 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  verify:
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  deploy:
+    name: Publish verified artifact
+    needs: verify
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Build
-        run: bun run build
-        env:
-          NODE_ENV: production
-          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-
       - name: Setup Pages
         uses: actions/configure-pages@v5
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: ./out
-
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  verify-production:
+    name: Verify published site
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for GitHub Pages and verify the application shell
+        env:
+          SITE_URL: ${{ needs.deploy.outputs.page_url }}
+        shell: bash
+        run: |
+          site_root="${SITE_URL%/}/"
+          for attempt in {1..12}; do
+            page="$(curl --fail --silent --show-error --location "$site_root" 2>/dev/null)" \
+              && grep --quiet --ignore-case 'Cardcraft' <<<"$page" \
+              && curl --fail --silent --show-error --location --output /dev/null "${site_root}editor/" \
+              && exit 0
+            echo "Published site is not ready yet (attempt $attempt/12)"
+            sleep 5
+          done
+          echo "GitHub Pages did not pass the post-deploy smoke check"
+          exit 1

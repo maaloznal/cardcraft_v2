@@ -1,5 +1,4 @@
-// @ts-nocheck -- Supabase Edge Functions use the Deno runtime, outside Next.js' TS environment.
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 
 const MAX_TEXT_LENGTH = 10_000;
 const MAX_CARDS = 60;
@@ -125,7 +124,7 @@ Deno.serve(async (request: Request) => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
   if (request.method !== 'POST') return json({ error: 'Метод не поддерживается.' }, 405, cors);
 
-  let admin = null;
+  let admin: SupabaseClient<any> | null = null;
   let reservedUserId = '';
   let reservedRequestId = '';
   let reservationActive = false;
@@ -144,8 +143,8 @@ Deno.serve(async (request: Request) => {
 
     const body = await request.json();
     const text = typeof body?.text === 'string' ? body.text.trim() : '';
-    const mode = body?.mode;
-    const role = body?.role;
+    const mode = body?.mode as keyof typeof MODE_PROMPTS;
+    const role = body?.role as keyof typeof ROLE_PROMPTS;
     const targetChars = Number(body?.targetChars);
     const requestId = body?.requestId;
     if (!text || text.length > MAX_TEXT_LENGTH || !MODES.has(mode) || !ROLES.has(role) ||
@@ -162,7 +161,7 @@ Deno.serve(async (request: Request) => {
     const reasoningEnabled = readBooleanSecret('AI_REASONING_ENABLED');
     if (!apiKey || !baseUrl || !model || !/^https:\/\//i.test(baseUrl)) throw new Error('ai_not_configured');
 
-    admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+    admin = createClient<any>(supabaseUrl, serviceKey, { auth: { persistSession: false } });
     const dailyLimit = Math.min(100, Math.max(1, Number(Deno.env.get('AI_DAILY_REQUEST_LIMIT') || 20)));
     const reservedTokens = Math.min(30_000, Math.max(1_000,
       Math.ceil(text.length * 1.5) + (reasoningEnabled ? 5_000 : 1_000)));

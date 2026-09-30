@@ -1,6 +1,8 @@
-// @ts-nocheck -- Deno Edge runtime; pure validation/auth modules are checked by tsc and Vitest.
 import { reconcileCryptoInvoices } from './crypto-pay-runtime.ts';
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
+
+type DatabaseClient = SupabaseClient<any>;
+type DatabaseRecord = Record<string, any>;
 export const OWNER_ID = '7145160476';
 export const db = () => createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
 export const botToken = () => Deno.env.get('TELEGRAM_BOT_TOKEN') || '';
@@ -27,24 +29,30 @@ export async function telegram(method: string, payload: Record<string, unknown>)
   if (!response.ok || !data.ok) throw new Error('Telegram unavailable');
   return data.result;
 }
+type InlineButton = {
+  text: string;
+  callback_data?: string;
+  web_app?: { url: string };
+};
+
 export function menu() {
-  const rows = [[{ text: 'Клиенты', callback_data: 'clients:0' }, { text: 'Заявки', callback_data: 'queue:0' }], [{ text: 'Статистика', callback_data: 'stats' }]];
+  const rows: InlineButton[][] = [[{ text: 'Клиенты', callback_data: 'clients:0' }, { text: 'Заявки', callback_data: 'queue:0' }], [{ text: 'Статистика', callback_data: 'stats' }]];
   const url = Deno.env.get('TELEGRAM_ADMIN_APP_URL');
   if (url?.startsWith('https://')) rows.push([{ text: 'Открыть админку', web_app: { url } }]);
   return { inline_keyboard: rows };
 }
-export async function overview(client, filters = {}) {
+export async function overview(client: DatabaseClient, filters: Record<string, unknown> = {}) {
   const { data, error } = await client.rpc('token_admin_overview', filters);
   if (error) throw new Error('Database unavailable');
   return data;
 }
-export async function clientsOverview(client, filters = {}) {
+export async function clientsOverview(client: DatabaseClient, filters: Record<string, unknown> = {}) {
   const { data, error } = await client.rpc('token_admin_clients', filters);
   if (error) throw new Error('Database unavailable');
   return data;
 }
 const n = (value: number) => new Intl.NumberFormat('ru-RU').format(value ?? 0);
-export async function notifyRequest(client, id: string) {
+export async function notifyRequest(client: DatabaseClient, id: string) {
   const { data: claims, error } = await client.rpc('claim_token_notification', { p_id: id });
   if (error) throw new Error('Notification unavailable');
   const request = claims?.[0];
@@ -86,7 +94,7 @@ export async function notifyRequest(client, id: string) {
     return false;
   }
 }
-export async function retryNotifications(client) {
+export async function retryNotifications(client: DatabaseClient) {
   try { await reconcileCryptoInvoices(client); } catch { /* Next cron pass retries API failures; still deliver committed payments. */ }
   const { data, error } = await client.from('token_requests').select('id').or('and(payment_provider.eq.manual,status.eq.pending),and(payment_provider.eq.crypto_pay,status.eq.approved)').is('notified_at', null).order('created_at').limit(10);
   if (error) throw new Error('Database unavailable');
@@ -94,7 +102,7 @@ export async function retryNotifications(client) {
   for (const request of data) if (await notifyRequest(client, request.id)) sent++;
   return sent;
 }
-export async function decide(client, id, decision, kind = 'purchase', note = '') {
+export async function decide(client: DatabaseClient, id: string, decision: 'approved' | 'rejected', kind = 'purchase', note = '') {
   const { data, error } = await client.rpc('decide_token_request', { p_id: id, p_decision: decision, p_admin_id: Number(OWNER_ID), p_kind: kind, p_note: note });
   if (error) throw new Error('Decision unavailable');
   // Cosmetic Telegram updates must never turn a committed credit into a failed API response.
@@ -102,10 +110,11 @@ export async function decide(client, id, decision, kind = 'purchase', note = '')
   return data;
 }
 
-export async function refreshRequestMessage(request) {
+export async function refreshRequestMessage(request: DatabaseRecord) {
   if (request.telegram_message_id) {
     try {
-      const label = { approved: 'Одобрено', rejected: 'Отклонено', cancelled: 'Закрыта клиентом' }[request.status] || request.status;
+      const labels: Record<string, string> = { approved: 'Одобрено', rejected: 'Отклонено', cancelled: 'Закрыта клиентом' };
+      const label = labels[request.status] || request.status;
       await telegram('editMessageText', { chat_id: OWNER_ID, message_id: request.telegram_message_id,
         text: `${label}: ${n(request.amount)} токенов\nЗаявка: ${request.id}\nКлиент: ${request.user_id}\n${request.admin_note || ''}`,
         reply_markup: { inline_keyboard: [[{ text: 'История клиента', callback_data: `history:${request.user_id}:0` }], ...menu().inline_keyboard] } });

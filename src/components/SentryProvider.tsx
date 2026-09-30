@@ -21,6 +21,27 @@ export function SentryProvider({ children }: { children: React.ReactNode }) {
     if (process.env.NODE_ENV !== 'production') {
       void import('@/lib/sentry-client');
     }
+
+    const reportCspViolation = (event: SecurityPolicyViolationEvent) => {
+      void import('@sentry/nextjs').then(({ captureMessage }) => {
+        captureMessage('Content Security Policy violation', {
+          level: 'warning',
+          tags: {
+            effectiveDirective: event.effectiveDirective,
+            disposition: event.disposition,
+          },
+          extra: {
+            blockedURI: event.blockedURI,
+            sourceFile: event.sourceFile,
+            lineNumber: event.lineNumber,
+            columnNumber: event.columnNumber,
+          },
+        });
+      });
+    };
+
+    document.addEventListener('securitypolicyviolation', reportCspViolation);
+    return () => document.removeEventListener('securitypolicyviolation', reportCspViolation);
   }, []);
 
   return <>{children}</>;

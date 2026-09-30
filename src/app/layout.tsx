@@ -16,6 +16,22 @@ import { AuthProvider } from '@/auth/AuthProvider';
 import { PwaRegistrar } from '@/components/PwaRegistrar';
 
 const APP_BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
+const SCRIPT_SECURITY_POLICY = process.env.NODE_ENV === 'production'
+  ? "script-src 'self' 'unsafe-inline' https://telegram.org"
+  : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://telegram.org";
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  SCRIPT_SECURITY_POLICY,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://z-cdn.chatglm.cn https://*.supabase.co",
+  "font-src 'self' data:",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.ingest.sentry.io https://*.ingest.us.sentry.io",
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join('; ');
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -83,6 +99,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru" suppressHydrationWarning>
+      <head>
+        <meta httpEquiv="Content-Security-Policy" content={CONTENT_SECURITY_POLICY} />
+        <meta name="referrer" content="strict-origin-when-cross-origin" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >

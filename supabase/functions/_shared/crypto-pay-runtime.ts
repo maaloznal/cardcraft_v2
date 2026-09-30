@@ -1,5 +1,13 @@
-// @ts-nocheck -- Supabase Edge Function (Deno).
 import { invoiceMatches, safeInvoiceUrl, usdtMicros } from './crypto-pay-contract.ts';
+import type { SupabaseClient } from 'npm:@supabase/supabase-js@2';
+
+type DatabaseClient = SupabaseClient<any>;
+type CryptoRecord = Record<string, any>;
+type CryptoRequest = CryptoRecord & {
+  id: string;
+  crypto_invoice_id?: number | null;
+  payment_amount_micros: number;
+};
 
 export const cryptoToken = () => Deno.env.get('CRYPTO_PAY_API_TOKEN') || '';
 export async function cryptoPay(method: string, body = {}) {
@@ -14,7 +22,7 @@ export async function cryptoPay(method: string, body = {}) {
   return result.result;
 }
 
-export async function ensureCryptoInvoice(client, request) {
+export async function ensureCryptoInvoice(client: DatabaseClient, request: CryptoRequest) {
   if (request.payment_provider !== 'crypto_pay' || request.status !== 'pending' || request.crypto_invoice_id) return request;
   const invoice = await cryptoPay('createInvoice', {
     currency_type: 'crypto', asset: 'USDT', amount: (request.payment_amount_micros / 1000000).toFixed(6),
@@ -33,7 +41,7 @@ export async function ensureCryptoInvoice(client, request) {
   return data;
 }
 
-export async function settleCryptoInvoice(client, invoice) {
+export async function settleCryptoInvoice(client: DatabaseClient, invoice: CryptoRecord) {
   if (invoice.status !== 'paid') throw new Error('Unpaid invoice');
   const { data: request, error } = await client.from('token_requests').select('*').eq('crypto_invoice_id', invoice.invoice_id).maybeSingle();
   if (error || !request || !invoiceMatches(invoice, request) || !Number.isFinite(Date.parse(invoice.paid_at))) throw new Error('Invoice mismatch');
@@ -45,10 +53,10 @@ export async function settleCryptoInvoice(client, invoice) {
   return data;
 }
 
-export async function syncCryptoInvoice(client, request) {
+export async function syncCryptoInvoice(client: DatabaseClient, request: CryptoRequest) {
   if (!request.crypto_invoice_id || request.status !== 'pending') return request;
   const result = await cryptoPay('getInvoices', { invoice_ids: String(request.crypto_invoice_id) });
-  const invoice = result.items?.find((item) => item.invoice_id === request.crypto_invoice_id);
+  const invoice = result.items?.find((item: CryptoRecord) => item.invoice_id === request.crypto_invoice_id);
   if (!invoice || !invoiceMatches(invoice, request)) throw new Error('Invoice unavailable');
   if (invoice.status === 'paid') return settleCryptoInvoice(client, invoice);
   if (invoice.status === 'expired') {
@@ -59,13 +67,13 @@ export async function syncCryptoInvoice(client, request) {
   return request;
 }
 
-export async function reconcileCryptoInvoices(client) {
+export async function reconcileCryptoInvoices(client: DatabaseClient) {
   const { data, error } = await client.from('token_requests').select('*').eq('payment_provider', 'crypto_pay').eq('status', 'pending').not('crypto_invoice_id', 'is', null).order('created_at').limit(1000);
   if (error) throw new Error('Database unavailable');
   if (!data.length) return;
-  const result = await cryptoPay('getInvoices', { invoice_ids: data.map((r) => r.crypto_invoice_id).join(','), count: 1000 });
+  const result = await cryptoPay('getInvoices', { invoice_ids: data.map((r: CryptoRecord) => r.crypto_invoice_id).join(','), count: 1000 });
   for (const invoice of result.items || []) {
-    const request = data.find((r) => r.crypto_invoice_id === invoice.invoice_id);
+    const request = data.find((r: CryptoRecord) => r.crypto_invoice_id === invoice.invoice_id);
     if (!request || !invoiceMatches(invoice, request)) continue;
     if (invoice.status === 'paid') await settleCryptoInvoice(client, invoice);
     else if (invoice.status === 'expired') {

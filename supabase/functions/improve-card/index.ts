@@ -1,5 +1,4 @@
-// @ts-nocheck -- Supabase Edge Functions use the Deno runtime, outside Next.js' TS environment.
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 
 const FIELD_LIMITS = { title: 200, subtitle: 500, text: 1000, listItems: 1000, footer: 200, cta: 100 };
 const MAX_INPUT_CHARACTERS = 3_000;
@@ -69,7 +68,7 @@ Deno.serve(async (request: Request) => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
   if (request.method !== 'POST') return json({ error: 'Метод не поддерживается.' }, 405, cors);
 
-  let admin = null;
+  let admin: SupabaseClient<any> | null = null;
   let reservedUserId = '';
   let reservedRequestId = '';
   let reservationActive = false;
@@ -103,7 +102,7 @@ Deno.serve(async (request: Request) => {
     const reasoningEnabled = readBooleanSecret('AI_REASONING_ENABLED');
     if (!apiKey || !baseUrl || !model || !/^https:\/\//i.test(baseUrl)) throw new Error('ai_not_configured');
 
-    admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+    admin = createClient<any>(supabaseUrl, serviceKey, { auth: { persistSession: false } });
     const inputCharacters = Object.values(card).reduce((sum, field) => sum + field.length, 0);
     const dailyLimit = Math.min(100, Math.max(1, Number(Deno.env.get('AI_DAILY_REQUEST_LIMIT') || 20)));
     const reservedTokens = Math.min(15_000, Math.max(800,

@@ -1,11 +1,16 @@
-// @ts-nocheck -- Supabase Edge Function (Deno).
 import { verifyTelegramAdmin, constantTimeEqual } from '../_shared/telegram-auth.ts';
 import { validUuid } from '../_shared/token-contract.ts';
 import { OWNER_ID, botToken, db, json, cors, readBody, telegram, menu, overview, clientsOverview, decide, retryNotifications } from '../_shared/token-runtime.ts';
+import type { SupabaseClient } from 'npm:@supabase/supabase-js@2';
 
-const n = (v) => new Intl.NumberFormat('ru-RU').format(v ?? 0);
-const statusLabel = (value) => ({ approved: 'одобрена', rejected: 'отклонена', cancelled: 'закрыта клиентом', pending: 'ожидает' })[value] || value;
-async function botUpdate(client, update) {
+type CallbackButton = { text: string; callback_data: string };
+
+const n = (v: number | null | undefined) => new Intl.NumberFormat('ru-RU').format(v ?? 0);
+const statusLabel = (value: string) => {
+  const labels: Record<string, string> = { approved: 'одобрена', rejected: 'отклонена', cancelled: 'закрыта клиентом', pending: 'ожидает' };
+  return labels[value] || value;
+};
+async function botUpdate(client: SupabaseClient<any>, update: Record<string, any>) {
   const callback = update.callback_query;
   const message = callback?.message || update.message;
   const actor = callback?.from || message?.from;
@@ -20,15 +25,15 @@ async function botUpdate(client, update) {
     const search = callback ? '' : (message?.text || '').replace(/^\/clients\s*/, '').trim().slice(0, 200);
     const page = /^\d{1,5}$/.test(id || '') ? Number(id) : 0;
     const result = await clientsOverview(client, { p_search: search, p_page: page });
-    const rows = result.clients.map((user) => [{ text: `${(user.email || user.display_name || user.id).slice(0, 45)} · ${user.unlimited_tokens ? '∞' : n(user.token_balance)}`, callback_data: `client:${user.id}` }]);
-    const pagination = [];
+    const rows = result.clients.map((user: Record<string, any>) => [{ text: `${(user.email || user.display_name || user.id).slice(0, 45)} · ${user.unlimited_tokens ? '∞' : n(user.token_balance)}`, callback_data: `client:${user.id}` }]);
+    const pagination: CallbackButton[] = [];
     if (page > 0) pagination.push({ text: '← Назад', callback_data: `clients:${page - 1}` });
     if (!search && (page + 1) * 20 < result.total) pagination.push({ text: 'Далее →', callback_data: `clients:${page + 1}` });
     await telegram('sendMessage', { chat_id: OWNER_ID, text: `Зарегистрированные клиенты: ${n(result.total)}${search ? `\nПоиск: ${search}` : `\nСтраница ${page + 1} из ${Math.max(1, Math.ceil(result.total / 20))}`}\n\nВыберите клиента: баланс, расход, проекты и история заявок.\nПоиск: /clients email или имя${search && result.total > 20 ? '\nПоказаны первые 20. Уточните поиск или откройте мини-приложение.' : ''}`, reply_markup: { inline_keyboard: [...rows, ...(pagination.length ? [pagination] : []), ...menu().inline_keyboard] } });
   } else if (action === 'client' && validUuid(id)) {
     const result = await clientsOverview(client, { p_user_id: id });
     const user = result.clients[0];
-    const date = (value) => value ? new Date(value).toLocaleDateString('ru-RU') : 'ещё не входил';
+    const date = (value: string | null | undefined) => value ? new Date(value).toLocaleDateString('ru-RU') : 'ещё не входил';
     await telegram('sendMessage', { chat_id: OWNER_ID, text: user ? `Клиент: ${user.email || 'Без email'}\n${user.display_name ? `Имя: ${user.display_name}\n` : ''}ID: ${user.id}\nРегистрация: ${date(user.created_at)}\nПоследний вход: ${date(user.last_sign_in_at)}\nEmail: ${user.email_confirmed ? 'подтверждён' : 'не подтверждён'}\n\nБаланс: ${user.unlimited_tokens ? 'Без ограничений' : n(user.token_balance)}\nКуплено: ${n(user.tokens_purchased)}\nБонусы: ${n(user.tokens_granted)}\nИспользовано: ${n(user.tokens_used)}\nПроектов: ${n(user.projects)}\nЗаявок: ${n(user.requests)}\nОжидают: ${n(user.pending)}` : 'Клиент не найден.', reply_markup: { inline_keyboard: [...(user ? [[{ text: 'История заявок', callback_data: `history:${id}:0` }]] : []), ...menu().inline_keyboard] } });
   } else if (['approve', 'reject'].includes(action) && validUuid(id)) {
     await telegram('sendMessage', { chat_id: OWNER_ID,
@@ -41,16 +46,16 @@ async function botUpdate(client, update) {
     const page = /^\d{1,5}$/.test(pageText || '') ? Number(pageText) : 0;
     const result = await overview(client, { p_status: 'all', p_user_id: id, p_page: page });
     const user = (await clientsOverview(client, { p_user_id: id })).clients[0];
-    const history = result.requests.map((r) => `${new Date(r.created_at).toLocaleDateString('ru-RU')} · ${n(r.amount)} · ${statusLabel(r.status)}`).join('\n');
-    const rows = [];
+    const history = result.requests.map((r: Record<string, any>) => `${new Date(r.created_at).toLocaleDateString('ru-RU')} · ${n(r.amount)} · ${statusLabel(r.status)}`).join('\n');
+    const rows: CallbackButton[] = [];
     if (page > 0) rows.push({ text: '←', callback_data: `history:${id}:${page - 1}` });
     if ((page + 1) * 20 < result.total) rows.push({ text: '→', callback_data: `history:${id}:${page + 1}` });
     await telegram('sendMessage', { chat_id: OWNER_ID, text: `${user?.email || id}\nКуплено: ${n(user?.tokens_purchased)}\nБонусы: ${n(user?.tokens_granted)}\nИспользовано: ${n(user?.tokens_used)}\nБаланс: ${user?.unlimited_tokens ? 'Без ограничений' : n(user?.token_balance)}\n\n${history || 'Нет заявок.'}`, reply_markup: { inline_keyboard: [...(rows.length ? [rows] : []), ...menu().inline_keyboard] } });
   } else if (action === 'queue' || command === '/requests') {
     const page = /^\d{1,5}$/.test(id || '') ? Number(id) : 0;
     const result = await overview(client, { p_page: page });
-    const rows = result.requests.map((r) => [{ text: `${(r.email || r.user_id).slice(0, 35)} · ${n(r.amount)}`, callback_data: `history:${r.user_id}:0` }, ...(r.payment_provider === 'crypto_pay' ? [] : [{ text: '✓', callback_data: `approve:${r.id}` }, { text: '✕', callback_data: `reject:${r.id}` }])]);
-    const pagination = [];
+    const rows = result.requests.map((r: Record<string, any>) => [{ text: `${(r.email || r.user_id).slice(0, 35)} · ${n(r.amount)}`, callback_data: `history:${r.user_id}:0` }, ...(r.payment_provider === 'crypto_pay' ? [] : [{ text: '✓', callback_data: `approve:${r.id}` }, { text: '✕', callback_data: `reject:${r.id}` }])]);
+    const pagination: CallbackButton[] = [];
     if (page > 0) pagination.push({ text: '←', callback_data: `queue:${page - 1}` });
     if ((page + 1) * 20 < result.total) pagination.push({ text: '→', callback_data: `queue:${page + 1}` });
     await telegram('sendMessage', { chat_id: OWNER_ID, text: `Ожидают решения: ${n(result.total)}.\nВыберите клиента для просмотра истории.`, reply_markup: { inline_keyboard: [...rows, ...(pagination.length ? [pagination] : []), ...menu().inline_keyboard] } });

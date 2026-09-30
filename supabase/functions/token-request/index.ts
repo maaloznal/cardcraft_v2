@@ -1,4 +1,3 @@
-// @ts-nocheck -- Supabase Edge Function (Deno).
 import { db, json, cors, readBody, notifyRequest, refreshRequestMessage } from '../_shared/token-runtime.ts';
 import { cryptoToken, cryptoPay, ensureCryptoInvoice, syncCryptoInvoice } from '../_shared/crypto-pay-runtime.ts';
 import { validTokenAmount, validUuid } from '../_shared/token-contract.ts';

@@ -41,6 +41,7 @@
     "examples",
     "skills",
     "tests",
+    "supabase/functions",
     "commitlint.config.js",
     ".husky"
   ]

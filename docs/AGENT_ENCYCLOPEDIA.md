@@ -25,8 +25,8 @@
 - USDT (0010): владелец установил временные 0,1 USDT / 10 000 токенов (50 000 → 0,5; 100 000 → 1; 500 000 → 5). `token_payment_settings` и `token_payment_networks` — серверные настройки тарифа и пяти кошельков (TON/Tron/Solana/Ethereum/BNB). Заявка сохраняет сеть, адрес, точную сумму в micro-USDT и необязательный TX hash. Хеш можно добавить после отправки заявки, пока она ожидает решения. Для изменения цен менять настройки, не исторические заявки.
 - Миграции 0008/0009: `token_requests`, service-role-only RPC, RLS, pg_cron + pg_net + Vault для повторной доставки уведомлений. Ошибка Telegram не откатывает сохранённую заявку/начисление. Возможный повтор уведомления при сетевой неопределённости безопасен для баланса.
 - Настройка, секреты, эксплуатация и ограничения: `docs/telegram-admin.md`. Никаких ключей, паролей VPS, подписанных initData в память/репозиторий.
-- В исходной рабочей копии были НЕзакоммиченные `.github/workflows/ci.yml`, `.github/workflows/deploy.yml`, `tests/e2e/csp-reporting.spec.ts`, `AGENTS.md`, `CLAUDE.md`, `playwright.production.config.ts`. Они сохранены при обновлении. CI-черновик ссылается на отсутствующие `test:e2e:production`, `scripts/serve-static.mjs`, `tests/production`; не коммитить его как завершённое изменение без реализации этих частей.
-- `headers()` работают на dev/сервере, но не в статическом экспорте. Удалены неработающие объявления `report-uri`/`report-to` и некорректный Reporting-Endpoints. CSP `/admin` отдельно разрешает Telegram SDK/Telegram frame ancestors. На VPS заголовки нужно настроить в reverse proxy; GitHub Pages их из Next.js не применяет.
+- Production workflow вызывает общий CI, проверяет собранный `out/` отдельным Playwright-конфигом под реальным `/cardcraft_v2`, публикует именно проверенный artifact и выполняет post-deploy smoke главной и редактора.
+- `headers()` не работают с `output: "export"`. Базовая CSP применяется ранним `<meta http-equiv="Content-Security-Policy">`; CSP-нарушения отправляются в Sentry. Директивы `frame-ancestors` и CSP reporting в meta не поддерживаются, поэтому их нет. Для будущего собственного сервера заголовки нужно задать в reverse proxy.
 - Проверки реализации: 356 unit-тестов, 8 навигационных E2E, 4 новых E2E админки/аккаунта, CSP-проверка, typecheck, lint (только 3 прежних warning в PreviewRenderer), production static build. SQL rollback-тесты проверяют баланс/RLS/стоимость; live smoke на временных аккаунтах проверил чужой Telegram ID, webhook без секрета, cross-user RLS, минимальное количество, оплату и три конкурентных одобрения с одним начислением. Временные пользователи удалены.
 - Git hooks теперь используют локальные `npx --no-install` lint-staged/commitlint, если Bun отсутствует; проверки не отключаются ради коммита на Windows.
 
@@ -96,7 +96,7 @@ React Shell          src/app, auth, components
 | Проблема | Решение |
 |---|---|
 | `basePath` должен быть `/cardcraft_v2` (не `/cardcraft`) | `next.config.ts`, иначе CSS/JS 404 и пустая страница |
-| `headers()` НЕ работает с `output: "export"` | CSP `report-uri`+`report-to` добавлены вручную; `Reporting-Endpoints` должен быть **валидным JSON** `{"csp-endpoint":{"url":"/api/csp-report","max_age":86400}}` |
+| `headers()` НЕ работает с `output: "export"` | Не возвращать Next headers или POST collector. Поддерживаемые директивы заданы meta-CSP; `frame-ancestors` станет возможен только через HTTP-заголовок на другом хостинге |
 | GitHub Actions: `NEXT_PUBLIC_SUPABASE_URL` — это **VARIABLE** (`vars.`), `ANON_KEY` — **SECRET** (`secrets.`) | Если URL только secret → `supabase=null` → AuthButton `null` |
 | Supabase миграция — версия `0001` (не `001`) | флаг: `Supabase Preview` падает при mismatch |
 | `test-results/`, `tool-results/`, `verification*.png`, `worklog.md`, `.zscripts/dev.pid` | должны быть в `.gitignore`, НЕ коммитить |
@@ -104,8 +104,8 @@ React Shell          src/app, auth, components
 
 ## 7. Деплой
 
-`.github/workflows/deploy.yml` (push на main / workflow_dispatch):
-`bun install --frozen-lockfile → bun run build (NODE_ENV=production + NEXT_PUBLIC_* vars/secrets) → upload ./out → deploy-pages`
+`.github/workflows/deploy.yml` (push на main / workflow_dispatch) вызывает reusable `ci.yml`:
+`lint/typecheck/unit/perf + Deno check + functional E2E + build + production export smoke → upload verified out/ → deploy-pages → live smoke`.
 
 Продакшен URL: `https://maaloznal.github.io/cardcraft_v2/`. Прод подключён к Supabase-проекту `rbvokjedmyndntojvekn` (West EU).
 
