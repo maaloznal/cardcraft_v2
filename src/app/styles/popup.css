@@ -254,3 +254,19 @@
   .word-style-popup .popup-section-title { min-height: 36px; }
   .word-style-popup input[type=range] { min-height: 44px; }
 }
+
+/* Explicit text action remains available on touch laptops and landscape tablets. */
+.cc-root button.btn-card-text { display: none; }
+@media (max-width: 1024px), (any-pointer: coarse) {
+  .cc-root button.btn-card-text { display: inline-flex; min-height: 44px; }
+}
+.text-picker { width: min(460px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); box-sizing: border-box; padding: 20px; border: 1px solid var(--ui-border); border-radius: 16px; background: var(--ui-surface); color: var(--ui-text); overflow: auto; }
+.text-picker::backdrop { background: rgb(0 0 0 / 45%); }
+.text-picker h3 { margin: 0 0 12px; }
+.text-picker p { font-size: 14px; line-height: 1.5; }
+.text-picker select { width: 100%; min-height: 44px; margin: 8px 0 16px; font-size: 16px; color: inherit; background: var(--ui-surface); }
+.text-picker-words, .text-picker-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.text-picker button { min-height: 44px; min-width: 44px; max-width: 100%; overflow-wrap: anywhere; padding: 8px 12px; border: 1px solid var(--ui-border); border-radius: 8px; background: var(--ui-surface); color: var(--ui-text); font: inherit; touch-action: manipulation; }
+.text-picker button[aria-pressed="true"], .text-picker button[data-picker="apply"] { background: var(--ui-accent); color: var(--ui-accent-fg); }
+.text-picker button:disabled { opacity: .5; }
+.text-picker-selection { overflow-wrap: anywhere; }

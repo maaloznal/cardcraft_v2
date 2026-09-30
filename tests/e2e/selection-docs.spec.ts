@@ -89,3 +89,30 @@ for (const width of [390, 768, 1024, 1280]) {
     await page.screenshot({ path: test.info().outputPath(`docs-${width}.png`) });
   });
 }
+
+for (const width of [390, 768, 1024]) {
+  test(`tap-based text formatting without native selection (${width})`, async ({ browser }) => {
+    const context = await browser.newContext({ viewport: { width, height: 900 }, hasTouch: true, isMobile: true, baseURL: 'http://localhost:3000' });
+    const page = await context.newPage();
+    try {
+      await gotoApp(page);
+      if (await page.locator('#modeEditorTab').isVisible()) await page.locator('#modeEditorTab').tap();
+      await page.locator('#editorCardsList textarea[data-field="text"]').first().fill('Alpha beta gamma');
+      if (await page.locator('#modePreviewTab').isVisible()) await page.locator('#modePreviewTab').tap();
+      await page.getByRole('button', { name: 'Оформить текст карточки 1', exact: true }).tap();
+      const dialog = page.getByRole('dialog', { name: 'Оформление текста' });
+      await expect(dialog).toBeVisible();
+      await dialog.getByLabel('Часть карточки').selectOption('text');
+      await dialog.getByRole('button', { name: 'beta', exact: true }).tap();
+      await dialog.getByRole('button', { name: 'gamma', exact: true }).tap();
+      await dialog.getByRole('button', { name: 'Оформить', exact: true }).tap();
+      const popup = page.locator('#wordStylePopup');
+      await expect(popup).toBeVisible();
+      await popup.locator('[data-format="bold"]').tap();
+      await expect(page.locator('#cardsArea .card-text .cc-styled-word').first()).toHaveText('beta gamma');
+      await expect(page.locator('#cardsArea .card-text .cc-styled-word').first()).toHaveCSS('font-weight', '700');
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await page.screenshot({ path: test.info().outputPath(`text-picker-${width}.png`) });
+    } finally { await context.close(); }
+  });
+}

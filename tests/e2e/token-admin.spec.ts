@@ -81,13 +81,14 @@ test('account validates amounts, submits custom tokens once, and shows status', 
       rows[0] = { ...rows[0], status: 'cancelled', admin_note: 'Закрыта клиентом' };
       await route.fulfill({ json: { request: rows[0] } }); return;
     }
+    if (body.action === 'status') { await route.fulfill({ json: { request: rows[0] } }); return; }
     if (body.action === 'payment') {
       payments.push(body); rows[0] = { ...rows[0], payment_tx_hash: body.txHash };
       await route.fulfill({ json: { request: rows[0] } }); return;
     }
     submissions.push(body);
     if (submissions.length === 1) { await route.fulfill({ status: 503, json: { error: 'Временная ошибка. Повторите отправку.' } }); return; }
-    const created = { ...request, ...body, user_id: user.id, payment_network: body.network, payment_address: 'test-tron-address', payment_amount_micros: 123450, payment_tx_hash: '' };
+    const created = { ...request, ...body, user_id: user.id, payment_network: body.network, payment_address: 'test-tron-address', payment_amount_micros: 1000000, payment_tx_hash: '', payment_provider: 'crypto_pay', crypto_invoice_id: 42, crypto_invoice_url: 'https://t.me/CryptoBot?start=fixture', crypto_expires_at: new Date(Date.now() + 3600000).toISOString() };
     rows = [created]; await route.fulfill({ json: { request: created } });
   });
   await page.goto('/account/');
@@ -101,14 +102,13 @@ test('account validates amounts, submits custom tokens once, and shows status', 
   await expect(page.locator('.account-project-row')).toHaveCount(2);
   await page.getByRole('button', { name: 'Пополнить баланс', exact: true }).click();
   await expect(page.locator('.token-package')).toHaveCount(4);
-  await expect(page.locator('.token-package').first()).toContainText('0,1 USDT');
-  await expect(page.locator('.token-package').nth(1)).toContainText('0,5 USDT');
+  await expect(page.locator('.token-package').first()).toContainText('1 USDT');
+  await expect(page.locator('.token-package').nth(1)).toContainText('1 USDT');
   const input = page.getByLabel('Или введите своё количество');
   await input.fill('9999');
   await expect(page.getByRole('button', { name: 'Создать заявку и перейти к оплате' })).toBeDisabled();
   await input.fill('12345');
-  await expect(page.locator('.token-payment-total')).toContainText('0,12345 USDT');
-  await page.getByLabel('Сеть перевода USDT').selectOption('tron');
+  await expect(page.locator('.token-payment-total')).toContainText('1 USDT');
   await expect(page.getByLabel('Адрес получателя')).toHaveCount(0);
   await page.getByText('Добавить комментарий', { exact: true }).click();
   await page.getByLabel('Комментарий (необязательно)').fill('Для теста');
@@ -117,38 +117,32 @@ test('account validates amounts, submits custom tokens once, and shows status', 
   await expect(page.locator('.token-section .project-error')).toContainText('Временная ошибка');
   await expect(input).toHaveValue('12345');
   await page.getByRole('button', { name: 'Создать заявку и перейти к оплате' }).click();
-  await expect(page.locator('.token-success')).toContainText('Заявка создана');
+  await expect(page.locator('.token-success')).toContainText('Счёт создан');
   expect(submissions).toHaveLength(2);
   expect(submissions[0].id).toBe(submissions[1].id);
   expect(submissions[0].amount).toBe(12345);
-  expect(submissions[0]).toMatchObject({ network: 'tron', price: 100000, txHash: '' });
-  await expect(page.getByLabel('Адрес получателя', { exact: true })).toHaveValue('test-tron-address');
-  await expect(page.getByLabel('Сумма USDT', { exact: true })).toHaveValue('0.12345');
-  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
-  await page.getByRole('button', { name: 'Копировать: адрес получателя' }).click();
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('test-tron-address');
+  expect(submissions[0]).toMatchObject({ network: 'crypto_pay', price: 100000, txHash: '' });
+  await expect(page.getByRole('link', { name: 'Оплатить в Crypto Bot' })).toHaveAttribute('href', 'https://t.me/CryptoBot?start=fixture');
+  await expect(page.getByLabel('Хеш транзакции (TXID)')).toHaveCount(0);
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Заявка создана. Следующий шаг — оплата' })).toBeVisible();
-  await page.getByLabel('Хеш транзакции (TXID)').fill('test-transaction');
+  await expect(page.getByRole('heading', { name: 'Оплатите счёт — токены начислятся автоматически' })).toBeVisible();
   await page.screenshot({ path: test.info().outputPath('account-invoice-mobile.png'), fullPage: true });
-  await page.getByRole('button', { name: 'Я оплатил — передать на проверку' }).click();
-  await expect(page.getByRole('heading', { name: 'Платёж передан на проверку' })).toBeVisible();
-  expect(payments).toHaveLength(1);
+  expect(payments).toHaveLength(0);
   expect(submissions).toHaveLength(2);
   rows[0] = { ...rows[0], status: 'approved' }; balance += 12345;
-  await page.getByRole('button', { name: 'Обновить статус' }).click();
+  await page.getByRole('button', { name: 'Проверить оплату' }).click();
   await expect(page.locator('.token-success')).toContainText('токенов зачислено');
   await expect(page.locator('.account-balance strong')).toHaveText('62 345');
   await expect(page.locator('.token-invoice')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Пополнить баланс', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'Пополнить баланс', exact: true }).click();
   await page.getByRole('button', { name: 'Создать заявку и перейти к оплате' }).click();
-  await page.getByRole('button', { name: 'Закрыть заявку', exact: true }).click();
-  await expect(page.getByRole('group', { name: 'Подтверждение закрытия заявки' })).toContainText('не возвращает перевод');
-  await page.getByRole('button', { name: 'Оставить открытой' }).click();
+  await page.getByRole('button', { name: 'Отменить оплату', exact: true }).click();
+  await expect(page.locator('.invoice-cancel')).toContainText('Закрыть неоплаченный счёт?');
+  await page.getByRole('button', { name: 'Оставить', exact: true }).click();
   await expect(page.locator('.token-invoice')).toBeVisible();
-  await page.getByRole('button', { name: 'Закрыть заявку', exact: true }).click();
-  await page.getByRole('button', { name: 'Да, закрыть заявку' }).click();
+  await page.getByRole('button', { name: 'Отменить оплату', exact: true }).click();
+  await page.getByRole('button', { name: 'Закрыть счёт', exact: true }).click();
   await expect(page.locator('.token-invoice')).toHaveCount(0);
   await expect(page.locator('.token-success')).toContainText('Заявка закрыта');
   await expect(page.locator('.account-balance strong')).toHaveText('62 345');

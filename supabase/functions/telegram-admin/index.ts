@@ -49,7 +49,7 @@ async function botUpdate(client, update) {
   } else if (action === 'queue' || command === '/requests') {
     const page = /^\d{1,5}$/.test(id || '') ? Number(id) : 0;
     const result = await overview(client, { p_page: page });
-    const rows = result.requests.map((r) => [{ text: `${(r.email || r.user_id).slice(0, 35)} · ${n(r.amount)}`, callback_data: `history:${r.user_id}:0` }, { text: '✓', callback_data: `approve:${r.id}` }, { text: '✕', callback_data: `reject:${r.id}` }]);
+    const rows = result.requests.map((r) => [{ text: `${(r.email || r.user_id).slice(0, 35)} · ${n(r.amount)}`, callback_data: `history:${r.user_id}:0` }, ...(r.payment_provider === 'crypto_pay' ? [] : [{ text: '✓', callback_data: `approve:${r.id}` }, { text: '✕', callback_data: `reject:${r.id}` }])]);
     const pagination = [];
     if (page > 0) pagination.push({ text: '←', callback_data: `queue:${page - 1}` });
     if ((page + 1) * 20 < result.total) pagination.push({ text: '→', callback_data: `queue:${page + 1}` });

@@ -214,6 +214,11 @@ export interface TokenRequest {
   admin_note: string;
   created_at: string;
   decided_at: string | null;
+  payment_provider?: 'manual' | 'crypto_pay';
+  crypto_invoice_id?: number | null;
+  crypto_invoice_url?: string | null;
+  crypto_expires_at?: string | null;
+  crypto_paid_at?: string | null;
   payment_network?: string | null;
   payment_address?: string | null;
   payment_amount_micros?: number | null;

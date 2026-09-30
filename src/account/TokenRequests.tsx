@@ -8,7 +8,7 @@ import TokenInvoice from '@/account/TokenInvoice';
 
 const presets = [10_000, 50_000, 100_000, 500_000];
 const n = (value: number) => new Intl.NumberFormat('ru-RU').format(value);
-const statuses = { pending: 'На рассмотрении', approved: 'Начислено', rejected: 'Отклонено', cancelled: 'Закрыта вами' };
+const statuses = { pending: 'Ожидает оплаты', approved: 'Начислено', rejected: 'Отклонено', cancelled: 'Закрыта вами' };
 
 export default function TokenRequests({ userId, onBalanceChange }: { userId: string; onBalanceChange: () => void }) {
   const [requests, setRequests] = useState<TokenRequest[]>([]);
@@ -22,7 +22,6 @@ export default function TokenRequests({ userId, onBalanceChange }: { userId: str
   const [message, setMessage] = useState('');
   const [page, setPage] = useState(0);
   const [payment, setPayment] = useState<TokenPaymentConfig | null>(null);
-  const [network, setNetwork] = useState('ton');
   const [paymentError, setPaymentError] = useState('');
   const requestId = useRef<string | null>(null);
   const previousPending = useRef<string | null>(null);
@@ -31,7 +30,8 @@ export default function TokenRequests({ userId, onBalanceChange }: { userId: str
   const refresh = useCallback(async () => {
     const version = ++generation.current;
     try {
-      const [rows, active] = await Promise.all([listTokenRequests(userId, page), getPendingTokenRequest(userId)]);
+      const active = await getPendingTokenRequest(userId);
+      const rows = await listTokenRequests(userId, page);
       if (version !== generation.current) return;
       setRequests(rows); setPending(active);
       if (previousPending.current && previousPending.current !== active?.id) {
@@ -48,7 +48,6 @@ export default function TokenRequests({ userId, onBalanceChange }: { userId: str
     try {
       const config = await getTokenPaymentConfig();
       setPayment(config); setPaymentError('');
-      setNetwork((value) => config.networks.some((item) => item.id === value) ? value : config.networks[0]?.id ?? '');
     } catch (cause) { setPaymentError((cause as Error).message); }
   }, []);
   useEffect(() => {
@@ -65,27 +64,26 @@ export default function TokenRequests({ userId, onBalanceChange }: { userId: str
   useEffect(() => { const timer = window.setTimeout(() => void loadPayment(), 0); return () => clearTimeout(timer); }, [loadPayment]);
   const value = Number(amount);
   const valid = /^\d+$/.test(amount) && Number.isSafeInteger(value) && value >= 10000 && value <= 1000000000;
-  const wallet = payment?.networks.find((item) => item.id === network);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!valid || locked.current || !payment || !wallet || pending) return;
+    if (!valid || locked.current || !payment || pending) return;
     locked.current = true; ++generation.current;
     setBusy(true); setError(''); setMessage(''); requestId.current ??= crypto.randomUUID();
     try {
-      const request = await submitTokenRequest(requestId.current, value, comment, { network, price: payment.price, txHash: '' });
+      const request = await submitTokenRequest(requestId.current, value, comment, { network: 'crypto_pay', price: payment.price, txHash: '' });
       requestId.current = null;
       previousPending.current = request.status === 'pending' ? request.id : null;
       setPending(request.status === 'pending' ? request : null);
       setPage(0); setRequests((rows) => [request, ...rows.filter((item) => item.id !== request.id)].slice(0, 20));
       setExpanded(false); setComment('');
-      setMessage(request.status === 'pending' ? 'Заявка создана. Сумма и реквизиты сохранены — теперь можно оплатить.' : 'Заявка уже обработана. Проверьте историю пополнений.');
+      setMessage(request.status === 'pending' ? 'Счёт создан. Оплатите его в Crypto Bot — токены начислятся автоматически.' : 'Заявка уже обработана. Проверьте историю пополнений.');
     } catch (cause) { setError((cause as Error).message); }
     finally { locked.current = false; setBusy(false); setLoading(false); }
   }
 
   return <section id="tokens" className="account-section token-section" aria-labelledby="token-heading">
-    <div className="token-section-heading"><div><span className="account-eyebrow">БАЛАНС И ПОПОЛНЕНИЕ</span><h2 id="token-heading">Больше токенов для ваших идей</h2><p className="account-note">Выберите пакет, оплатите в USDT и передайте платёж на проверку. Токены начислим после подтверждения.</p></div>
+    <div className="token-section-heading"><div><span className="account-eyebrow">БАЛАНС И ПОПОЛНЕНИЕ</span><h2 id="token-heading">Больше токенов для ваших идей</h2><p className="account-note">Выберите пакет и оплатите в USDT через Crypto Bot. После оплаты токены начислятся автоматически. Минимальная сумма — 1 USDT.</p></div>
       {!pending && <button className="account-primary" type="button" aria-expanded={expanded} aria-controls="token-request-form" onClick={() => setExpanded(!expanded)} disabled={loading || busy || !payment}>{expanded ? 'Свернуть' : 'Пополнить баланс'}</button>}
     </div>
     {message && <p role="status" className="token-success">{message}</p>}
@@ -94,21 +92,20 @@ export default function TokenRequests({ userId, onBalanceChange }: { userId: str
       <fieldset disabled={busy}><legend>1. Выберите количество токенов</legend><div className="token-presets">{presets.map((preset) => <button type="button" key={preset} className={value === preset ? 'token-package selected' : 'token-package'} aria-pressed={value === preset} onClick={() => { setAmount(String(preset)); requestId.current = null; }}><strong>{n(preset)}</strong><span>токенов</span><small>{payment?.price != null ? `${formatUsdt(paymentMicros(preset, payment.price))} USDT` : 'По согласованию'}</small></button>)}</div>
         <label htmlFor="token-amount">Или введите своё количество</label><input id="token-amount" type="number" inputMode="numeric" min="10000" max="1000000000" step="1" required value={amount} onChange={(event) => { setAmount(event.target.value); requestId.current = null; }} aria-describedby="token-minimum" />
         <p id="token-minimum" className="account-note">От 10 000 токенов. Стоимость рассчитывается автоматически.</p>
-        <div className="token-payment"><h3>2. Выберите сеть оплаты</h3><label htmlFor="payment-network">Сеть перевода USDT</label><select id="payment-network" value={network} onChange={(event) => { setNetwork(event.target.value); requestId.current = null; }}>{payment?.networks.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select><p className="account-note">Выберите сеть, которую поддерживает ваш кошелёк. Реквизиты появятся после создания заявки.</p></div>
         <details className="token-comment-details"><summary>Добавить комментарий</summary><label htmlFor="token-comment">Комментарий (необязательно)</label><textarea id="token-comment" rows={2} maxLength={500} value={comment} placeholder="Что важно знать администратору?" onChange={(event) => setComment(event.target.value)} /></details>
-        <div className="token-checkout"><div><span>Вы получите {valid ? `${n(value)} токенов` : 'выбранное количество токенов'}</span><p className="token-payment-total">К оплате <strong>{payment?.price != null && valid ? `${formatUsdt(paymentMicros(value, payment.price))} USDT` : 'По согласованию'}</strong></p></div><button className="account-primary" type="submit" disabled={!valid || busy || !wallet}>{busy ? 'Создаём заявку…' : 'Создать заявку и перейти к оплате'}</button></div>
-        <p className="account-note">Нажатие кнопки не списывает деньги. Оплату вы выполните самостоятельно в своём кошельке.</p>
+        <div className="token-checkout"><div><span>Вы получите {valid ? `${n(value)} токенов` : 'выбранное количество токенов'}</span><p className="token-payment-total">К оплате <strong>{payment?.price != null && valid ? `${formatUsdt(paymentMicros(value, payment.price))} USDT` : 'По согласованию'}</strong></p></div><button className="account-primary" type="submit" disabled={!valid || busy || !payment}>{busy ? 'Создаём заявку…' : 'Создать заявку и перейти к оплате'}</button></div>
+        <p className="account-note">Нажатие кнопки не списывает деньги. Оплата откроется в Crypto Bot. Возвращайтесь сюда, чтобы увидеть обновлённый баланс.</p>
       </fieldset>
     </form>}
     {error && <p role="alert" className="project-error">{error} <button className="account-secondary" onClick={() => { void refresh(); void loadPayment(); }} type="button">Повторить</button></p>}
     {paymentError && <p role="alert" className="project-error">{paymentError} <button className="account-secondary" onClick={() => void loadPayment()} type="button">Загрузить реквизиты</button></p>}
     <details className="token-history"><summary>История пополнений{requests.length > 0 ? ` · ${requests.length}${requests.length === 20 ? '+' : ''}` : ''}</summary>
-      {loading ? <p className="account-note">Загрузка…</p> : requests.length === 0 ? <div className="account-empty-note"><strong>Ваша история начнётся здесь</strong><p>После первого пополнения вы увидите сумму, статус и решение администратора.</p></div> : requests.map((request) => <article className="token-history-row" key={request.id}>
+      {loading ? <p className="account-note">Загрузка…</p> : requests.length === 0 ? <div className="account-empty-note"><strong>Ваша история начнётся здесь</strong><p>После первого пополнения вы увидите сумму, статус и начисленные токены.</p></div> : requests.map((request) => <article className="token-history-row" key={request.id}>
         <div><strong>{n(request.amount)} токенов</strong><small>{new Date(request.created_at).toLocaleString('ru-RU')} · №{request.id.slice(0, 8)}</small>{request.payment_amount_micros != null && <small>{formatUsdt(request.payment_amount_micros)} USDT · {payment?.networks.find((item) => item.id === request.payment_network)?.label || request.payment_network}</small>}{request.admin_note && <p>Комментарий администратора: {request.admin_note}</p>}{request.status === 'rejected' && <p className="account-note">Если вы уже перевели оплату, сохраните хеш транзакции и укажите его в комментарии новой заявки.</p>}</div>
         <span className={`token-status token-status-${request.status}`}>{statuses[request.status]}</span>
       </article>)}
       {(page > 0 || requests.length >= 20) && <div className="token-pagination"><button className="account-secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Назад</button><span>Страница {page + 1}</span><button className="account-secondary" disabled={requests.length < 20} onClick={() => setPage(page + 1)}>Далее</button></div>}
     </details>
-    <details className="account-token-help"><summary>Как работают токены и оплата?</summary><p>Токены используются для ИИ-генерации. Стоимость конкретного запроса зависит от объёма текста и ответа ИИ. Редактирование карточек и экспорт не требуют токенов.</p><p>Платёж проверяется вручную: после перевода передайте хеш транзакции. Статус и баланс обновляются автоматически, пока кабинет открыт.</p></details>
+    <details className="account-token-help"><summary>Как работают токены и оплата?</summary><p>Токены используются для ИИ-генерации. Стоимость конкретного запроса зависит от объёма текста и ответа ИИ. Редактирование карточек и экспорт не требуют токенов.</p><p>Crypto Bot автоматически подтверждает оплату. Хеш транзакции не нужен. Статус и баланс обновляются автоматически, пока кабинет открыт.</p></details>
   </section>;
 }

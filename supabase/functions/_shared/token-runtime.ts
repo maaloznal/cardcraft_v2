@@ -1,4 +1,5 @@
 // @ts-nocheck -- Deno Edge runtime; pure validation/auth modules are checked by tsc and Vitest.
+import { reconcileCryptoInvoices } from './crypto-pay-runtime.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 export const OWNER_ID = '7145160476';
 export const db = () => createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
@@ -49,6 +50,18 @@ export async function notifyRequest(client, id: string) {
   const request = claims?.[0];
   if (!request) return false;
   try {
+    if (request.payment_provider === 'crypto_pay') {
+      const { data: user, error: userError } = await client.auth.admin.getUserById(request.user_id);
+      if (userError) throw new Error('Account unavailable');
+      const message = await telegram('sendMessage', {
+        chat_id: OWNER_ID,
+        text: `✅ Оплата поступила в Crypto Bot\nКлиент: ${user.user.email || request.user_id}\nОплачено: ${request.payment_amount_micros / 1000000} USDT\nКомиссия Crypto Pay: ${request.crypto_fee_amount ?? '—'} ${request.crypto_fee_asset || ''}\nНачислено: ${n(request.amount)} токенов\nСчёт: ${request.crypto_invoice_id}\nДата оплаты: ${request.crypto_paid_at}\nЗаявка: ${request.id}`,
+        reply_markup: { inline_keyboard: [[{ text: 'История клиента', callback_data: `history:${request.user_id}:0` }], ...menu().inline_keyboard] },
+      });
+      const { error: saveError } = await client.from('token_requests').update({ notified_at: new Date().toISOString(), telegram_message_id: message.message_id }).eq('id', id).eq('status', 'approved');
+      if (saveError) throw new Error('Notification persistence unavailable');
+      return true;
+    }
     const [{ data: user, error: userError }, { data: account, error: accountError }, details] = await Promise.all([
       client.auth.admin.getUserById(request.user_id),
       client.from('user_accounts').select('*').eq('user_id', request.user_id).single(),
@@ -74,7 +87,8 @@ export async function notifyRequest(client, id: string) {
   }
 }
 export async function retryNotifications(client) {
-  const { data, error } = await client.from('token_requests').select('id').eq('status', 'pending').is('notified_at', null).order('created_at').limit(10);
+  try { await reconcileCryptoInvoices(client); } catch { /* Next cron pass retries API failures; still deliver committed payments. */ }
+  const { data, error } = await client.from('token_requests').select('id').or('and(payment_provider.eq.manual,status.eq.pending),and(payment_provider.eq.crypto_pay,status.eq.approved)').is('notified_at', null).order('created_at').limit(10);
   if (error) throw new Error('Database unavailable');
   let sent = 0;
   for (const request of data) if (await notifyRequest(client, request.id)) sent++;

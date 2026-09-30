@@ -1,5 +1,6 @@
 'use client';
 
+import CryptoInvoice from './CryptoInvoice';
 import { useRef, useState } from 'react';
 import type { TokenRequest } from '@/core/types';
 import { formatUsdt } from '@/account/payment-service';
@@ -33,6 +34,7 @@ export default function TokenInvoice({ request, networkLabel, onSaved, onRefresh
   const [closing, setClosing] = useState(false);
   const [closeError, setCloseError] = useState('');
   const closeLock = useRef(false);
+  if (request.payment_provider === 'crypto_pay') return <CryptoInvoice request={request} onRefresh={onRefresh} />;
   return <article className="token-invoice" aria-labelledby="invoice-title">
     <div className="invoice-heading"><div><span className="account-eyebrow">АКТИВНОЕ ПОПОЛНЕНИЕ</span><h3 id="invoice-title">{hasHash ? 'Платёж передан на проверку' : 'Заявка создана. Следующий шаг — оплата'}</h3></div><span className="token-status token-status-pending">{hasHash ? 'На проверке' : 'Ожидает оплаты'}</span></div>
     <ol className="token-steps" aria-label="Этапы пополнения">{['Заявка', 'Оплата', 'Проверка', 'Начисление'].map((label, index) => <li key={label} data-complete={index < (hasHash ? 2 : 1)} aria-current={index === (hasHash ? 2 : 1) ? 'step' : undefined}><span>{index + 1}</span>{label}</li>)}</ol>
