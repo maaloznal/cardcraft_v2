@@ -495,7 +495,7 @@ export class PreviewRenderer {
     // A drag/long-press selection can contain a phrase or any other range.
     // Only accept a selection whose endpoints both belong to the same card
     // field, so text from neighbouring fields can never be styled by mistake.
-    this.touchSelection = window.matchMedia('(pointer: coarse)').matches;
+    this.touchSelection = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches;
     this.selectionButton = document.createElement('button');
     this.selectionButton.type = 'button';
     this.selectionButton.className = 'preview-selection-action';
