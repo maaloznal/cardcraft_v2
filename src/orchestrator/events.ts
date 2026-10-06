@@ -507,6 +507,36 @@ export function bindModalEvents(ctx: OrchestratorContext): void {
     });
   });
 
+  // Alignment is exclusive per field. Clicking the active option restores
+  // the theme's default instead of saving a redundant override.
+  root.querySelectorAll<HTMLElement>('.align-btn-section').forEach((btn) => {
+    ctx.listeners.addEl(btn, 'click', (e) => {
+      e.stopPropagation();
+      const field = btn.dataset.field || '';
+      const align = btn.dataset.align;
+      if (
+        uiState.activeCardIndexForColors === null ||
+        !align ||
+        !['left', 'center', 'right', 'justify'].includes(align)
+      ) return;
+
+      const idx = uiState.activeCardIndexForColors;
+      const card = stateManager.getCard(idx);
+      if (!card) return;
+      const next = card.sectionStyles[field]?.textAlign === align ? undefined : align;
+      stateManager.dispatch({
+        type: 'SET_SECTION_STYLE_FIELD',
+        payload: { idx, field, property: 'textAlign', value: next },
+      });
+      root.querySelectorAll<HTMLElement>(`.align-btn-section[data-field="${field}"]`)
+        .forEach((option) => option.classList.toggle('active', option.dataset.align === next));
+      const updated = stateManager.getCard(idx);
+      if (updated) previewRenderer.updateCardStyle(updated, field, idx);
+      storage.scheduleSave({ silent: true });
+      history.scheduleHistoryPush();
+    });
+  });
+
   // Section size sliders — DO push history
   root.querySelectorAll<HTMLInputElement>('.size-slider-section').forEach((sl) => {
     ctx.listeners.addEl(sl, 'input', (e) => {

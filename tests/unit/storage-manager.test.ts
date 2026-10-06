@@ -464,6 +464,25 @@ describe('StorageManager', () => {
       const loaded = load();
       expect(loaded.cards![0].sectionStyles.title!.fontSize).toBe(96);
     });
+
+    it('keeps valid text alignment and drops invalid values', () => {
+      localStorage.setItem(
+        STORAGE_KEYS.CARDS,
+        JSON.stringify([
+          {
+            id: 'c1',
+            title: 'hi',
+            sectionStyles: {
+              title: { textAlign: 'center' },
+              text: { textAlign: 'url(javascript:alert(1))' },
+            },
+          },
+        ])
+      );
+      const loaded = load();
+      expect(loaded.cards![0].sectionStyles.title?.textAlign).toBe('center');
+      expect(loaded.cards![0].sectionStyles.text?.textAlign).toBeUndefined();
+    });
   });
 
   // ─── Quota exceeded ─────────────────────────────────────────

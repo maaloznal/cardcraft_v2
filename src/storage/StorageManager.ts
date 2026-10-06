@@ -298,6 +298,9 @@ function migrateCard(card: Partial<Card>): Card {
       if (old.strikethrough || deco.includes('line-through')) parts.push('line-through');
       if (parts.length) ns.textDecoration = parts.join(' ');
       if (old.fontSize) ns.fontSize = clampFontSize(old.fontSize);
+      if (['left', 'center', 'right', 'justify'].includes(String(old.textAlign))) {
+        ns.textAlign = String(old.textAlign);
+      }
       migrated.sectionStyles[field] = ns as Card['sectionStyles'][string];
     });
   }

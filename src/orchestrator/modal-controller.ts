@@ -104,6 +104,9 @@ export function createModalController(ctx: OrchestratorContext): ModalController
       const formatBtns = root.querySelectorAll<HTMLElement>(
         `.format-btn-section[data-field="${f.key}"]`,
       );
+      const alignBtns = root.querySelectorAll<HTMLElement>(
+        `.align-btn-section[data-field="${f.key}"]`,
+      );
       const sl = refs.$<HTMLInputElement>(`.size-slider-section[data-field="${f.key}"]`);
       const sv = refs.$<HTMLElement>(`.size-value-section[data-field="${f.key}"]`);
       const styles = currentSectionStyles[f.key];
@@ -117,6 +120,9 @@ export function createModalController(ctx: OrchestratorContext): ModalController
           btn.classList.add('active');
         else if (fmt === 'strikethrough' && styles.textDecoration?.includes('line-through'))
           btn.classList.add('active');
+      });
+      alignBtns.forEach((btn) => {
+        btn.classList.toggle('active', Boolean(styles?.textAlign && btn.dataset.align === styles.textAlign));
       });
       if (sl && sv) {
         const sz = styles?.fontSize ?? f.defaultSize;

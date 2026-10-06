@@ -201,23 +201,31 @@
   width: 100%;
   min-width: 0;
 }
-.card-copy {
+.card-top-content,
+.card-bottom-content {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+.card-copy {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 2.5%, 20px);
 }
 .card[data-format="aspect-4-5"] .card-top-content,
 .card[data-format="telegram"] .card-top-content,
 .card[data-format="aspect-9-16"] .card-top-content,
 .card[data-format="whatsapp"] .card-top-content {
   flex: 1 1 auto;
+  min-height: 0;
 }
 .card[data-format="aspect-4-5"] .card-copy,
 .card[data-format="telegram"] .card-copy,
 .card[data-format="aspect-9-16"] .card-copy,
 .card[data-format="whatsapp"] .card-copy {
-  margin-block: auto;
-  padding-block: clamp(12px, 4%, 28px);
+  flex: 1 1 auto;
+  justify-content: center;
+  padding-block: clamp(16px, 5%, 36px);
 }
 
 /* Hover — карточка приподнимается */
@@ -280,9 +288,9 @@
   color: var(--text-primary);
   margin: 0;
   word-break: normal;
-  overflow-wrap: break-word;
-  hyphens: auto;
-  text-wrap: balance;
+  overflow-wrap: anywhere;
+  hyphens: manual;
+  text-wrap: wrap;
 }
 .card-subtitle {
   font-size: 16px;
@@ -291,9 +299,9 @@
   color: var(--accent-color);
   margin: 0;
   word-break: normal;
-  overflow-wrap: break-word;
-  hyphens: auto;
-  text-wrap: balance;
+  overflow-wrap: anywhere;
+  hyphens: manual;
+  text-wrap: wrap;
 }
 .card-text {
   font-size: 15px;
@@ -301,9 +309,9 @@
   color: var(--text-secondary);
   margin: 0;
   word-break: normal;
-  overflow-wrap: break-word;
-  hyphens: auto;
-  text-wrap: pretty;
+  overflow-wrap: anywhere;
+  hyphens: manual;
+  text-wrap: wrap;
 }
 .card-list {
   list-style: none;
@@ -335,9 +343,9 @@
 .card-list-text {
   display: block;
   word-break: normal;
-  overflow-wrap: break-word;
-  hyphens: auto;
-  text-wrap: pretty;
+  overflow-wrap: anywhere;
+  hyphens: manual;
+  text-wrap: wrap;
   line-height: 1.5;
 }
 .card-footer-text {
@@ -348,9 +356,9 @@
   line-height: 1.4;
   color: var(--accent-color);
   word-break: normal;
-  overflow-wrap: break-word;
-  hyphens: auto;
-  text-wrap: balance;
+  overflow-wrap: anywhere;
+  hyphens: manual;
+  text-wrap: wrap;
 }
 .accent-btn {
   background-color: var(--btn-accent-bg);
@@ -363,9 +371,9 @@
   font-size: 14px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
   word-break: normal;
-  overflow-wrap: break-word;
-  hyphens: auto;
-  text-wrap: balance;
+  overflow-wrap: anywhere;
+  hyphens: manual;
+  text-wrap: wrap;
 }
 
 /* Styled word marker */

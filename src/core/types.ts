@@ -34,10 +34,11 @@ export interface SectionStyle {
   fontStyle?: string;
   textDecoration?: string;
   fontSize?: number;
+  textAlign?: 'left' | 'center' | 'right' | 'justify';
 }
 
 /** Editable section-style properties (used by SET_SECTION_STYLE_FIELD action) */
-export type SectionStyleProperty = 'fontWeight' | 'fontStyle' | 'textDecoration';
+export type SectionStyleProperty = 'fontWeight' | 'fontStyle' | 'textDecoration' | 'textAlign';
 
 /** A single card in the project */
 export interface Card {

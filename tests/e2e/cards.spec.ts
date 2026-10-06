@@ -26,7 +26,7 @@ test.describe('Card operations', () => {
     await expect(page.locator('#cardsArea .card-title').first()).toContainText('Edited Title E2E');
   });
 
-  test('4a. story card keeps copy balanced and away from the upper edge', async ({ page }) => {
+  test('4a. story card centers copy without automatic word hyphenation', async ({ page }) => {
     const editor = page.locator('#editorCardsList .card-editor-block').first();
     await editor.locator('[data-field="title"]').fill('Продуманный заголовок для красивой карточки');
     await editor.locator('[data-field="text"]').fill('Основной текст переносится аккуратно и сохраняет ровный визуальный ритм без случайных разрывов обычных слов.');
@@ -37,23 +37,43 @@ test.describe('Card operations', () => {
     });
 
     const card = page.locator('#cardsArea .card').first();
-    const copy = card.locator('.card-copy');
     await expect(card).toHaveAttribute('data-format', 'aspect-9-16');
-    await expect(copy).toBeVisible();
-    await expect(card.locator('.card-title')).toHaveCSS('text-wrap', 'balance');
-    await expect(card.locator('.card-text')).toHaveCSS('text-wrap', 'pretty');
+    await expect(card.locator('.card-copy')).toBeVisible();
+    await expect(card.locator('.card-title')).toHaveCSS('text-wrap', 'wrap');
+    await expect(card.locator('.card-text')).toHaveCSS('text-wrap', 'wrap');
+    await expect(card.locator('.card-text')).toHaveCSS('hyphens', 'manual');
     await expect(card.locator('.card-text')).toHaveCSS('word-break', 'normal');
 
     const spacing = await page.evaluate(() => {
       const cardRect = document.querySelector('#cardsArea .card')!.getBoundingClientRect();
-      const copyRect = document.querySelector('#cardsArea .card-copy')!.getBoundingClientRect();
+      const firstRect = document.querySelector('#cardsArea .card-title')!.getBoundingClientRect();
+      const lastRect = document.querySelector('#cardsArea .card-text')!.getBoundingClientRect();
       return {
-        above: copyRect.top - cardRect.top,
-        below: cardRect.bottom - copyRect.bottom,
+        above: firstRect.top - cardRect.top,
+        below: cardRect.bottom - lastRect.bottom,
       };
     });
     expect(spacing.above).toBeGreaterThan(80);
     expect(spacing.below).toBeGreaterThan(80);
+  });
+
+  test('4ab. late footer fields render and per-section alignment can be changed', async ({ page }) => {
+    const editor = page.locator('#editorCardsList .card-editor-block').first();
+    await editor.locator('[data-field="text"]').fill('Текст без автоматического разрыва обычных слов.');
+    await editor.locator('[data-field="footer"]').fill('Итог появляется сразу');
+    await editor.locator('[data-field="cta"]').fill('Продолжить');
+
+    const card = page.locator('#cardsArea .card').first();
+    await expect(card.locator('.card-bottom-content')).toBeVisible();
+    await expect(card.locator('.card-footer-text')).toHaveText('Итог появляется сразу');
+    await expect(card.locator('.accent-btn')).toHaveText('Продолжить');
+
+    await editor.locator('[data-action="palette"]').click();
+    await page.getByRole('button', { name: 'Текст и список', exact: true }).click();
+    const center = page.locator('.align-btn-section[data-field="text"][data-align="center"]');
+    await center.click();
+    await expect(center).toHaveClass(/active/);
+    await expect(card.locator('.card-text')).toHaveCSS('text-align', 'center');
   });
 
   test('4aa. desktop actions are centered, styles are duplicated, and AI follows the other actions', async ({ page }) => {

@@ -18,6 +18,7 @@ export function buildSectionStyle(card: Card, field: string): string {
     if (ss.fontWeight) styleStr += `font-weight:${ss.fontWeight};`;
     if (ss.fontStyle) styleStr += `font-style:${ss.fontStyle};`;
     if (ss.textDecoration) styleStr += `text-decoration:${ss.textDecoration};`;
+    if (ss.textAlign) styleStr += `text-align:${ss.textAlign};`;
   }
   return styleStr ? `style="${styleStr}"` : '';
 }

@@ -303,7 +303,12 @@ input[type="color"].color-picker-input::-moz-color-swatch {
   display: flex;
   gap: 4px;
 }
-.format-btn-section {
+.text-align-controls {
+  display: flex;
+  gap: 4px;
+}
+.format-btn-section,
+.align-btn-section {
   width: 26px;
   height: 26px;
   border: 1px solid var(--ui-border);
@@ -317,11 +322,22 @@ input[type="color"].color-picker-input::-moz-color-swatch {
   color: var(--ui-text-secondary);
   padding: 0;
 }
-.format-btn-section:hover {
+.align-btn-section {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+.align-btn-section.align-left { justify-content: flex-start; padding-left: 5px; }
+.align-btn-section.align-center { justify-content: center; }
+.align-btn-section.align-right { justify-content: flex-end; padding-right: 5px; }
+.align-btn-section.align-justify { justify-content: center; letter-spacing: 1px; }
+.format-btn-section:hover,
+.align-btn-section:hover {
   background: var(--ui-surface-hover);
   border-color: var(--ui-border-strong);
 }
-.format-btn-section.active {
+.format-btn-section.active,
+.align-btn-section.active {
   background: var(--ui-text);
   color: var(--ui-accent-fg);
   border-color: var(--ui-text);

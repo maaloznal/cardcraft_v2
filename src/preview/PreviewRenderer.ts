@@ -133,7 +133,9 @@ export class PreviewRenderer {
 
     // Case 3: content empty, element exists → remove
     if (!value && el) {
+      const parent = el.parentElement;
       el.remove();
+      if (parent?.classList.contains('card-bottom-content') && !parent.children.length) parent.remove();
       this.updateEmptyHint(cardNode, card);
       return;
     }
@@ -286,13 +288,13 @@ export class PreviewRenderer {
     const cardCopy = cardCopyInner.trim() ? `<div class="card-copy">${cardCopyInner}</div>` : '';
     const topContentInner = `${progressHtml}${tagHtml}${cardCopy}`;
     const topContent = topContentInner.trim()
-      ? `<div class="card-top-content" style="display:flex;flex-direction:column;gap:16px;">${topContentInner}</div>`
+      ? `<div class="card-top-content">${topContentInner}</div>`
       : '';
 
     // Build bottom content (footer + cta). Only render if at least one is present.
     const bottomContentInner = `${card.footer ? `<div class="card-footer-text" ${footerStyle} data-field="footer" data-card-id="${safeCardId}">${applyWordStylesToText(card.footer, card.wordStyles, 'footer')}</div>` : ''}${card.cta ? `<div class="accent-btn" ${ctaStyle} data-field="cta" data-card-id="${safeCardId}">${applyWordStylesToText(card.cta, card.wordStyles, 'cta')}</div>` : ''}`;
     const bottomContent = bottomContentInner.trim()
-      ? `<div class="card-bottom-content" style="display:flex;flex-direction:column;gap:16px;">${bottomContentInner}</div>`
+      ? `<div class="card-bottom-content">${bottomContentInner}</div>`
       : '';
 
     const wrapper = document.createElement('div');
@@ -338,6 +340,11 @@ export class PreviewRenderer {
         container.className = 'card-copy';
         topContent.appendChild(container);
       }
+    }
+    if (!container && cfg.container === 'bottom') {
+      container = document.createElement('div');
+      container.className = 'card-bottom-content';
+      cardNode.appendChild(container);
     }
     if (!container) return;
 

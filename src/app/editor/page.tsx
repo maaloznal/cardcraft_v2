@@ -32,6 +32,13 @@ const FORMAT_BTNS = [
   { fmt: 'strikethrough', label: 'S', title: 'Зачёркнутый' },
 ];
 
+const ALIGN_BTNS = [
+  { align: 'left', label: '≡', title: 'По левому краю' },
+  { align: 'center', label: '≡', title: 'По центру' },
+  { align: 'right', label: '≡', title: 'По правому краю' },
+  { align: 'justify', label: '☰', title: 'По ширине' },
+] as const;
+
 const MODAL_ROWS = [
   { key: 'title', label: 'Заголовок', defaultSize: 24, hasStyleControls: true },
   { key: 'subtitle', label: 'Подзаголовок', defaultSize: 18, hasStyleControls: true },
@@ -565,6 +572,21 @@ function CardEditor() {
                                   type="button"
                                 >
                                   {b.label}
+                                </button>
+                              ))}
+                            </div>
+                            <div className="text-align-controls" role="group" aria-label={`Выравнивание: ${row.label}`}>
+                              {ALIGN_BTNS.map((button) => (
+                                <button
+                                  key={button.align}
+                                  className={`align-btn-section align-${button.align}`}
+                                  data-field={row.key}
+                                  data-align={button.align}
+                                  title={button.title}
+                                  aria-label={`${button.title}: ${row.label}`}
+                                  type="button"
+                                >
+                                  {button.label}
                                 </button>
                               ))}
                             </div>

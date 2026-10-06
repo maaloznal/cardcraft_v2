@@ -499,6 +499,13 @@ describe('StateManager', () => {
       });
       expect(sm.getCards()[0].sectionStyles.title?.textDecoration).toBe('underline line-through');
     });
+    it('sets text alignment on a section style', () => {
+      sm.dispatch({
+        type: 'SET_SECTION_STYLE_FIELD',
+        payload: { idx: 0, field: 'text', property: 'textAlign', value: 'center' },
+      });
+      expect(sm.getCards()[0].sectionStyles.text?.textAlign).toBe('center');
+    });
     it('does nothing for out-of-range index', () => {
       const before = sm.get();
       sm.dispatch({
