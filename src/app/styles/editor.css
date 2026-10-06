@@ -50,47 +50,40 @@
   letter-spacing: 0.04em;
 }
 
-/* Input wrapper — contains input/textarea + clear button */
+/* Field row — the destructive clear action has its own column, outside the
+   editable surface, so selecting text near the right edge cannot trigger it. */
 .input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 30px;
+  align-items: start;
+  gap: 8px;
 }
 .input-wrapper input,
 .input-wrapper textarea {
-  flex: 1;
-  padding-right: 34px; /* room for the top-corner clear button */
+  min-width: 0;
 }
-/* Clear-field button — a quiet control in the top-right corner. Keeping it
-   away from the text baseline reduces accidental clicks while selecting. */
+/* Clear-field button — visually separate from the text box. */
 .btn-clear-field {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  transform: none;
-  width: 20px;
-  height: 20px;
+  position: static;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: none;
-  background: transparent;
+  border: 1px solid var(--ui-border);
+  background: var(--ui-surface);
   color: var(--ui-text-tertiary);
   cursor: pointer;
   border-radius: 4px;
-  opacity: 0;
-  transition: opacity var(--dur) var(--ease), color var(--dur) var(--ease), background var(--dur) var(--ease);
-  z-index: 2;
-}
-/* Show clear button on hover/focus of the input wrapper */
-.input-wrapper:hover .btn-clear-field,
-.input-wrapper:focus-within .btn-clear-field {
-  opacity: 1;
+  opacity: 0.72;
+  transition: color var(--dur) var(--ease), background var(--dur) var(--ease), border-color var(--dur) var(--ease), opacity var(--dur) var(--ease);
 }
 .btn-clear-field:hover {
-  color: var(--ui-text);
-  background: var(--ui-surface-hover);
+  color: var(--ui-danger);
+  background: var(--ui-danger-bg);
+  border-color: var(--ui-danger-border);
+  opacity: 1;
 }
 
 /* Divider */

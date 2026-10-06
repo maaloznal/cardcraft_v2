@@ -119,7 +119,7 @@ export class PreviewRenderer {
     // Case 1: content exists, element exists → update in-place
     if (value && el) {
       const styled = applyWordStylesToText(value, card.wordStyles, field);
-      el.innerHTML = field === 'subtitle' || field === 'text' ? styled.replace(/\n/g, '<br>') : styled;
+      el.innerHTML = styled.replace(/\n/g, '<br>');
       this.updateEmptyHint(cardNode, card);
       return;
     }
@@ -166,7 +166,7 @@ export class PreviewRenderer {
       else el.removeAttribute('style');
 
       const styled = applyWordStylesToText(value, card.wordStyles, field);
-      el.innerHTML = field === 'subtitle' || field === 'text' ? styled.replace(/\n/g, '<br>') : styled;
+      el.innerHTML = styled.replace(/\n/g, '<br>');
     }
   }
 
@@ -284,7 +284,7 @@ export class PreviewRenderer {
     // Build top content (progress + tag + title + subtitle + text + list).
     // Only render the wrapper div if it has any children — avoids empty
     // flex items that take up gap space (16px) for no reason.
-    const cardCopyInner = `${emptyHint}${card.title ? `<h2 class="card-title" ${titleStyle} data-field="title" data-card-id="${safeCardId}">${applyWordStylesToText(card.title, card.wordStyles, 'title')}</h2>` : ''}${card.subtitle ? `<p class="card-subtitle" ${subtitleStyle} data-field="subtitle" data-card-id="${safeCardId}">${applyWordStylesToText(card.subtitle, card.wordStyles, 'subtitle').replace(/\n/g, '<br>')}</p>` : ''}${card.text ? `<p class="card-text" ${textStyle} data-field="text" data-card-id="${safeCardId}">${applyWordStylesToText(card.text, card.wordStyles, 'text').replace(/\n/g, '<br>')}</p>` : ''}${listHtml}`;
+    const cardCopyInner = `${emptyHint}${card.title ? `<h2 class="card-title" ${titleStyle} data-field="title" data-card-id="${safeCardId}">${applyWordStylesToText(card.title, card.wordStyles, 'title').replace(/\n/g, '<br>')}</h2>` : ''}${card.subtitle ? `<p class="card-subtitle" ${subtitleStyle} data-field="subtitle" data-card-id="${safeCardId}">${applyWordStylesToText(card.subtitle, card.wordStyles, 'subtitle').replace(/\n/g, '<br>')}</p>` : ''}${card.text ? `<p class="card-text" ${textStyle} data-field="text" data-card-id="${safeCardId}">${applyWordStylesToText(card.text, card.wordStyles, 'text').replace(/\n/g, '<br>')}</p>` : ''}${listHtml}`;
     const cardCopy = cardCopyInner.trim() ? `<div class="card-copy">${cardCopyInner}</div>` : '';
     const topContentInner = `${progressHtml}${tagHtml}${cardCopy}`;
     const topContent = topContentInner.trim()
@@ -292,7 +292,7 @@ export class PreviewRenderer {
       : '';
 
     // Build bottom content (footer + cta). Only render if at least one is present.
-    const bottomContentInner = `${card.footer ? `<div class="card-footer-text" ${footerStyle} data-field="footer" data-card-id="${safeCardId}">${applyWordStylesToText(card.footer, card.wordStyles, 'footer')}</div>` : ''}${card.cta ? `<div class="accent-btn" ${ctaStyle} data-field="cta" data-card-id="${safeCardId}">${applyWordStylesToText(card.cta, card.wordStyles, 'cta')}</div>` : ''}`;
+    const bottomContentInner = `${card.footer ? `<div class="card-footer-text" ${footerStyle} data-field="footer" data-card-id="${safeCardId}">${applyWordStylesToText(card.footer, card.wordStyles, 'footer').replace(/\n/g, '<br>')}</div>` : ''}${card.cta ? `<div class="accent-btn" ${ctaStyle} data-field="cta" data-card-id="${safeCardId}">${applyWordStylesToText(card.cta, card.wordStyles, 'cta').replace(/\n/g, '<br>')}</div>` : ''}`;
     const bottomContent = bottomContentInner.trim()
       ? `<div class="card-bottom-content">${bottomContentInner}</div>`
       : '';
@@ -358,7 +358,7 @@ export class PreviewRenderer {
     if (styleStr) el.setAttribute('style', styleStr.replace('style="', '').replace(/"$/, ''));
 
     const styled = applyWordStylesToText(value, card.wordStyles, field);
-    el.innerHTML = field === 'subtitle' || field === 'text' ? styled.replace(/\n/g, '<br>') : styled;
+    el.innerHTML = styled.replace(/\n/g, '<br>');
 
     // Find insertion position
     const fieldsInOrder = Object.keys(FIELD_CONFIG)

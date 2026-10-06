@@ -386,8 +386,9 @@ export class EditorRenderer {
       const el = target as HTMLInputElement | HTMLTextAreaElement;
       const text = e.clipboardData?.getData('text') ?? '';
       const field = el.dataset.field || '';
-      const multiline = ['subtitle', 'text', 'listItems'].includes(field);
-      const cleanText = multiline ? text : text.replace(/\s+/g, ' ').trim();
+      // Every card section is multiline. Normalize platform line endings but
+      // preserve the author's intentional paragraph breaks.
+      const cleanText = text.replace(/\r\n?/g, '\n');
       const start = el.selectionStart ?? 0;
       const end = el.selectionEnd ?? 0;
       const cur = el.value;

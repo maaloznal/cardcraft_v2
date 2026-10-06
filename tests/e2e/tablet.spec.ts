@@ -63,7 +63,7 @@ test.describe('Tablet portrait (iPad gen 7, ~834×1194 / split-view)', () => {
 
   test('C2b: tapping the card title toggles the card on tablet', async ({ page }) => {
     const card = page.locator('#editorCardsList .card-editor-block').first();
-    await card.locator('input[data-field="title"]').fill('Планшетная карточка');
+    await card.locator('textarea[data-field="title"]').fill('Планшетная карточка');
     await card.locator('.card-collapse-toggle').click();
     await expect(card).toHaveClass(/\bcollapsed\b/);
 

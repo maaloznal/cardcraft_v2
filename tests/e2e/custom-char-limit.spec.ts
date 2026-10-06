@@ -15,7 +15,7 @@ test('custom card limit applies to the total text across all fields', async ({ p
   });
 
   const firstCard = page.locator('#editorCardsList .card-editor-block').first();
-  await firstCard.locator('input[data-field="title"]').fill('a'.repeat(80));
+  await firstCard.locator('textarea[data-field="title"]').fill('a'.repeat(80));
   await firstCard.locator('textarea[data-field="subtitle"]').fill('b'.repeat(50));
 
   await expect(firstCard.locator('textarea[data-field="subtitle"]')).toHaveValue('b'.repeat(20));

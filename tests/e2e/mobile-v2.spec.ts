@@ -111,7 +111,7 @@ test.describe('P0-sync: mobile mode state consistency', () => {
   test('sync-5: text persists across mode switches + focus restored', async ({ page }) => {
     await switchToEditorMode(page);
     // Type in title
-    const titleInput = page.locator('#editorCardsList .card-editor-block input[data-field="title"]');
+    const titleInput = page.locator('#editorCardsList .card-editor-block textarea[data-field="title"]');
     await titleInput.fill('SYNC TEST TEXT');
     await titleInput.focus();
     // Switch to preview
@@ -122,7 +122,7 @@ test.describe('P0-sync: mobile mode state consistency', () => {
     // Switch back to editor
     await switchToEditorMode(page);
     // Text still in input
-    const inputValue = await page.locator('#editorCardsList .card-editor-block input[data-field="title"]').inputValue();
+    const inputValue = await page.locator('#editorCardsList .card-editor-block textarea[data-field="title"]').inputValue();
     expect(inputValue).toBe('SYNC TEST TEXT');
   });
 });

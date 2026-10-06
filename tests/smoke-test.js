@@ -57,7 +57,7 @@
     assert('Карточка имеет top-content', !!q('.card-top-content'));
 
     // 5. Заполним первую карточку (state-independent: работаем с тем что есть)
-    var titleInput = qa('input[data-field="title"]')[0];
+    var titleInput = qa('textarea[data-field="title"]')[0];
     if (titleInput) {
       titleInput.value = 'Тестовый заголовок';
       titleInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -126,7 +126,7 @@
 
     // 13. Стилизация слов — ТОЛЬКО в превью, не в полях ввода редактора
     // 13a. Сначала убедимся, что dblclick в поле ввода редактора НЕ открывает попап
-    var editorInput = qa('input[data-field="title"]')[0] || qa('textarea[data-field="title"]')[0];
+    var editorInput = qa('textarea[data-field="title"]')[0];
     if (editorInput) {
       editorInput.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     }
@@ -174,7 +174,7 @@
     }
 
     // 16. Производительность: точечное обновление при вводе
-    var titleInput2 = qa('input[data-field="title"]')[0];
+    var titleInput2 = qa('textarea[data-field="title"]')[0];
     if (titleInput2) {
       titleInput2.focus();
       var t0 = performance.now();
@@ -285,7 +285,7 @@
     var h3 = q('.card-editor-title-group h3');
     assert('H3 показывает техническое название', h3?.textContent?.startsWith('Карточка'));
     // Название не зависит от заголовка
-    var titleForId = qa('input[data-field="title"]')[0];
+    var titleForId = qa('textarea[data-field="title"]')[0];
     if (titleForId) {
       titleForId.value = 'Тест идентификации';
       titleForId.dispatchEvent(new Event('input', {bubbles: true}));

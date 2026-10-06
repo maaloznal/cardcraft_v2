@@ -262,7 +262,7 @@ test.describe('Mobile editor navigation (Xiaomi Mi 11 Lite)', () => {
     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
   });
 
-  test('clear control stays in the top corner and text areas are slightly taller', async ({ page }) => {
+  test('clear control stays outside the text area and text areas are slightly taller', async ({ page }) => {
     await page.setViewportSize({ width: 393, height: 873 });
     await gotoApp(page);
     await switchToEditorMode(page);
@@ -279,14 +279,17 @@ test.describe('Mobile editor navigation (Xiaomi Mi 11 Lite)', () => {
       return {
         fieldHeight: field.height,
         topOffset: button.top - field.top,
-        rightOffset: field.right - button.right,
+        gap: button.left - field.right,
+        buttonWidth: button.width,
+        buttonHeight: button.height,
       };
     });
     expect(geometry.fieldHeight).toBeGreaterThanOrEqual(76);
     expect(geometry.topOffset).toBeGreaterThanOrEqual(0);
     expect(geometry.topOffset).toBeLessThanOrEqual(4);
-    expect(geometry.rightOffset).toBeGreaterThanOrEqual(0);
-    expect(geometry.rightOffset).toBeLessThanOrEqual(4);
+    expect(geometry.gap).toBeGreaterThanOrEqual(8);
+    expect(geometry.buttonWidth).toBeGreaterThanOrEqual(44);
+    expect(geometry.buttonHeight).toBeGreaterThanOrEqual(44);
 
     await clear.click();
     await expect(textarea).toHaveValue('');
@@ -455,7 +458,7 @@ test.describe('P4-S3: Scroll preservation (phone 390×844)', () => {
       if (await card.evaluate((element) => element.classList.contains('collapsed'))) {
         await card.locator('.card-collapse-toggle').click();
       }
-      await card.locator('input[data-field="title"]').fill(`Card ${i + 1} with a longer title`);
+      await card.locator('textarea[data-field="title"]').fill(`Card ${i + 1} with a longer title`);
       await card.locator('textarea[data-field="text"]').fill(`Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.`);
       await page.waitForTimeout(50);
     }

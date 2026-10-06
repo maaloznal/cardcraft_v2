@@ -99,7 +99,7 @@ test.describe('Mobile (390×844) — phone mode', () => {
     // Switch back to editor — verify the text is still in the input
     await switchToEditorMode(page);
     const inputValue = await page
-      .locator('#editorCardsList .card-editor-block:nth-child(1) input[data-field="title"]')
+      .locator('#editorCardsList .card-editor-block:nth-child(1) textarea[data-field="title"]')
       .inputValue();
     expect(inputValue).toBe(testText);
   });
@@ -167,7 +167,7 @@ test.describe('Mobile (390×844) — phone mode', () => {
     // Check title input font-size (use input selector — clear-field button also has data-field)
     const fontSize = await getFontSize(
       page,
-      '#editorCardsList .card-editor-block:nth-child(1) input[data-field="title"]',
+      '#editorCardsList .card-editor-block:nth-child(1) textarea[data-field="title"]',
     );
     expect(fontSize).toBeGreaterThanOrEqual(16);
   });

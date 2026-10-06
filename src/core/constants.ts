@@ -113,12 +113,12 @@ export const FIELD_LABELS: Record<string, string> = {
 };
 
 export const EDITOR_FIELDS: EditorField[] = [
-  { key: 'title', label: 'Заголовок', multiline: false, maxlength: 200 },
+  { key: 'title', label: 'Заголовок', multiline: true, maxlength: 200 },
   { key: 'subtitle', label: 'Подзаголовок', multiline: true, maxlength: 500 },
   { key: 'text', label: 'Основной текст', multiline: true, maxlength: 1000 },
   { key: 'listItems', label: 'Список', multiline: true, maxlength: 1000 },
-  { key: 'footer', label: 'Итоговый вывод', multiline: false, maxlength: 200 },
-  { key: 'cta', label: 'Кнопка / CTA', multiline: false, maxlength: 100 },
+  { key: 'footer', label: 'Итоговый вывод', multiline: true, maxlength: 200 },
+  { key: 'cta', label: 'Кнопка / CTA', multiline: true, maxlength: 100 },
 ];
 
 export const MODAL_FIELDS: ModalField[] = [

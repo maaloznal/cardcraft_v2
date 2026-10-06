@@ -26,6 +26,37 @@ test.describe('Card operations', () => {
     await expect(page.locator('#cardsArea .card-title').first()).toContainText('Edited Title E2E');
   });
 
+  test('4m. every card section supports line breaks and clear actions stay outside fields', async ({ page }) => {
+    const editor = page.locator('#editorCardsList .card-editor-block').first();
+    await expect(editor.locator('textarea[data-field]')).toHaveCount(6);
+
+    const fields = [
+      ['title', '.card-title'],
+      ['subtitle', '.card-subtitle'],
+      ['text', '.card-text'],
+      ['footer', '.card-footer-text'],
+      ['cta', '.accent-btn'],
+    ] as const;
+    for (const [field, previewSelector] of fields) {
+      await editor.locator(`textarea[data-field="${field}"]`).fill('Первая строка\nВторая строка');
+      await expect(page.locator(`#cardsArea ${previewSelector} br`)).toHaveCount(1);
+    }
+
+    await editor.locator('textarea[data-field="listItems"]').fill('Первый пункт\nВторой пункт');
+    await expect(page.locator('#cardsArea .card-list-item')).toHaveCount(2);
+
+    const titleField = editor.locator('textarea[data-field="title"]');
+    const clearTitle = editor.locator('[data-clear-for="title"]');
+    const [fieldBox, clearBox] = await Promise.all([titleField.boundingBox(), clearTitle.boundingBox()]);
+    expect(fieldBox).not.toBeNull();
+    expect(clearBox).not.toBeNull();
+    expect(clearBox!.x).toBeGreaterThanOrEqual(fieldBox!.x + fieldBox!.width);
+
+    await clearTitle.click();
+    await expect(titleField).toHaveValue('');
+    await expect(page.locator('#cardsArea .card-title')).toHaveCount(0);
+  });
+
   test('4a. story card centers copy without automatic word hyphenation', async ({ page }) => {
     const editor = page.locator('#editorCardsList .card-editor-block').first();
     await editor.locator('[data-field="title"]').fill('Продуманный заголовок для красивой карточки');
