@@ -21,6 +21,9 @@ export interface ActiveProject {
   remote: boolean;
 }
 
+const LOCAL_PROJECT_ID = 'local';
+const LOCAL_PROJECT_NAME = 'Локальный черновик';
+
 export function normalizeProjectName(value: string): string {
   return value.replace(/\s+/g, ' ').trim().slice(0, 80);
 }
@@ -55,7 +58,38 @@ export function setActiveProject(project: ActiveProject | null): void {
   else localStorage.removeItem(ACTIVE_PROJECT_KEY);
 }
 
+/** Remember that an authenticated user explicitly chose the device-only draft. */
+export function setLocalProjectSelection(ownerId: string): void {
+  setActiveProject({
+    id: LOCAL_PROJECT_ID,
+    name: LOCAL_PROJECT_NAME,
+    ownerId,
+    remote: false,
+  });
+}
+
+/**
+ * Resolve the project to open on this device.
+ *
+ * A valid saved cloud selection wins. An explicit local-draft selection is
+ * also respected. On a new device there is no selection in localStorage, so
+ * the most recently updated cloud project (the first item returned by
+ * pullProjects) is selected automatically to restore cross-device sync.
+ */
+export function resolveCloudProject<T extends { id: string }>(
+  projects: T[],
+  stored: ActiveProject | null,
+  ownerId: string,
+): T | null {
+  if (stored?.remote && stored.ownerId === ownerId) {
+    const selected = projects.find((project) => project.id === stored.id);
+    if (selected) return selected;
+  }
+  if (stored && !stored.remote && stored.ownerId === ownerId) return null;
+  return projects[0] ?? null;
+}
+
 export function projectStorageKey(baseKey: string): string {
   const project = getActiveProject();
-  return project ? `${baseKey}:project:${project.id}` : baseKey;
+  return project?.remote ? `${baseKey}:project:${project.id}` : baseKey;
 }

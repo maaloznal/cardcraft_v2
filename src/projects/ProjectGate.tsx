@@ -5,7 +5,15 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useAuth } from '@/auth/AuthProvider';
 import { createProject, pullProjects, type Project } from '@/lib/sync/cloudSync';
 import * as Storage from '@/storage/StorageManager';
-import { getActiveProject, getVisibleProjects, normalizeProjectName, setActiveProject, type ActiveProject } from './project-storage';
+import {
+  getActiveProject,
+  getVisibleProjects,
+  normalizeProjectName,
+  resolveCloudProject,
+  setActiveProject,
+  setLocalProjectSelection,
+  type ActiveProject,
+} from './project-storage';
 
 type ProjectContextValue = {
   project: ActiveProject | null;
@@ -39,12 +47,11 @@ export function ProjectGate({ children }: { children: React.ReactNode }) {
     }
     const cloud = await pullProjects(user.id);
     const stored = getActiveProject();
-    const selected = stored?.remote && stored.ownerId === user.id
-      ? cloud.find((item) => item.id === stored.id)
-      : null;
+    const selected = resolveCloudProject(cloud, stored, user.id);
     setProjects(cloud);
     setActive(selected ? toActive(selected, user.id) : null);
-    if (!selected && stored?.remote) setActiveProject(null);
+    if (selected) setActiveProject(toActive(selected, user.id));
+    else if (stored?.remote) setActiveProject(null);
     setLoading(false);
   }, [enabled, user]);
 
@@ -61,12 +68,11 @@ export function ProjectGate({ children }: { children: React.ReactNode }) {
           const cloud = await pullProjects(user.id);
           if (cancelled) return;
           const stored = getActiveProject();
-          const selected = stored?.remote && stored.ownerId === user.id
-            ? cloud.find((item) => item.id === stored.id)
-            : null;
+          const selected = resolveCloudProject(cloud, stored, user.id);
           setProjects(cloud);
           setActive(selected ? toActive(selected, user.id) : null);
-          if (!selected && stored?.remote) setActiveProject(null);
+          if (selected) setActiveProject(toActive(selected, user.id));
+          else if (stored?.remote) setActiveProject(null);
         }
       } catch {
         if (!cancelled) {
@@ -154,7 +160,8 @@ export function ProjectBadge() {
   const switchProject = async (next: Project | null) => {
     if (!user) return;
     await persistCurrentProject();
-    setActiveProject(next ? toActive(next, user.id) : null);
+    if (next) setActiveProject(toActive(next, user.id));
+    else setLocalProjectSelection(user.id);
     window.location.reload();
   };
 

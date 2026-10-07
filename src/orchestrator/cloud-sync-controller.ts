@@ -27,6 +27,7 @@ import { supabase } from '@/lib/supabase/client';
 import type { Session, User, RealtimeChannel } from '@supabase/supabase-js';
 import {
   getProject,
+  ProjectVersionConflictError,
   updateProject,
   type Project,
 } from '@/lib/sync/cloudSync';
@@ -228,12 +229,29 @@ export function createCloudSyncController(ctx: OrchestratorContext): CloudSyncCo
       }
 
       if (!cachedProject) return false;
-      const result: Project = await updateProject(
-        cachedProject.id,
-        currentUser.id,
-        payload,
-        cachedProject.version,
-      );
+      let result: Project;
+      try {
+        result = await updateProject(
+          cachedProject.id,
+          currentUser.id,
+          payload,
+          cachedProject.version,
+        );
+      } catch (error) {
+        if (!(error instanceof ProjectVersionConflictError)) throw error;
+        // Another device saved after our last pull. Refresh the version and
+        // retry once so every committed write receives a strictly newer
+        // version and Realtime subscribers cannot mistake it for a duplicate.
+        const latest = await getProject(activeProjectId, currentUser.id);
+        if (!latest) return false;
+        cachedProject = latest;
+        result = await updateProject(
+          latest.id,
+          currentUser.id,
+          payload,
+          latest.version,
+        );
+      }
       cachedProject = result;
       lastSyncedAt = new Date(result.updated_at);
       Storage.markCloudSyncClean(currentUser.id, activeProjectId);

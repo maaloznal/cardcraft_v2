@@ -18,6 +18,13 @@ export interface Project {
   created_at: string
 }
 
+export class ProjectVersionConflictError extends Error {
+  constructor() {
+    super('Project was updated on another device')
+    this.name = 'ProjectVersionConflictError'
+  }
+}
+
 /**
  * Pull all projects for a user (newest first by updated_at).
  * Returns [] if Supabase is not configured or user has no projects.
@@ -104,10 +111,12 @@ export async function updateProject(
     })
     .eq('id', projectId)
     .eq('user_id', userId)
+    .eq('version', currentVersion)
     .select()
-    .single()
+    .maybeSingle()
 
   if (error) throw error
+  if (!result) throw new ProjectVersionConflictError()
   return result as Project
 }
 
